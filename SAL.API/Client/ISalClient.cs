@@ -1,0 +1,49 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+using SAL.Infrastructure;
+
+namespace SAL.API.Client
+{
+    public interface ISalClient
+    {
+
+        // hi level
+        Task<string> PublishCommandAsync<TCommand>(
+            TCommand command,
+            string correlationId = null,
+            CommandPriority priority = CommandPriority.Normal,
+            TimeSpan? ttl = null,
+            string handlerServiceName = null,
+            string resultServiceType = null,
+            string resultServiceName = null
+        )
+            where TCommand : class, ICommand, new();
+
+
+        Task<CommandResult<TCommandResult>> ExecuteCommandAsync<TCommand, TCommandResult>(
+            TCommand command,
+            CommandPriority priority = CommandPriority.Normal,
+            int ttls = 60,
+            string handlerServiceName = null
+            )
+            where TCommand : class, IHaveResult<TCommandResult>, new()
+            where TCommandResult : class, ICommandResult, new();
+
+
+        Task PublishResultAsync(ICommandResult result, CommandDescriptor commandDescriptor);
+
+        Task PublishResultAsync(InternalExceptionDTO exceptionDTO, string resultCode, CommandDescriptor commandDescriptor);
+
+        Task PublishResultAsync(IList<FieldError> validationErrors, CommandDescriptor commandDescriptor);
+
+        Task PublishResultAsync<TCommandResult>(CommandResult<TCommandResult> result, CommandDescriptor commandDescriptor)
+            where TCommandResult : class, ICommandResult, new();
+
+        Task PublishEventAsync(IEvent evnt, TimeSpan? ttl = null, string handlerServiceType = null, string handlerServiceName = null);
+
+        Task RaiseExceptionDetectEvent(InternalExceptionDTO exceptionDTO);
+        Task RaiseExceptionDetectEvent(Exception ex);
+
+    }
+}

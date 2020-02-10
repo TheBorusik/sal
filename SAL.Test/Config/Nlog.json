@@ -1,0 +1,132 @@
+﻿{
+  "Nlog": {
+    "AutoReload": true,
+    "ThrowExceptions": false,
+    "InternalLogLevel": "Off",
+    "internalLogFile": "c:\\temp\\nlog-internal.log",
+
+    "Targets": {
+      "@async": true,
+
+      "LogStash": {
+        "Type": "BufferingWrapper",
+        "FlushTimeout": 5000,
+        "Target": {
+          "Type": "Network",
+          "Address": "tcp://10.99.129.186:5044",
+          "NewLine": true,
+          "Layout": {
+            "Type": "SalJsonLayout"
+          }
+        } 
+      },
+
+      "File": {
+        "Type": "File",
+        "Layout": "${longdate} ${sid:padding} ${level}: ${Logger} -> ${message} ${exception:format=Message,StackTrace}",
+        "FileName": "${var:logDir}\\${date:format=yyyy-MM-dd}.${var:serviceName}.Log",
+        "CreateDirs": true
+      },
+      "LoggerFile": {
+        "Type": "File",
+        "Layout": "${longdate} ${sid:padding} ${level}: -> ${message} ${exception:format=Type, Message}",
+        "FileName": "${var:logDir}\\${date:format=yyyy-MM-dd}.${Logger}.Log",
+        "CreateDirs": true
+      },
+      "RMQFile": {
+        "Type": "File",
+        "Layout": "${longdate} ${sid:padding} ${Logger} ${level} -> ${message} ${exception:format=Type, Message}",
+        "FileName": "${var:logDir}\\${date:format=yyyy-MM-dd}.Rabbit.Log",
+        "CreateDirs": "true"
+      },
+      "WDFile": {
+        "Type": "File",
+        "Layout": "${longdate} ${sid:padding} ${level:padding=-6}:${Logger:padding=-17} -> ${message} ${exception:format=Type, Message}",
+        "FileName": "${var:logDir}\\${date:format=yyyy-MM-dd}.WatchDog.Log",
+        "CreateDirs": true
+      },
+      "DataFile": {
+        "Type": "File",
+        "Layout": "${longdate} ${sid:padding} ${message} ${exception:format=Type, Message}",
+        "FileName": "${var:logDir}\\${date:format=yyyy-MM-dd}.${Logger}.Log",
+        "CreateDirs": true
+      },
+      "ColoredConsole": {
+        "Type": "ColoredConsole",
+        "Layout": "${longdate} ${sid:padding} ${level}: ${Logger} -> ${message} ${exception:format=Message,StackTrace}",
+
+        "UseDefaultRowHighlightingRules": false,
+        "RowHighlightingRules": [
+          {
+            "Condition": "level == LogLevel.Debug",
+            "ForegroundColor": "DarkGray"
+          },
+          {
+            "Condition": "level == LogLevel.Info",
+            "ForegroundColor": "Gray"
+          },
+          {
+            "Condition": "level == LogLevel.Warn",
+            "ForegroundColor": "Yellow"
+          },
+          {
+            "Condition": "level == LogLevel.Error",
+            "ForegroundColor": "Red"
+          },
+          {
+            "Condition": "level == LogLevel.Fatal",
+            "ForegroundColor": "Red",
+            "BackgroundColor": "White"
+          }
+        ]
+
+      },
+      "BlackHole": {
+        "Type": "Null",
+        "FormatMessage": false
+      }
+    },
+    "Rules": [
+      {
+        "Pattern": "*",
+        "Minlevel": "Trace",
+        "WriteTo": "LogStash"
+      },
+      {
+        "Pattern": "*",
+        "Minlevel": "Trace",
+        "WriteTo": "ColoredConsole",
+        "Final": true
+      },
+      {
+        "Pattern": "WatchDog*",
+        "Minlevel": "Trace",
+        "WriteTo": "WDFile",
+        "Final": true
+      },
+      {
+        "Pattern": "RMQ*",
+        "Minlevel": "Trace",
+        "WriteTo": "RMQFile",
+        "Final": true
+      },
+      {
+        "Pattern": "*Command",
+        "Minlevel": "Trace",
+        "WriteTo": "DataFile",
+        "Final": true
+      },
+      {
+        "Pattern": "*Event",
+        "Minlevel": "Trace",
+        "WriteTo": "DataFile",
+        "Final": true
+      },
+      {
+        "Pattern": "*",
+        "Minlevel": "Trace",
+        "WriteTo": "File"
+      }
+    ]
+  }
+}

@@ -1,0 +1,133 @@
+﻿using System;
+using System.Net;
+using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
+using Autofac;
+using Microsoft.Extensions.DependencyInjection;
+using NLog;
+using NLog.Fluent;
+using SAL.API;
+
+namespace SAL.Core.Service
+{
+    public partial class AdapterRunner : IServiceProviderFactory<ContainerBuilder>, ISalService
+    {
+        private Logger logger;
+        protected IContainer Container;
+
+
+        public virtual void LoadConfiguration()
+        {
+            InitConfiguration();
+            InitNLog();
+        }
+
+
+        public virtual void Initialization()
+        {
+            logger.Trace("Инициализация...");
+            ConfigureLimits();
+            InitUnhandledExceptionHandler();
+            InitWatchDog();
+            InitProcessors();
+            logger.Trace("Инициализация завершена");
+            ShowStartupInfo();
+        }
+
+
+        public void Start()
+        {
+            Log.Trace("Запуск...");
+            StartWatchDog();
+            StartProcessors();
+            StartTransport();
+            Log.Trace("Основные системы запущены.");
+        }
+
+
+
+        public void Stop()
+        {
+            Log.Trace("Остановка...");
+            StopProcessors();
+            StopWatchDog();
+            StopTransport();
+            Log.Trace("Сервис остановлен.");
+        }
+
+
+        protected virtual void InitUnhandledExceptionHandler()
+        {
+            logger.Trace("Init Unhandled Exception Handler");
+            AppDomain.CurrentDomain.UnhandledException += (sender, args) =>
+            {
+                logger.Fatal($"AppDomain.UnhandledException:\r\n", (Exception)args.ExceptionObject);
+
+                try
+                {
+                    // var eventBus = Container.Resolve<IEventBus>();
+                    //  eventBus.RaiseExceptionDetectEvent((Exception)args.ExceptionObject);
+                }
+                catch (Exception ex)
+                {
+                    logger.Fatal($"TaskScheduler.UnobservedTaskException: При RaiseExceptionDetectEvent произошла ошибка ", ex);
+                }
+            };
+
+            TaskScheduler.UnobservedTaskException += (sender, args) =>
+            {
+                args.Exception.Handle(exp =>
+                {
+                    if (exp is OperationCanceledException)
+                        return true;
+
+                    logger.Fatal($"TaskScheduler.UnobservedTaskException:\r\n", exp);
+
+
+                    try
+                    {
+                        //    var eventBus = Container.Resolve<IEventBus>();
+                        //     exp.RaiseExceptionDetectEvent(eventBus);
+                    }
+                    catch (Exception ex)
+                    {
+                        logger.Fatal($"TaskScheduler.UnobservedTaskException: При RaiseExceptionDetectEvent произошла ошибка ", ex);
+                    }
+
+                    return true;
+                });
+            };
+        }
+
+        protected virtual void ConfigureLimits()
+        {
+            logger.Trace($"ConfigureLimits");
+            ServicePointManager.DefaultConnectionLimit = int.MaxValue;
+            ServicePointManager.ReusePort = true;
+            ThreadPool.SetMaxThreads(2000, 1000);
+            ThreadPool.SetMinThreads(100, 50);
+        }
+
+        protected virtual void ShowStartupInfo()
+        {
+            var sb = new StringBuilder();
+            sb.AppendLine()
+                .AppendLine("-------------------------------------------------------------")
+                .AppendLine($"AdapterName     : {ServiceConfiguration.AdapterName}")
+                .AppendLine($"AdapterType     : {ServiceConfiguration.AdapterType}")
+                .AppendLine($"AdapterVersion  : {ServiceConfiguration.AdapterVersion}")
+                .AppendLine($"AdapterHostName : {ServiceConfiguration.AdapterHostName}")
+                .AppendLine($"AdapterHostIp   : {string.Join(", ", ServiceConfiguration.AdapterHostIp)}")
+                .AppendLine($"Contour         : {ServiceConfiguration.Contour.ToUpper()}")
+                .AppendLine($"SalVersion      : {ServiceConfiguration.SalVersion} ({ServiceConfiguration.Revision})")
+                .AppendLine($"RootPath        : {ServiceConfiguration.RootPath}")
+                .AppendLine($"ConfigPath      : {ServiceConfiguration.ConfigPath}")
+                .AppendLine($"LogRootPath     : {ServiceConfiguration.LogRootPath}")
+                .AppendLine($"DiskStorePath   : {ServiceConfiguration.DiskStorePath}")
+
+                .AppendLine("-------------------------------------------------------------");
+            logger.Info(sb.ToString());
+        }
+    }
+}

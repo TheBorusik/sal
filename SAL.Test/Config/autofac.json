@@ -1,0 +1,5 @@
+﻿{
+  "Modules": [
+    "SAL.Test.Module, SAL.Test"
+  ]
+}

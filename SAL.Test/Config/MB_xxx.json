@@ -1,0 +1,30 @@
+﻿{
+  "MessageBus": {
+    "Host": "10.10.32.83",
+    "VirtualHost": "back.v3",
+    "Username": "dev",
+    "Password": "dev"
+  },
+
+  "BackMessageBus": {
+    "Host": "10.99.129.186",
+    "VirtualHost": "devV3",
+    "Username": "test",
+    "Password": "test"
+  },
+
+
+  "FrontMessageBus": {
+    "Host": "10.99.129.186",
+    "VirtualHost": "devV3",
+    "Username": "test",
+    "Password": "test"
+  },
+
+  "BridgedMessageBus": {
+    "Host": "10.99.129.215",
+    "VirtualHost": "extestV3",
+    "Username": "extest",
+    "Password": "extest1"
+  }
+}

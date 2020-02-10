@@ -1,0 +1,26 @@
+﻿{
+  "Service": {
+    "AdapterName": "SRAM",
+    "DiskStorePath": null,
+    "DataPath": null
+  },
+
+  "ConnectionManager": {
+    //  "DefaultConnection": "wfmDB",
+    "DefaultSettings": {
+      "Connection Timeout": 15
+    },
+    "ConnectionData": {
+      "default": {
+        "ProviderName": "Oracle",
+        "Properties": {
+          "Contour": "PAYTEST"
+        },
+        "Data Source": "(DESCRIPTION=(ADDRESS=(PROTOCOL=TCP)(HOST=pablo.transcapital.com)(PORT=1521))(CONNECT_DATA=(SERVICE_NAME=mbankt2)))",
+        "User Id": "wfm2",
+        "Password": "hY +3,49sdh"
+      }
+    }
+
+  }
+}

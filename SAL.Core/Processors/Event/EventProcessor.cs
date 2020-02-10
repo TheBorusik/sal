@@ -1,0 +1,320 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
+using System.Threading.Tasks;
+using Autofac;
+using Autofac.Core;
+using Microsoft.Extensions.Logging;
+using Newtonsoft.Json.Linq;
+using SAL.API;
+using SAL.API.Client;
+using SAL.API.Events;
+using SAL.API.LoggerHelper;
+using SAL.API.Monad;
+using SAL.Core.Config;
+using SAL.Core.DTO.Transport;
+using SAL.Core.Helpers;
+using SAL.Core.Rabbit.Interfaces;
+using SAL.Infrastructure.EventAttributes;
+
+namespace SAL.Core.Processors
+{
+    internal class EventProcessor : IProcessor
+    {
+        private ILoggerProvider loggerProvider;
+        private ILogger logger;
+        private ISalLogger salLogger;
+
+        private ISubscription subscription;
+        private ISubscription systemSubscription;
+        private ISalClient salClient;
+
+        private readonly ILifetimeScope container;
+
+
+        private readonly IDictionary<string, List<EventHandlerInfo>> eventHandlers = new Dictionary<string, List<EventHandlerInfo>>();
+
+        public EventProcessor(ILifetimeScope container, ILoggerProvider loggerProvider, ISalLogger salLogger)
+        {
+            this.container = container;
+            this.loggerProvider = loggerProvider;
+            this.salLogger = salLogger;
+            logger = loggerProvider.CreateLogger(nameof(EventProcessor));
+        }
+
+        public void Start()
+        {
+            try
+            {
+                salClient = container.Resolve<ISalClient>();
+
+                container.ComponentRegistry.Registrations
+                    .Where(r => r.Services.OfType<TypedService>().Any(ts => ts.ServiceType == typeof(IEventHandler)))
+                    .Select(a => a.Activator.LimitType)
+                    .ForEach(RegisterEventHandler);
+
+                container.ComponentRegistry.Registrations
+                    .Where(r => r.Services.OfType<TypedService>().Any(ts => ts.ServiceType == typeof(ICommonEventHandler)))
+                    .Select(a => a.Activator.LimitType)
+                    .ForEach(RegisterCommonEventHandler);
+
+                var configWatcher = container.Resolve<IConfigWatcher>();
+                var jsonConfig = configWatcher.GetSection(ConfigurationSectionNames.EventProcessor);
+                var config = new EventProcessorConfig();
+
+                if (jsonConfig != null)
+                {
+                    config = jsonConfig.ConvertValue<EventProcessorConfig>();
+                }
+
+
+                var transport = container.Resolve<ITransport>();
+
+                var subscriptionFactory = transport.CreateMessageSubscription();
+
+                var eventList = eventHandlers.Where(eh => eh.Value.Any(h => h.IsSystem == false)).Select(eh => eh.Key).ToArray();
+                var systemEventList = eventHandlers.Where(eh => eh.Value.Any(h => h.IsSystem == true)).Select(eh => eh.Key).ToArray();
+
+                subscription = subscriptionFactory.CreateEvent(config.PrefetchCount, eventList, Handler);
+                systemSubscription = subscriptionFactory.CreateSystemEvent(config.SystemPrefetchCount, systemEventList, Handler);
+
+            }
+            catch (Exception ex)
+            {
+                logger.Error("При запуске произошла ошибка:", ex);
+                throw;
+            }
+        }
+
+        public void Online()
+        {
+            subscription.Start();
+            systemSubscription.Start();
+        }
+
+        public void Offline()
+        {
+            subscription.Stop();
+        }
+
+        public void Stop()
+        {
+            subscription.Stop();
+            systemSubscription.Stop();
+        }
+
+        private void RegisterEventHandler(Type handlerType)
+        {
+            var handlerInterfaces = handlerType.GetInterfaces()
+                .Where(i => i.IsAssignableTo<IEventHandler>() && i.IsGenericType).ToArray();
+
+            foreach (var handlerInterface in handlerInterfaces)
+            {
+                var eventType = handlerInterface.GetGenericArguments()[0];
+                var eventName = eventType.GetSourceName();
+
+                var isSystem = eventType
+                    .GetCustomAttributes(typeof(SalSystemEventAttribute))
+                    .OfType<SalSystemEventAttribute>().Any();
+
+                var eventHandlerInfo = new EventHandlerInfo
+                {
+                    HandlerType = handlerType,
+                    EventName = eventName,
+                    EventType = eventType,
+
+                    IsSystem = isSystem,
+                    HandlerMethod = handlerInterface.GetMethod("Handle"),
+                    IsCommon = false,
+                };
+
+
+                if (eventHandlers.TryGetValue(eventName, out var handlers))
+                {
+                    handlers.Add(eventHandlerInfo);
+                }
+                else
+                {
+                    handlers = new List<EventHandlerInfo>();
+                    handlers.Add(eventHandlerInfo);
+                    eventHandlers.Add(eventName, handlers);
+                }
+
+                logger.Info($"Для евента {eventName} добавлен обработчик результата {handlerType.Name}");
+            }
+
+        }
+
+        private void RegisterCommonEventHandler(Type handlerType)
+        {
+
+            var attrs = handlerType
+                .GetCustomAttributes(typeof(SalEventHandlerAttribute)).OfType<SalEventHandlerAttribute>().ToArray();
+
+
+            attrs.ForEach(a =>
+            {
+
+                var eventName = a.EventName;
+
+                var eventHandlerInfo = new EventHandlerInfo
+                {
+                    HandlerType = handlerType,
+                    EventName = eventName,
+                    EventType = null,
+                    IsSystem = false,
+                    HandlerMethod = null,
+                    IsCommon = true,
+                };
+
+                if (eventHandlers.TryGetValue(eventName, out var handlers))
+                {
+                    handlers.Add(eventHandlerInfo);
+                }
+                else
+                {
+                    handlers = new List<EventHandlerInfo>();
+                    handlers.Add(eventHandlerInfo);
+                    eventHandlers.Add(eventName, handlers);
+                }
+
+                logger.Info($"Для евента {eventName} добавлен уневерсальный обработчик результата {handlerType.Name}");
+
+            });
+        }
+
+        private async Task Handler(RabbitMessage rabbitMessage, Action ack, Action nack)
+        {
+            try
+            {
+                var transportMessage = await ExtractMessage(rabbitMessage);
+                var eventPayload = await ExtractEventPayload(transportMessage);
+                salLogger.LogIncoming(eventPayload);
+                await Processing(transportMessage, eventPayload);
+                ack();
+            }
+            catch (SalException ex)
+            {
+                nack();
+                logger.Error("При обработке event произошла ошибка", ex);
+                await salClient.RaiseExceptionDetectEvent(ex.ToDto());
+            }
+            catch (Exception ex)
+            {
+                nack();
+                var dto = SalError.CreateDto(ResultCodes.Fatal,
+                    "При обработке event произошла ошибка"
+                    , innerException: ex
+                    , properties: new
+                    {
+                        rabbitMessage.CorrelationId,
+                        rabbitMessage.QueueName
+                    });
+                logger.Error(dto, ex);
+                await salClient.RaiseExceptionDetectEvent(dto);
+            }
+        }
+
+        protected Task<Message> ExtractMessage(RabbitMessage rabbitMessage)
+        {
+            var transportMessage = SalSerializer.BinaryDeserialize<Message>(rabbitMessage.Payload);
+            if (transportMessage == null)
+                throw new Exception($"Неудалось десерилизовать сообщение | CorrelationId:{rabbitMessage.CorrelationId}");
+            if (transportMessage.Type != MessageTypes.Event)
+                throw new Exception($"Сообщение не Event ({transportMessage.Type}) | CorrelationId:{rabbitMessage.CorrelationId}");
+
+            if (transportMessage.Payload == null)
+                throw new Exception($"Отсутствует message.Payload | CorrelationId:{rabbitMessage.CorrelationId}");
+
+            if (transportMessage.Payload.Type == JTokenType.Null)
+                throw new Exception($"Отсутствует message.Payload | CorrelationId:{rabbitMessage.CorrelationId}");
+
+            return Task.FromResult(transportMessage);
+        }
+
+        protected Task<EventPayload> ExtractEventPayload(Message transportMessage)
+        {
+            var eventPayload = transportMessage.Payload.ConvertValue<EventPayload>();
+
+            if (eventPayload.Descriptor == null)
+                throw new Exception($"Отсутствует eventPayload.Descriptor | CorrelationId:{transportMessage.CorrelationId}");
+
+            if (string.IsNullOrWhiteSpace(eventPayload.Descriptor.EventName))
+                throw new Exception($"Пустой eventPayload.Descriptor.EventName | CorrelationId:{transportMessage.CorrelationId}");
+
+            if (eventPayload.Body == null)
+                throw new Exception($"Отсутствует eventPayload.Body | CorrelationId:{transportMessage.CorrelationId}");
+
+            return Task.FromResult(eventPayload);
+        }
+
+        private async Task Processing(Message message, EventPayload eventPayload)
+        {
+            var eventName = eventPayload.Descriptor.EventName;
+
+
+            HandlerContext.Type = HandlerTypes.EventHandler;
+            HandlerContext.Name = eventName;
+
+
+            if (message.Session != null && message.Session.Count > 0)
+            {
+                SessionManager.SetSession(message.Session);
+            }
+
+            if (eventHandlers.TryGetValue(eventName, out var eventHandlerInfos))
+            {
+                var handlerTasks = new List<Task>();
+
+                foreach (var eventHandlerInfo in eventHandlerInfos)
+                {
+                    salLogger.LogHandler(eventPayload, eventHandlerInfo.HandlerType.Name);
+                    handlerTasks.Add(ExecuteEventHandlerAsync(eventHandlerInfo, eventPayload));
+                }
+
+                await Task.WhenAll(handlerTasks.ToArray());
+
+            }
+            else
+            {
+                var dto = SalError.CreateDto(ResultCodes.Fatal, "Евент не обрабатываеться", properties: new { eventName });
+                throw dto.ToException();
+            }
+        }
+
+        public Task ExecuteEventHandlerAsync(EventHandlerInfo ehi, EventPayload eventPayload)
+        {
+            using var scope = container.BeginLifetimeScope();
+
+            var executingContext = new ExecutingContext
+            {
+                SalClient = salClient,
+                Scope = scope
+            };
+
+            var handler = scope.Resolve(ehi.HandlerType);
+
+            if (ehi.IsCommon)
+                return ExecuteCommonEventHandlerAsync(handler, eventPayload.Body, eventPayload.Descriptor, executingContext);
+            else
+            {
+                var evnt = eventPayload.Body.ConvertValue(ehi.EventType);
+                return (Task)ehi.HandlerMethod.Invoke(handler, new[] { evnt, eventPayload.Descriptor, executingContext });
+            }
+        }
+
+        private Task ExecuteCommonEventHandlerAsync(object handler, JObject evnt, EventDescriptor descriptor, ExecutingContext executingContext)
+        {
+            if (handler is ICommonEventHandler eha)
+            {
+                return eha.Handle(evnt, descriptor, executingContext);
+            }
+            else
+            {
+                var dto = SalError.CreateDto(ResultCodes.Fatal, "Обработчик не являеться общим", properties: new { handlerType = handler.GetType().Name });
+                throw dto.ToException();
+            }
+        }
+    }
+}

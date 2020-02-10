@@ -1,0 +1,48 @@
+﻿{
+  "CommandProcessor": {
+    "GlobalPrefetchCount": 100,
+    "CommandPrefetchCount": 0,
+    "CommandProcessingSettings": {
+      "WFM.Test": {
+        "PrefetchCount": 10
+      },
+      "WFM2.Test": {
+        "PrefetchCount": 50
+      }
+    },
+    "Logging": {
+      "Items": {
+        ".*": {
+          "Ignore": false,
+          "СropSize": 0
+        }
+      }
+    }
+  },
+  "CommandResultProcessor": {
+    "GlobalPrefetchCount": 25,
+    "InstancePrefetchCount": 15,
+    "TypePrefetchCount": 5,
+    "SyncPrefetchCount": 5,
+    "Logging": {
+      "Items": {
+        ".*": {
+          "Ignore": false,
+          "СropSize": 0
+        }
+      }
+    }
+  },
+  "EventProcessor": {
+    "GlobalPrefetchCount": 25,
+    "Logging": {
+      "Items": {
+        ".*": {
+          "Ignore": false,
+          "СropSize": 0
+        }
+      }
+    }
+  } 
+
+}
