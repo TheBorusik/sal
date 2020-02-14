@@ -349,7 +349,7 @@ namespace SAL.Core.Processors
 
         protected Task<CommandResultPayload> ExtractCommandResultPayload(Message transportMessage)
         {
-
+            
             var commandResultPayload = transportMessage.Payload.ConvertValue<CommandResultPayload>();
 
             if (commandResultPayload.Descriptor == null)

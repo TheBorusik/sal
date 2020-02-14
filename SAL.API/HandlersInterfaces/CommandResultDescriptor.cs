@@ -18,8 +18,8 @@ namespace SAL.API
         public CommandResultDescriptor(CommandDescriptor commandDescriptor)
         {
             CorrelationId = commandDescriptor.CorrelationId;
-            ServiceType = commandDescriptor.ServiceType;
-            ServiceName = commandDescriptor.ServiceName;
+            ServiceType = commandDescriptor.ResultServiceType;
+            ServiceName = commandDescriptor.ResultServiceName;
             CommandName = commandDescriptor.CommandName;
             Priority = commandDescriptor.Priority;
             SourceServiceType = commandDescriptor.SourceServiceType;

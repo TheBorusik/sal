@@ -2,7 +2,7 @@
     "MajorVersion":  3,
     "MinorVersion":  0,
     "BuildVersion":  0,
-    "BuildNumber":  12,
+    "BuildNumber":  13,
     "IncBuildNumber":  true,
     "PreRealise":  "Beta"
 }

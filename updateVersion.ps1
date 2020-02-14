@@ -21,10 +21,13 @@ Get-ChildItem -Filter *.csproj -Recurse | %{
 	[xml]$xml = Get-Content $_.FullName
 	if ($xml.Project.Sdk -eq "Microsoft.NET.Sdk")
 	{
-		$xml.Project.PropertyGroup.Version = $versionName
-		$xml.Project.PropertyGroup.AssemblyVersion = $versionNumber
-		$xml.Project.PropertyGroup.FileVersion = $versionNumber
-		$xml.Save($_.FullName)
+		if($xml.Project.PropertyGroup.Version)
+		{
+			$xml.Project.PropertyGroup.Version = $versionName
+			$xml.Project.PropertyGroup.AssemblyVersion = $versionNumber
+			$xml.Project.PropertyGroup.FileVersion = $versionNumber
+			$xml.Save($_.FullName)
+		}
 	}
 	
 }
