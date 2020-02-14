@@ -13,9 +13,11 @@ namespace SAL.Core.NLogEx.LayoutRenderer
             if (SessionManager.Current != null)
             {
                 var sessionId = SessionManager.Current.GetSafeValue(SessionNames.SessionId, "");
-          
+                var operationId = SessionManager.Current.GetSafeValue(SessionNames.OperationId, "");
+
+
                 if (!string.IsNullOrEmpty(sessionId))
-                    builder.Append($"[SID:{sessionId}]");
+                    builder.Append($"[SID:{sessionId}:{operationId}]");
             }
         }
     }

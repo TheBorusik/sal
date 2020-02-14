@@ -33,7 +33,7 @@ namespace SAL.API.Client
 
         Task PublishResultAsync(ICommandResult result, CommandDescriptor commandDescriptor);
 
-        Task PublishResultAsync(InternalExceptionDTO exceptionDTO, string resultCode, CommandDescriptor commandDescriptor);
+        Task PublishResultAsync(InternalExceptionDTO exceptionDTO, CommandDescriptor commandDescriptor);
 
         Task PublishResultAsync(IList<FieldError> validationErrors, CommandDescriptor commandDescriptor);
 

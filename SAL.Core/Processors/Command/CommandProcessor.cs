@@ -61,7 +61,7 @@ namespace SAL.Core.Processors
                     .ForEach(RegisterCommandHandler);
 
                 container.ComponentRegistry.Registrations
-                    .Where(r => r.Services.OfType<TypedService>().Any(ts => ts.ServiceType == typeof(ICommonCommandHandlerAsync)))
+                    .Where(r => r.Services.OfType<TypedService>().Any(ts => ts.ServiceType == typeof(ICommonCommandHandler)))
                     .Select(a => a.Activator.LimitType)
                     .ForEach(RegisterCommonCommandHandler);
 
@@ -253,6 +253,35 @@ namespace SAL.Core.Processors
                 await Processing(transportMessage, commandPayload);
                 ack();
             }
+
+            catch (SalException ex)
+            {
+                nack();
+                logger.Error("При обработке результата команды произошла ошибка", ex);
+                await salClient.RaiseExceptionDetectEvent(ex.ToDto());
+            }
+            catch (TargetInvocationException ex)
+            {
+                nack();
+                if (ex.InnerException is SalException sex)
+                {
+                    logger.Error("При обработке команды произошла ошибка", ex);
+                    await salClient.RaiseExceptionDetectEvent(ex.ToDto());
+                }
+                else
+                {
+                    var dto = SalError.CreateDto(ResultCodes.Fatal,
+                        "При обработке команды произошла ошибка"
+                        , innerException: ex.InnerException
+                        , properties: new
+                        {
+                            rabbitMessage.CorrelationId,
+                            rabbitMessage.QueueName
+                        });
+                    logger.Error(dto, ex.InnerException);
+                    await salClient.RaiseExceptionDetectEvent(dto);
+                }
+            }
             catch (Exception ex)
             {
                 nack();
@@ -285,7 +314,7 @@ namespace SAL.Core.Processors
 
             if (transportMessage.Session != null && transportMessage.Session.Count > 0)
             {
-                SessionManager.SetSession(transportMessage.Session);
+                SessionManager.SetSession(SessionManager.StartSession(transportMessage.Session));
             }
 
             return Task.FromResult(transportMessage);
@@ -328,7 +357,7 @@ namespace SAL.Core.Processors
                 salLogger.LogHandler(commandPayload, HandlerContext.Name);
 
                 using var scope = container.BeginLifetimeScope();
-                var handler = scope.Resolve(commandHandlerInfo.HandlerType);
+                var handler = (ICommandHandler)scope.Resolve(commandHandlerInfo.HandlerType);
                 var executingContext = new ExecutingContext
                 {
                     Scope = scope,
@@ -342,6 +371,7 @@ namespace SAL.Core.Processors
                     Session = message.Session.DeepClone() as JObject,
                 };
 
+                handler.SetContexts(commandContext, executingContext);
 
                 if (!commandHandlerInfo.IsCommon)
                 {
@@ -357,11 +387,11 @@ namespace SAL.Core.Processors
                         return;
                     }
 
-                    await (Task)commandHandlerInfo.HandlerMethod.Invoke(handler, new[] { commandObject, commandContext, executingContext });
+                    await (Task)commandHandlerInfo.HandlerMethod.Invoke(handler, new[] { commandObject });
                 }
                 else
                 {
-                    await ExecuteCommonHandlerAsync(handler, commandPayload.Body, commandContext, executingContext);
+                    await ExecuteCommonHandlerAsync(handler, commandPayload.Body);
 
                 }
             }
@@ -379,11 +409,11 @@ namespace SAL.Core.Processors
             return (Task<IEnumerable<FieldError>>)handlerInfo.ValidationMethod.Invoke(handler, new[] { validateObject });
         }
 
-        private Task ExecuteCommonHandlerAsync(object handler, JObject command, CommandContext commandContext, ExecutingContext executingContext)
+        private Task ExecuteCommonHandlerAsync(object handler, JObject command)
         {
-            if (handler is ICommonCommandHandlerAsync ccha)
+            if (handler is ICommonCommandHandler ccha)
             {
-                return ccha.Handle(command, commandContext, executingContext);
+                return ccha.Handle(command);
             }
             else
             {

@@ -65,12 +65,21 @@ namespace SAL.Test
     [SalCommandHandler("SalTest", "Test2")]
     [SalCommandHandler("SalTest", "Test")]
     [SalCommandHandler("SalTest", "Jopa")]
-    public class CommonCommandHandler : ICommonCommandHandlerAsync
+    public class CommonCommandHandler : ICommonCommandHandler
     {
-        public async Task Handle(JObject command, CommandContext context, ExecutingContext executingContext)
+        private CommandContext commandContext;
+        private ExecutingContext executingContext;
+
+        public void SetContexts(CommandContext commandContext, ExecutingContext executingContext)
+        {
+            this.commandContext = commandContext;
+            this.executingContext = executingContext;
+        }
+
+        public async Task Handle(JObject command)
         {
 
-
+            await executingContext.SalClient.PublishEventAsync(new TestEvent());
             await executingContext.SalClient.PublishResultAsync(new TestCommandResult
             {
                 TestTimeSpan = TimeSpan.FromHours(1.5),
@@ -78,10 +87,12 @@ namespace SAL.Test
                 TestInt = 1234567,
                 TestStr = "Testtt"
 
-            }, context.Descriptor);
+            }, commandContext.Descriptor);
 
              await Task.Delay(10000);
         }
+
+
     }
 
     public class TestCommandHandler :
@@ -93,25 +104,10 @@ namespace SAL.Test
     {
 
 
-
-
-        public Task Handle(TestCommand command, CommandContext context)
+        public void SetContexts(CommandContext context, ExecutingContext executingContext)
         {
 
-            return Task.FromResult(new TestCommandResult());
-
         }
-
-        public Task Handle(Test2Command command, CommandContext context)
-        {
-            return Task.FromResult(new TestCommandResult());
-        }
-
-        public Task Handle(Test3Command command, CommandContext context)
-        {
-            return Task.FromResult(new TestCommandResult());
-        }
-
 
         public Task<IEnumerable<FieldError>> Validate(TestCommand verifiable)
         {
@@ -124,17 +120,17 @@ namespace SAL.Test
         }
 
 
-        public Task Handle(TestCommand command, CommandContext context, ExecutingContext executingContext)
+        public Task Handle(TestCommand command)
         {
             return Task.CompletedTask;
         }
 
-        public Task Handle(Test2Command command, CommandContext context, ExecutingContext executingContext)
+        public Task Handle(Test2Command command)
         {
             return Task.CompletedTask;
         }
 
-        public Task Handle(Test3Command command, CommandContext context, ExecutingContext executingContext)
+        public Task Handle(Test3Command command)
         {
             return Task.CompletedTask;
         }
@@ -144,23 +140,43 @@ namespace SAL.Test
 
     public class TestCommandResultHandler : ICommandResultHandlerAsync<Test2Command, TestCommandResult>
     {
-        public Task<bool> ResultHandle(CommandResult<TestCommandResult> result, CommandResultDescriptor context, ExecutingContext executingContext)
+        ExecutingContext executingContext ;
+
+        public void SetContexts(CommandResultContext commandContext, ExecutingContext executingContext)
         {
-            
+            this.executingContext = executingContext;
+        }
+
+        public Task<bool> ResultHandle(CommandResult<TestCommandResult> result)
+        {
+            executingContext.SalClient.PublishEventAsync(new TestEvent());
 
             return Task.FromResult(true);
         }
+
+
+
     }
 
 
 
-    public class CommonCommandResultHandler : ICommonCommandResultHandlerAsync
+    public class CommonCommandResultHandler : ICommonCommandResultHandler
     {
-        public Task<bool> ResultHandle(CommonCommandResult result, CommandResultDescriptor context, ExecutingContext executingContext)
+        ExecutingContext executingContext;
+        public void SetContexts(CommandResultContext commandContext, ExecutingContext executingContext)
         {
+            this.executingContext = executingContext;
+        }
+
+        public Task<bool> ResultHandle(CommonCommandResult result)
+        {
+            executingContext.SalClient.PublishEventAsync(new TestEvent());
             //  throw new Exception("Test");
             return Task.FromResult(true);
         }
+
+
+
     }
 
 
@@ -177,16 +193,23 @@ namespace SAL.Test
 
     public class EventHandler : IEventHandler<TestEvent>, IEventHandler<Test2Event>
     {
-        public Task Handle(TestEvent Event, EventDescriptor eventDescriptor, ExecutingContext executingContext)
+
+        public void SetContexts(EventContext eventContext, ExecutingContext executingContext)
+        {
+        }
+
+        public Task Handle(TestEvent Event)
         {
             return Task.CompletedTask;
         }
 
-        public Task Handle(Test2Event Event, EventDescriptor eventDescriptor, ExecutingContext executingContext)
+        public Task Handle(Test2Event Event)
         {
             throw new Exception("Test");
             return Task.CompletedTask;
         }
+
+
     }
 
     public class
@@ -211,7 +234,9 @@ namespace SAL.Test
 
         public void Online()
         {
-            
+
+            SessionManager.SetNewSession();
+
             var res = client.ExecuteCommandAsync<TestCommand, TestCommandResult>(
                 new TestCommand
                 {

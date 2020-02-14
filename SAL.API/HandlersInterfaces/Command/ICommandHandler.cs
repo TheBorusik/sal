@@ -6,12 +6,12 @@ namespace SAL.API.Command
 {
     public interface ICommandHandler
     {
-
+        void SetContexts(CommandContext commandContext, ExecutingContext executingContext);
     }
     
     public interface IValidator<in TVerifiable> 
     {
-        new Task<IEnumerable<FieldError>> Validate(TVerifiable verifiable);
+        Task<IEnumerable<FieldError>> Validate(TVerifiable verifiable);
     }
 
 
@@ -19,6 +19,6 @@ namespace SAL.API.Command
         where TCommand : class, IHaveResult<TCommandResult>, new()
         where TCommandResult : class, ICommandResult, new()
     {
-        Task Handle(TCommand command, CommandContext context, ExecutingContext executingContext);
+        Task Handle(TCommand command);
     }
 }

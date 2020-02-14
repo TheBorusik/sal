@@ -19,9 +19,8 @@ namespace SAL.Core.DB
         private const string mainSectionName = "ConnectionManager";
         private const string defaultConnectionKeyName = "DefaultConnection";
         private const string defaultConnectionSettingsSectionName = "DefaultSettings";
-
+        private const string userProperties = "Properties";
         private const string connectionsDataSectionName = "ConnectionData";
-        private const string connectionPropertiesSectionName = "Properties";
         private const string connectionProviderNameKeyName = "ProviderName";
         private const string defaultConnectionName = "Default";
 
@@ -100,7 +99,7 @@ namespace SAL.Core.DB
             if (builder == null)
                 throw SalError.CreateException(ResultCodes.Fatal, "Неудалось создать ConnectionStringBuilder");
 
-            var ignoreKeys = new[] { connectionPropertiesSectionName, connectionProviderNameKeyName };
+            var ignoreKeys = new[] { userProperties, connectionProviderNameKeyName };
 
             var defaultSettings = config.GetValue(defaultConnectionSettingsSectionName) as JObject;
 

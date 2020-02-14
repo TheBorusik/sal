@@ -6,13 +6,13 @@ namespace SAL.API.CommandResult
 
     public interface ICommandResultHandler
     {
-
+        void SetContexts(CommandResultContext commandContext, ExecutingContext executingContext);
     }
 
     public interface ICommandResultHandlerAsync<TCommand, TCommandResult> : ICommandResultHandler
         where TCommand : class, IHaveResult<TCommandResult>, new()
         where TCommandResult : class, ICommandResult, new()
     {
-        Task<bool> ResultHandle(CommandResult<TCommandResult> result, CommandResultDescriptor context, ExecutingContext executingContext);
+        Task<bool> ResultHandle(CommandResult<TCommandResult> result);
     }
 }

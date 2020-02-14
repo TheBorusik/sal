@@ -6,7 +6,6 @@ namespace SAL.API
     public static class SessionManager
     {
         private static string sessionName = "sal#session";
-        private static long operationId;
 
         public static JObject Current
         {
@@ -27,20 +26,37 @@ namespace SAL.API
             CallContext.SetData(sessionName, session);
         }
 
-        public static JObject CreateNewSession()
+        public static JObject CreateNewSession(string sessionId = null)
         {
-            Interlocked.Increment(ref operationId);
-
             var session = new JObject();
-            session.AddOrUpdate(SessionNames.SessionId, $"{ServiceConfiguration.AdapterType}#{ServiceConfiguration.AdapterName}");
+            if (!string.IsNullOrWhiteSpace(sessionId))
+            {
+                session.AddOrUpdate(SessionNames.SessionId, sessionId);
+            }
+            else
+            {
+                session.AddOrUpdate(SessionNames.SessionId, $"{ServiceConfiguration.AdapterType}#{ServiceConfiguration.AdapterName}");
+
+            }
+            session.AddOrUpdate(SessionNames.OperationId, 1L);
             session.AddOrUpdate(SessionNames.Version, 1);
             return session;
         }
 
-        public static JObject SetNewSession()
+        public static JObject SetNewSession(string sessionId = null)
         {
-            var session = CreateNewSession();
+            var session = CreateNewSession(sessionId);
             SetSession(session);
+            return session;
+        }
+
+        public static JObject StartSession(JObject session)
+        {
+            var sessionId =
+                $"{session.GetSafeValue(SessionNames.SessionId, "")}:{session.GetSafeValue(SessionNames.OperationId, 0L)}";
+
+            session.AddOrUpdate(SessionNames.SessionId, sessionId);
+            session.AddOrUpdate(SessionNames.OperationId, 1L);
             return session;
         }
 

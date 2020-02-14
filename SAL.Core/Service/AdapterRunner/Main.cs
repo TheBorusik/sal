@@ -26,6 +26,7 @@ namespace SAL.Core.Service
 
         public virtual void Initialization()
         {
+            SessionManager.SetNewSession("Init");
             logger.Trace("Инициализация...");
             ConfigureLimits();
             InitUnhandledExceptionHandler();
@@ -38,6 +39,7 @@ namespace SAL.Core.Service
 
         public void Start()
         {
+            SessionManager.SetNewSession("Start");
             Log.Trace("Запуск...");
             StartWatchDog();
             StartProcessors();
@@ -49,6 +51,7 @@ namespace SAL.Core.Service
 
         public void Stop()
         {
+            SessionManager.SetNewSession("Stop");
             Log.Trace("Остановка...");
             StopProcessors();
             StopWatchDog();
@@ -62,7 +65,7 @@ namespace SAL.Core.Service
             logger.Trace("Init Unhandled Exception Handler");
             AppDomain.CurrentDomain.UnhandledException += (sender, args) =>
             {
-                logger.Fatal($"AppDomain.UnhandledException:\r\n", (Exception)args.ExceptionObject);
+                logger.Fatal((Exception)args.ExceptionObject, $"AppDomain.UnhandledException:\r\n");
 
                 try
                 {
@@ -71,7 +74,7 @@ namespace SAL.Core.Service
                 }
                 catch (Exception ex)
                 {
-                    logger.Fatal($"TaskScheduler.UnobservedTaskException: При RaiseExceptionDetectEvent произошла ошибка ", ex);
+                    logger.Fatal(ex, $"TaskScheduler.UnobservedTaskException: При RaiseExceptionDetectEvent произошла ошибка ");
                 }
             };
 
@@ -82,7 +85,7 @@ namespace SAL.Core.Service
                     if (exp is OperationCanceledException)
                         return true;
 
-                    logger.Fatal($"TaskScheduler.UnobservedTaskException:\r\n", exp);
+                    logger.Fatal(exp, $"TaskScheduler.UnobservedTaskException:\r\n");
 
 
                     try
@@ -92,7 +95,7 @@ namespace SAL.Core.Service
                     }
                     catch (Exception ex)
                     {
-                        logger.Fatal($"TaskScheduler.UnobservedTaskException: При RaiseExceptionDetectEvent произошла ошибка ", ex);
+                        logger.Fatal(ex, $"TaskScheduler.UnobservedTaskException: При RaiseExceptionDetectEvent произошла ошибка ");
                     }
 
                     return true;

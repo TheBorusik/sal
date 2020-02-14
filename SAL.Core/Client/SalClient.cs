@@ -1,9 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
 using SAL.API;
 using SAL.API.Client;
+using SAL.API.Helpers;
+using SAL.API.Monad;
 using SAL.Core.DTO.Transport;
 using SAL.Core.Helpers;
 using SAL.Core.Processors;
@@ -17,7 +21,6 @@ namespace SAL.Core.Client
         private IPublisher publisher;
         private ICommandResultProcessor commandResultProcessor;
         private ISalLogger salLogger;
-
 
         public SalClient(IPublisher publisher, ICommandResultProcessor commandResultProcessor, ISalLogger salLogger)
         {
@@ -98,13 +101,13 @@ namespace SAL.Core.Client
             }, commandDescriptor);
         }
 
-        public Task PublishResultAsync(InternalExceptionDTO exceptionDTO, string resultCode, CommandDescriptor commandDescriptor)
+        public Task PublishResultAsync(InternalExceptionDTO exceptionDTO, CommandDescriptor commandDescriptor)
         {
             return PublishResultAsync(new CommonCommandResult
             {
                 Error = exceptionDTO,
                 Result = null,
-                ResultCode = resultCode
+                ResultCode = exceptionDTO.Code
             }, commandDescriptor);
         }
 
@@ -232,6 +235,8 @@ namespace SAL.Core.Client
                 Body = JObject.FromObject(commandBody)
             };
 
+
+            UpdateOprationId();
             salLogger.LogOutgoing(commandPayload);
 
             var transportMessage = new Message
@@ -298,7 +303,7 @@ namespace SAL.Core.Client
                 Descriptor = commandDescriptor,
                 Body = JObject.FromObject(commandBody)
             };
-
+            UpdateOprationId();
             salLogger.LogOutgoing(commandPayload);
 
             var transportMessage = new Message
@@ -361,6 +366,7 @@ namespace SAL.Core.Client
                     Body = result
                 };
 
+                UpdateOprationId();
                 salLogger.LogOutgoing(commandResultPayload);
 
                 var transportMessage = new Message
@@ -408,6 +414,7 @@ namespace SAL.Core.Client
                 Body = JObject.FromObject(eventBody)
             };
 
+            UpdateOprationId();
             salLogger.LogOutgoing(eventPayload);
 
             var routingKey = string.IsNullOrWhiteSpace(handlerServiceName) 
@@ -430,6 +437,12 @@ namespace SAL.Core.Client
             publisher.PublishEvent(Pack(transportMessage));
 
             return Task.CompletedTask;
+        }
+
+        private void UpdateOprationId()
+        {
+            var operationId = SessionManager.Current.GetSafeValue(SessionNames.OperationId, 0L);
+            SessionManager.Current.AddOrUpdate(SessionNames.OperationId, ++operationId);
         }
 
     }

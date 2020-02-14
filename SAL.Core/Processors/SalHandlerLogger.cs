@@ -306,6 +306,22 @@ namespace SAL.Core.Processors
             var handlerLogger = GetHandlerLogger(commandPayload);
             return handlerLogger.logger;
         }
+
+        public ILogger GetLogger(CommandResultPayload commandResultPayload)
+        {
+            var handlerLogger = GetHandlerLogger(commandResultPayload);
+            return handlerLogger.logger;
+        }
+
+
+        public ILogger GetLogger(EventPayload eventPayload)
+        {
+            var handlerLogger = GetHandlerLogger(eventPayload);
+            return handlerLogger.logger;
+        }
+
+
+
         private HandlerLogger GetHandlerLogger(CommandPayload commandPayload)
         {
             var commandName = $"{commandPayload.Descriptor.ServiceType}.{commandPayload.Descriptor.CommandName}";

@@ -8,7 +8,7 @@ namespace SAL.API
         {
             if (session is null)
                 return string.Empty;
-            return $"[SID:{session.GetSafeValue(SessionNames.SessionId,"")}]";
+            return $"[SID:{session.GetSafeValue(SessionNames.SessionId,"")}:{session.GetSafeValue(SessionNames.OperationId, "")}]";
         }
     }
 }

@@ -2,8 +2,8 @@
 
 namespace SAL.API.CommandResult
 {
-    public interface ICommonCommandResultHandlerAsync 
+    public interface ICommonCommandResultHandler : ICommandResultHandler
     {
-        Task<bool> ResultHandle(CommonCommandResult result, CommandResultDescriptor context, ExecutingContext executingContext);
+        Task<bool> ResultHandle(CommonCommandResult result);
     }
 }

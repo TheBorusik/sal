@@ -27,6 +27,7 @@ namespace SAL.Core.Service
         {
             if (!IsOnline)
             {
+                logger.Info("Переход в Online");
                 IsOnline = true;
                 OnlineProcessors();
             }
@@ -35,6 +36,7 @@ namespace SAL.Core.Service
         {
             if (IsOnline)
             {
+                logger.Info("Переход в Offline");
                 IsOnline = false;
                 OfflineProcessors();
             }

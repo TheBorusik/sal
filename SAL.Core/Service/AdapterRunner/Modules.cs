@@ -21,7 +21,7 @@ namespace SAL.Core.Service
                     var moduleType = Type.GetType(mn, false);
                     if (moduleType == null)
                     {
-                  //      Log.Error($"Не найден тип модуля {mn}");
+
                         throw new Exception($"Не найден тип модуля {mn}");
                     }
                     var imodule = (IModule) Activator.CreateInstance(moduleType);

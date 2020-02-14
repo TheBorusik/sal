@@ -3,8 +3,8 @@ using Newtonsoft.Json.Linq;
 
 namespace SAL.API.Events
 {
-    public interface ICommonEventHandler
+    public interface ICommonEventHandler : IEventHandler
     {
-        Task Handle(JObject evnt, EventDescriptor context, ExecutingContext executingContext);
+        Task Handle(JObject evnt);
     }
 }

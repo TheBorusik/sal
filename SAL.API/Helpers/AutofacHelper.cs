@@ -18,15 +18,16 @@ namespace SAL.API
             var registration = builder.RegisterType<T>();
 
             var interfaces = handlerType.GetInterfaces();
+
             if (interfaces.Any(i => i.IsAssignableTo<ICommandHandler>()))
             {
                 registration = registration.As<ICommandHandler>();
                 anyHandler = true;
             }
 
-            if (interfaces.Any(i => i.IsAssignableTo<ICommonCommandHandlerAsync>()))
+            if (interfaces.Any(i => i.IsAssignableTo<ICommonCommandHandler>()))
             {
-                registration = registration.As<ICommonCommandHandlerAsync>();
+                registration = registration.As<ICommonCommandHandler>();
                 anyHandler = true;
             }
 
@@ -36,9 +37,9 @@ namespace SAL.API
                 anyHandler = true;
             }
 
-            if (interfaces.Any(i => i.IsAssignableTo<ICommonCommandResultHandlerAsync>()))
+            if (interfaces.Any(i => i.IsAssignableTo<ICommonCommandResultHandler>()))
             {
-                registration = registration.As<ICommonCommandResultHandlerAsync>();
+                registration = registration.As<ICommonCommandResultHandler>();
                 anyHandler = true;
             }
 

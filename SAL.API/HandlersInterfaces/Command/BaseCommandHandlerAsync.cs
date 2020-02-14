@@ -1,38 +1,46 @@
-﻿using System.Threading.Tasks;
+﻿using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using Autofac;
+using Microsoft.Extensions.Logging;
+using SAL.API.Client;
 using SAL.Infrastructure;
 
 namespace SAL.API.Command
 {
-    public abstract class BaseCommandHandlerAsync<TCommand, TCommandResult> : ICommandHandlerAsync<TCommand, TCommandResult>
+    public abstract class BaseCommandHandlerAsync<TCommand, TCommandResult> : 
+        ICommandHandlerAsync<TCommand, TCommandResult>,
+        IValidator<TCommand>
         where TCommand : class, IHaveResult<TCommandResult>, new()
         where TCommandResult : class, ICommandResult, new()
+
     {
-        private CommandContext commandContext;
-        private ExecutingContext executingContext;
+        protected CommandContext commandContext;
+        protected ISalClient salClient { get; set; }
+        protected ILifetimeScope scope { get; set; }
+        protected ILogger logger { get; set; }
 
-
-
-        public Task Handle(TCommand command, CommandContext commandContext, ExecutingContext executingContext)
+        public void SetContexts(CommandContext commandContext, ExecutingContext executingContext)
         {
             this.commandContext = commandContext;
-            this.executingContext = executingContext;
-
-            return Handle(command);
+            salClient = executingContext.SalClient;
+            logger = executingContext.Logger;
+            scope = executingContext.Scope;
         }
+
 
         public abstract Task Handle(TCommand command);
 
 
         public Task PublishResult(TCommandResult result)
         {
-            return executingContext.SalClient?.PublishResultAsync(result, commandContext.Descriptor);
+            return salClient?.PublishResultAsync(result, commandContext.Descriptor);
         }
 
-        /*
-        public Task PublishError(InternalExceptionDTO error)
+        
+        public Task PublishResult(InternalExceptionDTO error)
         {
-            return executingContext.SalClient?.P(error, commandContext.Descriptor);
-            return Task.CompletedTask;
+            return salClient?.PublishResultAsync(error, commandContext.Descriptor);
         }
 
         public Task PublishError(string code,
@@ -41,9 +49,13 @@ namespace SAL.API.Command
             object properties = null,
             System.Exception innerException = null)
         {
-            return PublishError(SalError.CreateDto(code, message, codeDescription, properties, innerException));
+            return PublishResult(SalError.CreateDto(code, message, codeDescription, properties, innerException));
         }
-        */
 
+
+        public virtual Task<IEnumerable<FieldError>> Validate(TCommand verifiable)
+        {
+            return Task.FromResult(new FieldError[0].AsEnumerable());
+        }
     }
 }

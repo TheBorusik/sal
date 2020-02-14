@@ -18,11 +18,6 @@ namespace SAL.Core.Validators
             return valErrors;
         }
 
-        public List<FieldError> ValidateData(object dto)
-        {
-            return Validatedata(dto, null);
-        }
-
         private List<FieldError> Validatedata(object dto, string[] dtdPath)
         {
             var errors = new List<FieldError>();

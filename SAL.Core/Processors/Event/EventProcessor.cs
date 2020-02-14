@@ -200,6 +200,28 @@ namespace SAL.Core.Processors
                 logger.Error("При обработке event произошла ошибка", ex);
                 await salClient.RaiseExceptionDetectEvent(ex.ToDto());
             }
+            catch (TargetInvocationException ex)
+            {
+                nack();
+                if (ex.InnerException is SalException sex)
+                {
+                    logger.Error("При обработке event произошла ошибка", ex);
+                    await salClient.RaiseExceptionDetectEvent(ex.ToDto());
+                }
+                else
+                {
+                    var dto = SalError.CreateDto(ResultCodes.Fatal,
+                        "При обработке event произошла ошибка"
+                        , innerException: ex.InnerException
+                        , properties: new
+                        {
+                            rabbitMessage.CorrelationId,
+                            rabbitMessage.QueueName
+                        });
+                    logger.Error(dto, ex.InnerException);
+                    await salClient.RaiseExceptionDetectEvent(dto);
+                }
+            }
             catch (Exception ex)
             {
                 nack();
@@ -230,6 +252,12 @@ namespace SAL.Core.Processors
             if (transportMessage.Payload.Type == JTokenType.Null)
                 throw new Exception($"Отсутствует message.Payload | CorrelationId:{rabbitMessage.CorrelationId}");
 
+
+            if (transportMessage.Session != null && transportMessage.Session.Count > 0)
+            {
+                SessionManager.SetSession(SessionManager.StartSession(transportMessage.Session));
+            }
+
             return Task.FromResult(transportMessage);
         }
 
@@ -258,11 +286,6 @@ namespace SAL.Core.Processors
             HandlerContext.Name = eventName;
 
 
-            if (message.Session != null && message.Session.Count > 0)
-            {
-                SessionManager.SetSession(message.Session);
-            }
-
             if (eventHandlers.TryGetValue(eventName, out var eventHandlerInfos))
             {
                 var handlerTasks = new List<Task>();
@@ -270,7 +293,7 @@ namespace SAL.Core.Processors
                 foreach (var eventHandlerInfo in eventHandlerInfos)
                 {
                     salLogger.LogHandler(eventPayload, eventHandlerInfo.HandlerType.Name);
-                    handlerTasks.Add(ExecuteEventHandlerAsync(eventHandlerInfo, eventPayload));
+                    handlerTasks.Add(ExecuteEventHandlerAsync(eventHandlerInfo, message, eventPayload));
                 }
 
                 await Task.WhenAll(handlerTasks.ToArray());
@@ -283,32 +306,43 @@ namespace SAL.Core.Processors
             }
         }
 
-        public Task ExecuteEventHandlerAsync(EventHandlerInfo ehi, EventPayload eventPayload)
+        public Task ExecuteEventHandlerAsync(EventHandlerInfo ehi, Message message, EventPayload eventPayload)
         {
             using var scope = container.BeginLifetimeScope();
 
+
             var executingContext = new ExecutingContext
             {
-                SalClient = salClient,
-                Scope = scope
+                Scope = scope,
+                SalClient = scope.Resolve<ISalClient>(),
+                Logger = salLogger.GetLogger(eventPayload)
             };
 
-            var handler = scope.Resolve(ehi.HandlerType);
+            var context = new EventContext()
+            {
+                Descriptor = eventPayload.Descriptor,
+                Session = message.Session.DeepClone() as JObject
+            };
+
+
+            var handler = (IEventHandler)scope.Resolve(ehi.HandlerType);
+
+            handler.SetContexts(context, executingContext);
 
             if (ehi.IsCommon)
-                return ExecuteCommonEventHandlerAsync(handler, eventPayload.Body, eventPayload.Descriptor, executingContext);
+                return ExecuteCommonEventHandlerAsync(handler, eventPayload.Body);
             else
             {
                 var evnt = eventPayload.Body.ConvertValue(ehi.EventType);
-                return (Task)ehi.HandlerMethod.Invoke(handler, new[] { evnt, eventPayload.Descriptor, executingContext });
+                return (Task)ehi.HandlerMethod.Invoke(handler, new[] { evnt });
             }
         }
 
-        private Task ExecuteCommonEventHandlerAsync(object handler, JObject evnt, EventDescriptor descriptor, ExecutingContext executingContext)
+        private Task ExecuteCommonEventHandlerAsync(object handler, JObject evnt)
         {
             if (handler is ICommonEventHandler eha)
             {
-                return eha.Handle(evnt, descriptor, executingContext);
+                return eha.Handle(evnt);
             }
             else
             {

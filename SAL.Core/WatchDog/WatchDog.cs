@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
 using Autofac;
+using Microsoft.Extensions.Logging;
 using SAL.API;
 using SAL.API.Monad;
 using SAL.Core.Service;
@@ -10,6 +11,7 @@ namespace SAL.Core.WatchDog
     public class WatchDog : IWatchDog
     {
         private readonly ILifetimeScope container;
+        private readonly ILogger<WatchDog> logger;
         private IWatchDogMonitor[] monitors;
 
         private Action OnOnline;
@@ -18,9 +20,10 @@ namespace SAL.Core.WatchDog
         private bool AggStatus;
 
 
-        public WatchDog(ILifetimeScope container)
+        public WatchDog(ILifetimeScope container, ILogger<WatchDog> logger)
         {
             this.container = container;
+            this.logger = logger;
             monitors = container.Resolve<IWatchDogMonitor[]>();
         }
 
@@ -29,6 +32,7 @@ namespace SAL.Core.WatchDog
         {
             OnOnline = onOnline;
             OnOffline = onOffline;
+            SessionManager.SetNewSession("WD");
 
             monitors.ForEach(m =>
             {
@@ -82,5 +86,7 @@ namespace SAL.Core.WatchDog
             else
                 OnOffline?.Invoke();
         }
+
+
 }
 }

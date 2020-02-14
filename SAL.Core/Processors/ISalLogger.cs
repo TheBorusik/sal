@@ -27,6 +27,10 @@ namespace SAL.Core.Processors
 
         ILogger GetLogger(CommandPayload commandPayload);
 
+        ILogger GetLogger(CommandResultPayload commandResultPayload);
+
+        ILogger GetLogger(EventPayload eventPayload);
+
 
     }
 }

@@ -1,0 +1,19 @@
+stages:
+    - build
+    - deploy
+
+build:
+    stage: build
+    tags: [powershell, netCore]
+    artifacts:
+        paths:
+            - *.nuget
+
+
+nuget-deploy:
+    stage: deploy
+    tags: [netCore] 
+    when: manual 
+
+
+        

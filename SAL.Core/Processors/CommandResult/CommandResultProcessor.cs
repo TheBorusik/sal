@@ -61,7 +61,7 @@ namespace SAL.Core.Processors
                     .ForEach(RegisterCommandResultHandler);
 
                 container.ComponentRegistry.Registrations
-                    .Where(r => r.Services.OfType<TypedService>().Any(ts => ts.ServiceType == typeof(ICommonCommandResultHandlerAsync)))
+                    .Where(r => r.Services.OfType<TypedService>().Any(ts => ts.ServiceType == typeof(ICommonCommandResultHandler)))
                     .Select(a => a.Activator.LimitType)
                     .ForEach(RegisterCommonCommandResultHandler);
 
@@ -209,7 +209,7 @@ namespace SAL.Core.Processors
         {
             subscription.Stop();
         }
-         
+
         public void Stop()
         {
             subscription.Stop();
@@ -225,6 +225,34 @@ namespace SAL.Core.Processors
                 salLogger.LogIncoming(commandResultPayload);
                 await Processing(transportMessage, commandResultPayload);
                 ack();
+            }
+            catch (SalException ex)
+            {
+                nack();
+                logger.Error("При обработке результата команды произошла ошибка", ex);
+                await salClient.RaiseExceptionDetectEvent(ex.ToDto());
+            }
+            catch (TargetInvocationException ex)
+            {
+                nack();
+                if (ex.InnerException is SalException sex)
+                {
+                    logger.Error("При обработке результата команды произошла ошибка", ex);
+                    await salClient.RaiseExceptionDetectEvent(ex.ToDto());
+                }
+                else
+                {
+                    var dto = SalError.CreateDto(ResultCodes.Fatal,
+                        "При обработке результата команды произошла ошибка"
+                        , innerException: ex.InnerException
+                        , properties: new
+                        {
+                            rabbitMessage.CorrelationId,
+                            rabbitMessage.QueueName
+                        });
+                    logger.Error(dto, ex.InnerException);
+                    await salClient.RaiseExceptionDetectEvent(dto);
+                }
             }
             catch (Exception ex)
             {
@@ -252,6 +280,35 @@ namespace SAL.Core.Processors
                 await SyncProcessing(transportMessage, commandResultPayload);
                 ack();
             }
+            catch (SalException ex)
+            {
+                nack();
+                logger.Error("При обработке результата команды произошла ошибка", ex);
+                await salClient.RaiseExceptionDetectEvent(ex.ToDto());
+            }
+            catch (TargetInvocationException ex)
+            {
+                nack();
+                if (ex.InnerException is SalException sex)
+                {
+                    logger.Error("При обработке результата команды произошла ошибка", ex);
+                    await salClient.RaiseExceptionDetectEvent(ex.ToDto());
+                }
+                else
+                {
+                    var dto = SalError.CreateDto(ResultCodes.Fatal,
+                        "При обработке результата команды произошла ошибка"
+                        , innerException: ex.InnerException
+                        , properties: new
+                        {
+                            rabbitMessage.CorrelationId,
+                            rabbitMessage.QueueName
+                        });
+                    logger.Error(dto, ex.InnerException);
+                    await salClient.RaiseExceptionDetectEvent(dto);
+                }
+            }
+
             catch (Exception ex)
             {
                 nack();
@@ -282,6 +339,10 @@ namespace SAL.Core.Processors
             if (transportMessage.Payload.Type == JTokenType.Null)
                 throw new Exception($"Отсутствует message.Payload | CorrelationId:{rabbitMessage.CorrelationId}");
 
+            if (transportMessage.Session != null && transportMessage.Session.Count > 0)
+            {
+                SessionManager.SetSession(SessionManager.StartSession(transportMessage.Session));
+            }
 
             return Task.FromResult(transportMessage);
         }
@@ -310,7 +371,8 @@ namespace SAL.Core.Processors
 
         private async Task Processing(Message message, CommandResultPayload commandResultPayload)
         {
-            var сommandName = $"{commandResultPayload.Descriptor.ServiceType}.{commandResultPayload.Descriptor.CommandName}";
+            var сommandName =
+                $"{commandResultPayload.Descriptor.ServiceType}.{commandResultPayload.Descriptor.CommandName}";
 
 
             HandlerContext.Type = HandlerTypes.CommandResultHandler;
@@ -318,16 +380,21 @@ namespace SAL.Core.Processors
 
             using var scope = container.BeginLifetimeScope();
 
+
             var executingContext = new ExecutingContext
             {
-                SalClient = salClient,
-                Scope = scope
+                Scope = scope,
+                SalClient = scope.Resolve<ISalClient>(),
+                Logger = salLogger.GetLogger(commandResultPayload)
             };
 
-            if (message.Session != null && message.Session.Count > 0)
+            var context = new CommandResultContext
             {
-                SessionManager.SetSession(message.Session);
-            }
+                Descriptor = commandResultPayload.Descriptor,
+                Session = message.Session.DeepClone() as JObject
+            };
+
+
 
             var isHandled = false;
 
@@ -337,29 +404,31 @@ namespace SAL.Core.Processors
                 {
 
                     HandlerContext.Name = rchi.HandlerType.Name;
-                    isHandled = await ExecuteResultHandlerAsync(scope, rchi, commandResultPayload, executingContext);
+                    isHandled = await ExecuteResultHandlerAsync(scope, rchi, commandResultPayload.Body, context,
+                        executingContext);
                     salLogger.LogHandler(commandResultPayload, rchi.HandlerType.Name, isHandled);
                     if (isHandled)
                         break;
                 }
-            }
 
-            if (!isHandled)
-            {
-                var node = anyResultHandlers.First;
-                while (node != null && isHandled == false)
+                if (!isHandled)
                 {
-                    HandlerContext.Name = node.Value.HandlerType.Name;
-                    isHandled = await ExecuteResultHandlerAsync(scope, node.Value, commandResultPayload, executingContext);
-                    salLogger.LogHandler(commandResultPayload, node.Value.HandlerType.Name, isHandled);
-                    node = node.Next;
+                    var node = anyResultHandlers.First;
+                    while (node != null && isHandled == false)
+                    {
+                        HandlerContext.Name = node.Value.HandlerType.Name;
+                        isHandled = await ExecuteResultHandlerAsync(scope, node.Value, commandResultPayload.Body,
+                            context, executingContext);
+                        salLogger.LogHandler(commandResultPayload, node.Value.HandlerType.Name, isHandled);
+                        node = node.Next;
+                    }
                 }
-            }
 
-            if (!isHandled)
-            {
-                HandlerContext.Name = commandResultPayload.Descriptor.CommandName;
-                throw SalError.CreateException(SalErrorCodes.NotHandledCommandResult);
+                if (!isHandled)
+                {
+                    HandlerContext.Name = commandResultPayload.Descriptor.CommandName;
+                    throw SalError.CreateException(SalErrorCodes.NotHandledCommandResult);
+                }
             }
         }
 
@@ -378,25 +447,27 @@ namespace SAL.Core.Processors
 
         }
 
-        public Task<bool> ExecuteResultHandlerAsync(ILifetimeScope scope, CommandResultHandlerInfo rchi, CommandResultPayload commandResultPayload, ExecutingContext executingContext)
+        public Task<bool> ExecuteResultHandlerAsync(ILifetimeScope scope, CommandResultHandlerInfo rchi, CommonCommandResult result, CommandResultContext context, ExecutingContext executingContext)
         {
-            var handler = scope.Resolve(rchi.HandlerType);
+            var handler = (ICommandResultHandler)scope.Resolve(rchi.HandlerType);
+
+            handler.SetContexts(context, executingContext);
 
             if (rchi.IsCommon)
-                return ExecuteCommonResultHandlerAsync(handler, commandResultPayload.Body, commandResultPayload.Descriptor, executingContext);
+                return ExecuteCommonResultHandlerAsync(handler, result);
             else
             {
                 var commandResultType = typeof(CommandResult<>).MakeGenericType(rchi.ResultType);
-                var commandResult = commandResultPayload.Body.ConvertValue(commandResultType);
-                return (Task<bool>)rchi.HandlerMethod.Invoke(handler, new[] { commandResult, commandResultPayload.Descriptor, executingContext });
+                var commandResult = result.ConvertValue(commandResultType);
+                return (Task<bool>)rchi.HandlerMethod.Invoke(handler, new[] { commandResult });
             }
         }
 
-        private Task<bool> ExecuteCommonResultHandlerAsync(object handler, CommonCommandResult commonResult, CommandResultDescriptor descriptor, ExecutingContext executingContext)
+        private Task<bool> ExecuteCommonResultHandlerAsync(object handler, CommonCommandResult commonResult)
         {
-            if (handler is ICommonCommandResultHandlerAsync ccrha)
+            if (handler is ICommonCommandResultHandler ccrha)
             {
-                return ccrha.ResultHandle(commonResult, descriptor, executingContext);
+                return ccrha.ResultHandle(commonResult);
             }
             else
             {
