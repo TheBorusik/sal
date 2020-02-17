@@ -1,8 +1,0 @@
-{
-    "MajorVersion":  3,
-    "MinorVersion":  0,
-    "BuildVersion":  0,
-    "BuildNumber":  15,
-    "IncBuildNumber":  true,
-    "PreRealise":  "Beta"
-}
