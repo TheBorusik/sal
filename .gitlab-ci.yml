@@ -5,8 +5,6 @@ stages:
 build:
     stage: build
     tags: [powershell, netCore]
-    variables:
-        CI_DEBUG_TRACE: "true"
     script: 
         - build.ps1
     artifacts:
