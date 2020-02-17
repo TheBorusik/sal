@@ -11,6 +11,7 @@ using SAL.API.Command;
 using SAL.API.CommandResult;
 using SAL.API.Events;
 using SAL.Infrastructure;
+using SAL.Infrastructure.ValidationAttribute;
 
 [assembly: SalServiceType("SalTest")]
 
@@ -21,8 +22,8 @@ namespace SAL.Test
     {
         public void Configure(ContainerBuilder builder)
         {
-            //   builder.RegisterSalHandler<TestCommandHandler>(); 
-            builder.RegisterSalHandler<CommonCommandHandler>();
+            builder.RegisterSalHandler<TestCommandHandler>(); 
+           // builder.RegisterSalHandler<CommonCommandHandler>();
             // builder.RegisterSalHandler<Test2CommonCommandHandler>();
 
 
@@ -38,8 +39,31 @@ namespace SAL.Test
     //  [SalCommandTypeResultHandler]
     public class TestCommand : IHaveResult<TestCommandResult>
     {
+        [Required] public string DistributorName { get; set; }
+        [NotEmptyArray] public DistributorCategory[] Categories { get; set; }
+    }
+
+
+    public class DistributorCategory
+    {
+        public long DistributorId { get; set; }
+
+        public decimal Decimal { get; set; }
+
+        public double Double { get; set; }
+
+        public float Float { get; set; }
+
+        public DateTime DateTime { get; set; }
+        public TimeSpan TimeSpan { get; set; }
+
+
+        public string CategoryId { get; set; }
+        public object AllData { get; set; }
+
 
     }
+
 
     [SalServiceType("Test1")]
     [SalCommandName("Jopa")]
@@ -57,7 +81,7 @@ namespace SAL.Test
     {
         public string TestStr { get; set; }
         public DateTime TestDate { get; set; }
-        public  TimeSpan TestTimeSpan { get; set; }
+        public TimeSpan TestTimeSpan { get; set; }
         public int TestInt { get; set; }
 
     }
@@ -89,7 +113,7 @@ namespace SAL.Test
 
             }, commandContext.Descriptor);
 
-             await Task.Delay(10000);
+            await Task.Delay(10000);
         }
 
 
@@ -140,7 +164,7 @@ namespace SAL.Test
 
     public class TestCommandResultHandler : ICommandResultHandlerAsync<Test2Command, TestCommandResult>
     {
-        ExecutingContext executingContext ;
+        ExecutingContext executingContext;
 
         public void SetContexts(CommandResultContext commandContext, ExecutingContext executingContext)
         {
@@ -205,7 +229,7 @@ namespace SAL.Test
 
         public Task Handle(Test2Event Event)
         {
-            throw new Exception("Test");
+           // throw new Exception("Test");
             return Task.CompletedTask;
         }
 
@@ -237,11 +261,31 @@ namespace SAL.Test
 
             SessionManager.SetNewSession();
 
-            var res = client.ExecuteCommandAsync<TestCommand, TestCommandResult>(
-                new TestCommand
+            var testCommand = new TestCommand
+            {
+                Categories = new DistributorCategory[]
                 {
+                    new DistributorCategory
+                    {
+                        AllData = new {test = "test"},
+                        CategoryId = "1",
 
-                },
+                        DistributorId = 1,
+
+                    },
+
+                    new DistributorCategory
+                    {
+                        CategoryId = "1",
+                        DistributorId = 1,
+
+                    },
+
+                }
+            };
+
+            var res = client.ExecuteCommandAsync<TestCommand, TestCommandResult>(
+                testCommand,
                 CommandPriority.High,
                 100).Result;
 

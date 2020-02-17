@@ -41,8 +41,12 @@ namespace SAL.Core.Validators
                 return errors;
             }
 
-
             var type = dto.GetType();
+
+            if (type == typeof(object))
+                return errors;
+
+
 
             var properties = type.GetProperties();
             foreach (var propertyInfo in properties)
@@ -143,6 +147,7 @@ namespace SAL.Core.Validators
             return type.IsPrimitive
                    || type.IsEnum
                    || type.Module.ScopeName == "CommonLanguageRuntimeLibrary"
+                   || type.Module.ScopeName == "System.Private.CoreLib.dll"
                 ;
         }
     }

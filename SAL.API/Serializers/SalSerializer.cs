@@ -13,6 +13,11 @@ namespace SAL.API
 			return JsonConvert.SerializeObject(obj, sal.SerializerSettings);
 		}
 
+        public static string SerializeIndented(object obj)
+        {
+            return JsonConvert.SerializeObject(obj, Formatting.Indented, sal.SerializerSettings);
+        }
+
 		public static T Deserialize<T>(string jsonData)
 		{
 		    return JsonConvert.DeserializeObject<T>(jsonData, sal.SerializerSettings);
@@ -38,6 +43,11 @@ namespace SAL.API
 	    {
 	        return JsonConvert.DeserializeObject(SalEncoding.GetString(data), sal.SerializerSettings);
 	    }
+
+        public static JsonSerializer Create()
+        {
+            return JsonSerializer.Create(sal.SerializerSettings);
+        }
 
 
 

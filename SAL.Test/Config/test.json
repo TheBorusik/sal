@@ -14,7 +14,7 @@
       "Items": {
         ".*": {
           "Ignore": false,
-          "СropSize": 0
+          "СropSize": -1
         }
       }
     }

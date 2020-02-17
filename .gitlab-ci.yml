@@ -5,13 +5,13 @@ stages:
 build:
     stage: build
     tags: [powershell, netCore]
-    script: cat file1.txt file2.txt > compiled.txt
+    script: 
     artifacts:
         paths:
             - \*.nuget
 
 nuget-deploy:
     stage: deploy
-    tags: [netCore]
+    tags: [powershell, netCore]
     when: manual
     script: cat compiled.txt | gzip > packaged.gz  

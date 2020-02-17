@@ -11,14 +11,14 @@ namespace SAL.API
 
         public JsonLoadSettings LoadSettings { get; set; }
 
-        public SalJsonSerializerSettings(bool indented = false)
+        public SalJsonSerializerSettings()
         {
             SerializerSettings = new JsonSerializerSettings
             {
-                Formatting = indented ? Formatting.Indented :Formatting.None,
+                Formatting = Formatting.None,
                 ContractResolver = new DefaultContractResolver(),
                 NullValueHandling = NullValueHandling.Ignore,
-                DefaultValueHandling = DefaultValueHandling.Include,
+                DefaultValueHandling = DefaultValueHandling.Ignore,
                 DateFormatHandling = DateFormatHandling.IsoDateFormat,
                 TypeNameHandling = TypeNameHandling.None
             };

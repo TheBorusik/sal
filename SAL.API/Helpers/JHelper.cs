@@ -111,8 +111,8 @@ namespace SAL.API
 
         public static string ToIndentedJson(this object jToken)
         {
-            var sal = new SalJsonSerializerSettings(true);
-            return JsonConvert.SerializeObject(jToken, sal.SerializerSettings);
+
+            return SalSerializer.SerializeIndented(jToken);
 
         }
 
