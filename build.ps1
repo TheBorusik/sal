@@ -1,6 +1,6 @@
 $configurationName = "Debug";
 $buildNumber = 0;
-$versionName = "{0}.{1}.0-{3}.{2}+git.commit.{4}" -f $env:MajorVersion, $env:MinorVersion, $env:CI_BUILD_ID,$env:CI_COMMIT_BRANCH, $env:CI_COMMIT_SHORT_SHA ;
+$versionName = "{0}.{1}.{2}-{3}+git.commit.{4}" -f $env:MajorVersion, $env:MinorVersion, $env:CI_BUILD_ID,$env:CI_COMMIT_BRANCH, $env:CI_COMMIT_SHORT_SHA ;
 
 if($env:CI_COMMIT_BRANCH -eq "master")
 {
@@ -25,4 +25,6 @@ Get-ChildItem -Filter *.csproj -Recurse | %{
 		}
 	}
 }
+
+dotnet build --configuration $configurationName;
 
