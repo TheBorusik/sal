@@ -1,5 +1,5 @@
 $configurationName = "Debug";
-$versionName = "{0}.{1}.{2}-{3}{5}+git.commit.{4}" -f $env:MajorVersion, $env:MinorVersion, $env:CI_PIPELINE_ID,$env:CI_COMMIT_BRANCH, $env:CI_COMMIT_SHORT_SHA,$env:CI_BUILD_ID ;
+$versionName = "{0}.{1}.{2}-{3}.{5}+git.commit.{4}" -f $env:MajorVersion, $env:MinorVersion, $env:CI_PIPELINE_ID,$env:CI_COMMIT_BRANCH, $env:CI_COMMIT_SHORT_SHA,$env:CI_BUILD_ID ;
 
 if($env:CI_COMMIT_BRANCH -eq "master")
 {
@@ -25,4 +25,6 @@ Get-ChildItem -Filter *.csproj -Recurse | %{
 }
 
 dotnet build --configuration $configurationName;
-
+dotnet pack ./SAL.API/SAL.API.csproj  --no-build --output nupkgs
+dotnet pack ./SAL.Core/SAL.Core.csproj  --no-build --output nupkgs
+dotnet pack ./SAL.Infrastructure/SAL.Infrastructure.csproj  --no-build --output nupkgs

@@ -9,7 +9,7 @@ build:
         - .\build.ps1
     artifacts:
         paths:
-            - \*\*\\\*.nuget
+            - .\nupkgs\*.nuget
 
 nuget-deploy:
     stage: deploy
@@ -19,4 +19,4 @@ nuget-deploy:
           when: manual
         - when: on_success
     script:
-        - dotnet nuget push **/*.nupkg --skip-duplicate -k $env:NUGET_KEY -s $env:NUGET_URL
+        - dotnet nuget push *.nupkg --skip-duplicate -k $env:NUGET_KEY -s $env:NUGET_URL

@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <Authors>Kooklev P.A.</Authors>
@@ -7,7 +7,7 @@
     <Version>3.0.0-Beta.15</Version>
     <PackageTags>SAL3 API</PackageTags>
     <PackageId>SAL3.API</PackageId>
-    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
     <AssemblyVersion>3.0.0.15</AssemblyVersion>
     <FileVersion>3.0.0.15</FileVersion>
   </PropertyGroup>
