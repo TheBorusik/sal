@@ -16,7 +16,7 @@ nuget-deploy:
     tags: [powershell, netCore]
     rules:
         - if: '$CI_COMMIT_BRANCH == "master"'
-        when: manual
+          when: manual
         - when: on_success
     script:
         - dotnet nuget push **/*.nupkg --skip-duplicate -k $env:NUGET_KEY -s $env:NUGET_URL
