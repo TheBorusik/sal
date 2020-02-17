@@ -1,16 +1,14 @@
 $configurationName = "Debug";
-$buildNumber = 0;
-$versionName = "{0}.{1}.{2}-{3}+git.commit.{4}" -f $env:MajorVersion, $env:MinorVersion, $env:CI_BUILD_ID,$env:CI_COMMIT_BRANCH, $env:CI_COMMIT_SHORT_SHA ;
+$versionName = "{0}.{1}.{2}-{3}{5}+git.commit.{4}" -f $env:MajorVersion, $env:MinorVersion, $env:CI_PIPELINE_ID,$env:CI_COMMIT_BRANCH, $env:CI_COMMIT_SHORT_SHA,$env:CI_BUILD_ID ;
 
 if($env:CI_COMMIT_BRANCH -eq "master")
 {
 	$configurationName = "Release"
 	$buildNumber = 1;	
-    $versionName = "{0}.{1}.{2}.{3}" -f $env:MajorVersion, $env:MinorVersion, $env:CI_BUILD_ID, $buildNumber;
+    $versionName = "{0}.{1}.{2}.{3}" -f $env:MajorVersion, $env:MinorVersion, $env:CI_PIPELINE_ID, $env:CI_BUILD_ID;
 }
 
-$versionNumber = "{0}.{1}.{2}.{3}" -f $env:MajorVersion, $env:MinorVersion, $env:CI_BUILD_ID, $buildNumber;
-
+$versionNumber = "{0}.{1}.{2}.{3}" -f $env:MajorVersion, $env:MinorVersion, $env:CI_PIPELINE_ID, $env:CI_BUILD_ID;
 
 Get-ChildItem -Filter *.csproj -Recurse | %{
 	[xml]$xml = Get-Content $_.FullName

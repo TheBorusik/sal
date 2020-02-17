@@ -9,10 +9,14 @@ build:
         - .\build.ps1
     artifacts:
         paths:
-            - \*.nuget
+            - **\*.nuget
 
 nuget-deploy:
     stage: deploy
     tags: [powershell, netCore]
-    when: manual
-    script: cat compiled.txt | gzip > packaged.gz  
+    rules:
+        - if: '$CI_COMMIT_BRANCH == "master"'
+        when: manual
+        - when: on_success
+    script:
+        - dotnet nuget push **/*.nupkg --skip-duplicate -k $env:NUGET_KEY -s $env:NUGET_URL
