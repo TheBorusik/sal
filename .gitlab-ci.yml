@@ -4,8 +4,13 @@ stages:
 
 build:
     stage: build
-    tags: [powershell, netCore]
+    tags: [powershell, netCore, msBuild]
+    variables:
+        CI_DEBUG_TRACE: "true"
     script: 
+        - echo $env:CI_JOB_STAGE
+        - echo $env:NUGET_KEY
+        - echo $env:NUGET_URL
     artifacts:
         paths:
             - \*.nuget
