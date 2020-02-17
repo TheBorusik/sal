@@ -4,10 +4,9 @@ stages:
 
 build:
     stage: build
-    tags: [powershell, netCore, vs2019]
+    tags: [powershell, netCore]
     variables:
-        - CI_DEBUG_TRACE: "true"
-        - MSBUILD: "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\MSBuild\Current\Bin\MSBuild.exe"
+        CI_DEBUG_TRACE: "true"
     script: 
         - build.ps1
     artifacts:
