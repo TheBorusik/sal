@@ -9,7 +9,7 @@ build:
         - .\build.ps1
     artifacts:
         paths:
-            - .\nupkgs\*.nuget
+            - nupkgs\
 
 nuget-deploy:
     stage: deploy
