@@ -6,7 +6,7 @@ build:
     stage: build
     tags: [powershell, netCore]
     script: 
-        - build.ps1
+        - .\build.ps1
     artifacts:
         paths:
             - \*.nuget
