@@ -4,13 +4,12 @@ stages:
 
 build:
     stage: build
-    tags: [powershell, netCore, msBuild]
+    tags: [powershell, netCore, vs2019]
     variables:
-        CI_DEBUG_TRACE: "true"
+        - CI_DEBUG_TRACE: "true"
+        - MSBUILD: "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\MSBuild\Current\Bin\MSBuild.exe"
     script: 
-        - echo $env:CI_JOB_STAGE
-        - echo $env:NUGET_KEY
-        - echo $env:NUGET_URL
+        - build.ps1
     artifacts:
         paths:
             - \*.nuget
