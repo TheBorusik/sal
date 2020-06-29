@@ -1,5 +1,4 @@
-﻿
-using System.Data.Common;
+﻿using System.Data.Common;
 
 namespace SAL.API
 {
@@ -11,6 +10,4 @@ namespace SAL.API
         string GetProviderName(string connectionName = null);
         string GetDefaultConnectionName();
     }
-
-
 }

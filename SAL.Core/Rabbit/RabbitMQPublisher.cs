@@ -29,37 +29,6 @@ namespace SAL.Core.Rabbit
         public void PublishCommand(RabbitMessage msg)
         {
 
-            /*
-            var needUpdateTopology = false;
-
-            if (!string.IsNullOrWhiteSpace(msg.QueueName))
-            {
-                if (!transport.IsQueuePresent(msg.QueueName))
-                {
-                    transport.AddQueue(new Queue
-                    {
-                        Name = msg.QueueName,
-                        AutoDelete = false,
-                        MaxPriority = 9,
-                        Exclusive = false,
-                        HasDeadLetter = true,
-                        Expire = null,
-                        Durable = true,
-                        Bindings = new[]{ new QueueBinding
-                            {
-                                ExchangeName = ExchangeNames.CommandExchange,
-                                RoutingKey = msg.RoutingKey,
-                            }}
-                    });
-                    needUpdateTopology = true;
-                }-
-
-            }
-
-            if (needUpdateTopology)
-                transport.UpdateTopology();
-                */
-
             msg.Exchange = ExchangeNames.CommandExchange;
 
             Publish(msg);

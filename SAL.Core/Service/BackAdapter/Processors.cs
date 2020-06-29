@@ -4,7 +4,7 @@ using SAL.API.Monad;
 
 namespace SAL.Core.Service
 {
-    public partial class AdapterRunner
+    internal partial class BackAdapter
     {
         private IProcessor[] processors;
 

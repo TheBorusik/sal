@@ -11,9 +11,9 @@ using SAL.API;
 
 namespace SAL.Core.Service
 {
-    public partial class AdapterRunner : IServiceProviderFactory<ContainerBuilder>, ISalService
+    internal partial class BackAdapter : IServiceProviderFactory<ContainerBuilder>, ISalService
     {
-        private Logger logger;
+        protected Logger logger;
         protected IContainer Container;
 
 
@@ -117,18 +117,18 @@ namespace SAL.Core.Service
             var sb = new StringBuilder();
             sb.AppendLine()
                 .AppendLine("-------------------------------------------------------------")
+                .AppendLine($"RunnerType      : {GetType().Name}")
                 .AppendLine($"AdapterName     : {ServiceConfiguration.AdapterName}")
                 .AppendLine($"AdapterType     : {ServiceConfiguration.AdapterType}")
                 .AppendLine($"AdapterVersion  : {ServiceConfiguration.AdapterVersion}")
                 .AppendLine($"AdapterHostName : {ServiceConfiguration.AdapterHostName}")
                 .AppendLine($"AdapterHostIp   : {string.Join(", ", ServiceConfiguration.AdapterHostIp)}")
-                .AppendLine($"Contour         : {ServiceConfiguration.Contour.ToUpper()}")
+                .AppendLine($"Contour         : {ServiceConfiguration.Contour}")
                 .AppendLine($"SalVersion      : {ServiceConfiguration.SalVersion} ({ServiceConfiguration.Revision})")
                 .AppendLine($"RootPath        : {ServiceConfiguration.RootPath}")
                 .AppendLine($"ConfigPath      : {ServiceConfiguration.ConfigPath}")
                 .AppendLine($"LogRootPath     : {ServiceConfiguration.LogRootPath}")
                 .AppendLine($"DiskStorePath   : {ServiceConfiguration.DiskStorePath}")
-
                 .AppendLine("-------------------------------------------------------------");
             logger.Info(sb.ToString());
         }

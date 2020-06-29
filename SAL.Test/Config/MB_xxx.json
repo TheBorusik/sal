@@ -1,30 +1,22 @@
 ﻿{
   "MessageBus": {
-    "Host": "10.10.32.83",
+    "Host": "10.10.33.15",
     "VirtualHost": "back.v3",
-    "Username": "dev",
-    "Password": "dev"
+    "Username": "v3",
+    "Password": "v3"
   },
-
-  "BackMessageBus": {
-    "Host": "10.99.129.186",
-    "VirtualHost": "devV3",
-    "Username": "test",
-    "Password": "test"
-  },
-
 
   "FrontMessageBus": {
-    "Host": "10.99.129.186",
-    "VirtualHost": "devV3",
-    "Username": "test",
-    "Password": "test"
+    "Host": "10.10.33.15",
+    "VirtualHost": "front.v3",
+    "Username": "v3",
+    "Password": "v3"
   },
 
   "BridgedMessageBus": {
-    "Host": "10.99.129.215",
-    "VirtualHost": "extestV3",
-    "Username": "extest",
-    "Password": "extest1"
+    "Host": "10.10.33.15",
+    "VirtualHost": "test.v3",
+    "Username": "v3",
+    "Password": "v3"
   }
 }

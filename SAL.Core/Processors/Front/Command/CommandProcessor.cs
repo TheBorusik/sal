@@ -25,7 +25,7 @@ using SessionManager = SAL.API.SessionManager;
 
 namespace SAL.Core.Processors
 {
-    internal class CommandProcessor : IProcessor
+    internal class FrontCommandProcessor : IProcessor
     {
         private ILogger logger;
         private ILoggerProvider loggerProvider;
@@ -39,13 +39,13 @@ namespace SAL.Core.Processors
 
         private ISubscription subscription;
 
-        public CommandProcessor(ILifetimeScope container, ILoggerProvider loggerProvider, ISalLogger salLogger)
+        public FrontCommandProcessor(ILifetimeScope container, ILoggerProvider loggerProvider, ISalLogger salLogger)
         {
             this.container = container;
             this.loggerProvider = loggerProvider;
             this.salLogger = salLogger;
             logger = loggerProvider.CreateLogger(nameof(CommandProcessor));
-            salClient = container.Resolve<ISalClient>();
+            salClient = container.ResolveNamed<ISalClient>("front");
         }
 
         private CommandProcessorConfig commandProcessorConfig;
@@ -100,29 +100,6 @@ namespace SAL.Core.Processors
 
                 var subscriptionFactory = transport.CreateMessageSubscription();
 
-                /*
-                commandProcessorConfig.CommandShaping.ForEach(kv =>
-                {
-
-                    var shaperList = new List<ICommandShaper>();
-
-                    kv.Value.Shaping.ForEach(s =>
-                    {
-
-                        var shaperType = s.GetSafeValue("Type", "");
-                        if (!string.IsNullOrWhiteSpace(shaperType))
-                        {
-                            var shaper = container.ResolveNamed<ICommandShaper>(shaperType, 
-                                new NamedParameter("commandName", kv.Key),
-                                new NamedParameter("config", (JObject)s),
-                                new NamedParameter("dateDatabase", commandDatabase));
-                            shaperList.Add(shaper);
-                        }
-                    });
-
-
-                    commandHandlers[kv.Key].CommandShapers = shaperList.ToArray();
-                });*/
 
                 subscription = subscriptionFactory.CreateCommand(
                     commandProcessorConfig.GlobalPrefetchCount,
@@ -190,43 +167,6 @@ namespace SAL.Core.Processors
             }
         }
 
-        private void RegisterCommonCommandHandler(Type handlerType)
-        {
-
-            var isInstanceHandler = handlerType.GetCustomAttributes(typeof(SalInstanceHandlerAttribute)).Any();
-
-            handlerType.GetCustomAttributes(typeof(SalCommandHandlerAttribute))
-                .OfType<SalCommandHandlerAttribute>().ForEach(a =>
-                {
-                    var name = a.Name;
-                    name = Regex.Replace(name, "(.+)command$", "$1", RegexOptions.IgnoreCase);
-                    var commandName = $"{a.ServiceType}.{name}";
-
-                    if (commandName.Count(c => c == '.') > 1)
-                        throw new Exception($"{commandName} - неправильное указанеие");
-
-                    if (commandHandlers.ContainsKey(commandName))
-                        throw new Exception($"{commandName} уже имеет обработчик");
-
-                    var commandHandlerInfo = new CommandHandlerInfo
-                    {
-                        CommandName = commandName,
-                        HandlerType = handlerType,
-                        ResultType = null,
-                        HandlerMethod = null,
-                        ValidationMethod = null,
-                        CommandType = null,
-                        IsCommon = true,
-                        IsInstanceHandler = isInstanceHandler
-                    };
-
-                    commandHandlers.Add(commandName, commandHandlerInfo);
-
-                    logger.Info($"Для команды {commandName} добавлен уневерсальный обработчик {handlerType.Name}");
-
-                });
-
-        }
 
         public void Online()
         {

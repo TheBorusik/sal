@@ -10,7 +10,6 @@
     public static partial class SalErrorCodes
     {
         public const string Fatal = "Fatal";
-        public const string ValidationFailed = "ValidationFailed";
 
         public const string NotHandledCommandResult = " NotHandledCommandResult";
         public const string NotHandledCommand = "NotHandledCommand";

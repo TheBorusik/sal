@@ -1,0 +1,427 @@
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Reflection;
+using System.Text.RegularExpressions;
+using System.Threading.Tasks;
+using Autofac;
+using Autofac.Core;
+using Microsoft.Extensions.Logging;
+using Newtonsoft.Json.Linq;
+using SAL.API;
+using SAL.API.Client;
+using SAL.API.Command;
+using SAL.API.LoggerHelper;
+using SAL.API.Monad;
+using SAL.Core.Config;
+using SAL.Core.DTO.Transport;
+using SAL.Core.Helpers;
+using SAL.Core.Rabbit;
+using SAL.Core.Rabbit.Interfaces;
+using SAL.Core.Validators;
+using SAL.Infrastructure;
+using SessionManager = SAL.API.SessionManager;
+
+// ReSharper disable once CheckNamespace
+namespace SAL.Core.Processors
+{
+    internal class CommandProcessor : IProcessor
+    {
+        private ILogger logger;
+        private ILoggerProvider loggerProvider;
+        private ISalLogger salLogger;
+
+        private readonly ILifetimeScope container;
+
+        private ISalClient salClient;
+
+        private readonly IDictionary<string, CommandHandlerInfo> commandHandlers = new Dictionary<string, CommandHandlerInfo>();
+
+        private ISubscription subscription;
+
+        public CommandProcessor(ILifetimeScope container, ILoggerProvider loggerProvider, ISalLogger salLogger)
+        {
+            this.container = container;
+            this.loggerProvider = loggerProvider;
+            this.salLogger = salLogger;
+            logger = loggerProvider.CreateLogger(nameof(CommandProcessor));
+            salClient = container.Resolve<ISalClient>();
+        }
+
+        private CommandProcessorConfig commandProcessorConfig;
+
+
+        public void Start()
+        {
+            try
+            {
+                container.ComponentRegistry.Registrations
+                    .Where(r => r.Services.OfType<TypedService>().Any(ts => ts.ServiceType == typeof(ICommandHandler)))
+                    .Select(a => a.Activator.LimitType)
+                    .ForEach(RegisterCommandHandler);
+
+                container.ComponentRegistry.Registrations
+                    .Where(r => r.Services.OfType<TypedService>().Any(ts => ts.ServiceType == typeof(ICommonCommandHandler)))
+                    .Select(a => a.Activator.LimitType)
+                    .ForEach(RegisterCommonCommandHandler);
+
+
+
+
+                var processingCommand = commandHandlers.Where(h => h.Value.IsInstanceHandler == false).ToArray();
+
+                var baseJsonConfig = new CommandProcessorConfig
+                {
+                    GlobalPrefetchCount = 1,
+                    CommandPrefetchCount = 1,
+                    CommandProcessingSettings = processingCommand.ToDictionary(kv => kv.Key, kv => new CommandProcessingSettings
+                    {
+                        PrefetchCount = 0
+                    })
+                }.ToJObjectSafe();
+
+
+                var configWatcher = container.Resolve<IConfigWatcher>();
+
+                var config = configWatcher.GetSection(ConfigurationSectionNames.CommandProcessor);
+                if (config != null)
+                {
+                    baseJsonConfig.Merge(config, new JsonMergeSettings { MergeArrayHandling = MergeArrayHandling.Merge });
+                }
+
+                commandProcessorConfig = baseJsonConfig.ToObject<CommandProcessorConfig>();
+
+                var configStr = commandProcessorConfig.ToIndentedJson();
+                File.WriteAllText(Path.Combine(ServiceConfiguration.ConfigPath, $"{ConfigurationSectionNames.CommandProcessor}.txt"), configStr);
+
+                logger.Info($"Command processing config \n{configStr}");
+
+                var transport = container.Resolve<ITransport>();
+
+                var subscriptionFactory = transport.CreateMessageSubscription();
+
+                /*
+                commandProcessorConfig.CommandShaping.ForEach(kv =>
+                {
+
+                    var shaperList = new List<ICommandShaper>();
+
+                    kv.Value.Shaping.ForEach(s =>
+                    {
+
+                        var shaperType = s.GetSafeValue("Type", "");
+                        if (!string.IsNullOrWhiteSpace(shaperType))
+                        {
+                            var shaper = container.ResolveNamed<ICommandShaper>(shaperType, 
+                                new NamedParameter("commandName", kv.Key),
+                                new NamedParameter("config", (JObject)s),
+                                new NamedParameter("dateDatabase", commandDatabase));
+                            shaperList.Add(shaper);
+                        }
+                    });
+
+
+                    commandHandlers[kv.Key].CommandShapers = shaperList.ToArray();
+                });*/
+
+                subscription = subscriptionFactory.CreateCommand(
+                    commandProcessorConfig.GlobalPrefetchCount,
+                    commandProcessorConfig.CommandPrefetchCount,
+                    processingCommand.Select(k => new CommandInfo
+                    {
+                        CommandName = k.Key,
+                        PrefetchCount = commandProcessorConfig.CommandProcessingSettings[k.Key].PrefetchCount
+                    }).ToArray(),
+                    Handler);
+
+            }
+            catch (Exception ex)
+            {
+                logger.Error("При запуске произошла ошибка:", ex);
+                throw;
+            }
+        }
+
+        private void RegisterCommandHandler(Type handlerType)
+        {
+            var genericValidator = typeof(IValidator<>);
+
+            var handlerInterfaces = handlerType.GetInterfaces()
+                .Where(i => i.IsAssignableTo<ICommandHandler>() && i.IsGenericType).ToArray();
+
+            var isInstanceHandler = handlerType.GetCustomAttributes(typeof(SalInstanceHandlerAttribute)).Any();
+
+            foreach (var handlerInterface in handlerInterfaces)
+            {
+                var commandType = handlerInterface.GetGenericArguments()[0];
+
+                var commandName = commandType.GetRouteKey();
+
+                if (commandHandlers.ContainsKey(commandName))
+                    throw new Exception($"{commandName} уже имеет обработчик");
+
+
+                var commandHandlerInfo = new CommandHandlerInfo
+                {
+                    CommandName = commandName,
+                    CommandType = commandType,
+                    ResultType = handlerInterface.GetGenericArguments()[1],
+
+                    HandlerType = handlerType,
+
+                    HandlerMethod = handlerInterface.GetMethod("Handle"),
+                    ValidationMethod = null,
+
+                    IsCommon = false,
+                    IsInstanceHandler = isInstanceHandler
+
+                };
+
+
+                var validator = genericValidator.MakeGenericType(commandType);
+
+                if (handlerType.GetInterfaces().Any(i => i == validator))
+                {
+                    commandHandlerInfo.ValidationMethod = validator.GetMethod("Validate");
+                }
+
+                commandHandlers.Add(commandName, commandHandlerInfo);
+                logger.Info($"Для команды {commandName} добавлен обработчик {handlerType.Name}");
+            }
+        }
+
+        private void RegisterCommonCommandHandler(Type handlerType)
+        {
+
+            var isInstanceHandler = handlerType.GetCustomAttributes(typeof(SalInstanceHandlerAttribute)).Any();
+
+            handlerType.GetCustomAttributes(typeof(SalCommandHandlerAttribute))
+                .OfType<SalCommandHandlerAttribute>().ForEach(a =>
+                {
+                    var name = a.Name;
+                    name = Regex.Replace(name, "(.+)command$", "$1", RegexOptions.IgnoreCase);
+                    var commandName = $"{a.ServiceType}.{name}";
+
+                    if (commandName.Count(c => c == '.') > 1)
+                        throw new Exception($"{commandName} - неправильное указанеие");
+
+                    if (commandHandlers.ContainsKey(commandName))
+                        throw new Exception($"{commandName} уже имеет обработчик");
+
+                    var commandHandlerInfo = new CommandHandlerInfo
+                    {
+                        CommandName = commandName,
+                        HandlerType = handlerType,
+                        ResultType = null,
+                        HandlerMethod = null,
+                        ValidationMethod = null,
+                        CommandType = null,
+                        IsCommon = true,
+                        IsInstanceHandler = isInstanceHandler
+                    };
+
+                    commandHandlers.Add(commandName, commandHandlerInfo);
+
+                    logger.Info($"Для команды {commandName} добавлен уневерсальный обработчик {handlerType.Name}");
+
+                });
+
+        }
+
+        public void Online()
+        {
+            subscription.Start();
+        }
+
+        public void Offline()
+        {
+            subscription.Stop();
+        }
+
+        public void Stop()
+        {
+            subscription.Stop();
+        }
+
+        private async Task Handler(RabbitMessage rabbitMessage, Action ack, Action nack)
+        {
+            try
+            {
+                var transportMessage = await ExtractMessage(rabbitMessage);
+                var commandPayload = await ExtractCommandPayload(transportMessage);
+                salLogger.LogIncoming(commandPayload);
+                await Processing(transportMessage, commandPayload);
+                ack();
+            }
+
+            catch (SalException ex)
+            {
+                nack();
+                logger.Error("При обработке результата команды произошла ошибка", ex);
+                await salClient.RaiseExceptionDetectEvent(ex.ToDto());
+            }
+            catch (TargetInvocationException ex)
+            {
+                nack();
+                if (ex.InnerException is SalException sex)
+                {
+                    logger.Error("При обработке команды произошла ошибка", ex);
+                    await salClient.RaiseExceptionDetectEvent(ex.ToDto());
+                }
+                else
+                {
+                    var dto = SalError.CreateDto(ResultCodes.Fatal,
+                        "При обработке команды произошла ошибка"
+                        , innerException: ex.InnerException
+                        , properties: new
+                        {
+                            rabbitMessage.CorrelationId,
+                            rabbitMessage.QueueName
+                        });
+                    logger.Error(dto, ex.InnerException);
+                    await salClient.RaiseExceptionDetectEvent(dto);
+                }
+            }
+            catch (Exception ex)
+            {
+                nack();
+                var dto = SalError.CreateDto(ResultCodes.Fatal,
+                    "При обработке команды произошла ошибка"
+                    , innerException: ex
+                    , properties: new
+                    {
+                        rabbitMessage.CorrelationId,
+                        rabbitMessage.QueueName
+                    });
+                logger.Error(dto, ex);
+                await salClient.RaiseExceptionDetectEvent(dto);
+            }
+        }
+
+        protected Task<Message> ExtractMessage(RabbitMessage rabbitMessage)
+        {
+            var transportMessage = SalSerializer.BinaryDeserialize<Message>(rabbitMessage.Payload);
+            if (transportMessage == null)
+                throw new Exception($"Неудалось десерилизовать сообщение | CorrelationId:{rabbitMessage.CorrelationId}");
+            if (transportMessage.Type != MessageTypes.Command)
+                throw new Exception($"Сообщение не команда ({transportMessage.Type}) | CorrelationId:{rabbitMessage.CorrelationId}");
+
+            if (transportMessage.Payload == null)
+                throw new Exception($"Отсутствует message.Payload | CorrelationId:{rabbitMessage.CorrelationId}");
+
+            if (transportMessage.Payload.Type == JTokenType.Null)
+                throw new Exception($"Отсутствует message.Payload | CorrelationId:{rabbitMessage.CorrelationId}");
+
+            if (transportMessage.Session != null && transportMessage.Session.Count > 0)
+            {
+                SessionManager.SetSession(SessionManager.StartSession(transportMessage.Session));
+            }
+
+            return Task.FromResult(transportMessage);
+        }
+
+        protected Task<CommandPayload> ExtractCommandPayload(Message transportMessage)
+        {
+
+            var commandPayload = transportMessage.Payload.ConvertValue<CommandPayload>();
+
+            if (commandPayload.Descriptor == null)
+                throw new Exception($"Отсутствует commandPayload.Descriptor | CorrelationId:{transportMessage.CorrelationId}");
+
+            if (string.IsNullOrWhiteSpace(commandPayload.Descriptor.CommandName))
+                throw new Exception($"Пустой commandPayload.Descriptor.CommandName | CorrelationId:{transportMessage.CorrelationId}");
+
+            if (commandPayload.Body == null)
+                throw new Exception($"Отсутствует commandPayload.Body | CorrelationId:{transportMessage.CorrelationId}");
+
+
+            if (commandPayload.Descriptor.ServiceType != ServiceConfiguration.AdapterType)
+                throw new Exception($"Не соответствие Descriptor.ServiceType и AdapterType для команды CorrelationId:{transportMessage.CorrelationId}");
+
+            commandPayload.Descriptor.HandlerTimeStamp = DateTime.UtcNow;
+
+            return Task.FromResult(commandPayload);
+        }
+
+        protected virtual async Task Processing(Message message, CommandPayload commandPayload)
+        {
+            var fullCommandName = $"{commandPayload.Descriptor.ServiceType}.{commandPayload.Descriptor.CommandName}";
+
+            HandlerContext.Type = HandlerTypes.CommandHandler;
+            HandlerContext.Name = commandPayload.Descriptor.CommandName;
+
+            if (commandHandlers.TryGetValue(fullCommandName, out var commandHandlerInfo))
+            {
+                HandlerContext.Name = commandHandlerInfo.HandlerType.Name;
+
+                salLogger.LogHandler(commandPayload, HandlerContext.Name);
+
+                using var scope = container.BeginLifetimeScope();
+                var handler = (ICommandHandler)scope.Resolve(commandHandlerInfo.HandlerType);
+                var executingContext = new ExecutingContext
+                {
+                    Scope = scope,
+                    SalClient = scope.Resolve<ISalClient>(),
+                    Logger = salLogger.GetLogger(commandPayload)
+                };
+
+                var commandContext = new CommandContext
+                {
+                    Descriptor = commandPayload.Descriptor,
+                    Session = message.Session.DeepClone() as JObject,
+                };
+
+                handler.SetContexts(commandContext, executingContext);
+
+                if (!commandHandlerInfo.IsCommon)
+                {
+                    var commandObject = commandPayload.Body.ConvertValue(commandHandlerInfo.CommandType);
+                    var validator = scope.Resolve<ObjectValidator>();
+
+                    var validationErrors = await validator.ValidateData(commandObject,
+                        o => Validate(handler, commandHandlerInfo, o));
+
+                    if (validationErrors.Any())
+                    {
+                        await salClient.PublishResultAsync(validationErrors, commandPayload.Descriptor);
+                        return;
+                    }
+
+                    await (Task)commandHandlerInfo.HandlerMethod.Invoke(handler, new[] { commandObject });
+                }
+                else
+                {
+                    await ExecuteCommonHandlerAsync(handler, commandPayload.Body);
+
+                }
+            }
+            else
+            {
+                throw SalError.CreateException(ResultCodes.Fatal, "Обработчик команды не найден");
+            }
+        }
+
+        private Task<IEnumerable<FieldError>> Validate(object handler, CommandHandlerInfo handlerInfo, object validateObject)
+        {
+            if (handlerInfo.ValidationMethod == null)
+                return Task.FromResult(new List<FieldError>().AsEnumerable());
+
+            return (Task<IEnumerable<FieldError>>)handlerInfo.ValidationMethod.Invoke(handler, new[] { validateObject });
+        }
+
+        private Task ExecuteCommonHandlerAsync(object handler, JObject command)
+        {
+            if (handler is ICommonCommandHandler ccha)
+            {
+                return ccha.Handle(command);
+            }
+            else
+            {
+                throw SalError.CreateException(ResultCodes.Fatal, "Обработчик не являеться общим", properties: new { handlerType = handler.GetType().Name });
+            }
+        }
+
+
+    }
+}

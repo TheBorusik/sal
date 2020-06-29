@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Autofac;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using SAL.API;
@@ -19,14 +20,22 @@ namespace SAL.Core.Client
 {
     public class SalClient : ISalClient, ILoSalClient
     {
-        private IPublisher publisher;
-        private ICommandResultProcessor commandResultProcessor;
-        private ISalLogger salLogger;
+        private readonly IPublisher publisher;
+        private readonly ICommandResultProcessor commandResultProcessor;
+        private readonly ISalLogger salLogger;
 
-        public SalClient(IPublisher publisher, ICommandResultProcessor commandResultProcessor, ISalLogger salLogger)
+        public SalClient(ILifetimeScope scope, ISalLogger salLogger, string prefix)
         {
-            this.publisher = publisher;
-            this.commandResultProcessor = commandResultProcessor;
+            var transport = !string.IsNullOrWhiteSpace(prefix) ? 
+                scope.ResolveNamed<ITransport>(prefix) : 
+                scope.Resolve<ITransport>();
+
+            this.publisher = transport.CreatePublisher();
+
+            this.commandResultProcessor = !string.IsNullOrWhiteSpace(prefix) ?
+                scope.ResolveNamed<ICommandResultProcessor>(prefix) :
+                scope.Resolve<ICommandResultProcessor>();
+
             this.salLogger = salLogger;
         }
 

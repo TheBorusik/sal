@@ -2,7 +2,7 @@
 {
     internal class ExchangeNames
     {
-        internal const string RejectedMessageExchange = "RejectedMessageExchange";
+        internal const string NotHandledExchange = "NotHandledExchange";
 
         internal const string CommandExchange = "CommandExchange";
         internal const string CommandResultExchange = "CommandResultExchange";

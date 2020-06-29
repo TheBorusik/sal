@@ -47,7 +47,6 @@ namespace SAL.Core.Rabbit
                 HasDeadLetter = true,
                 Expire = null,
                 Durable = true,
-                DeadLetterRoutingKey = NotHandledRoutingKey.Event,
                 Bindings = bindings.ToArray()
             });
 
@@ -89,7 +88,6 @@ namespace SAL.Core.Rabbit
                 HasDeadLetter = true,
                 Expire = null,
                 Durable = true,
-                DeadLetterRoutingKey = NotHandledRoutingKey.Event,
                 Bindings = bindings.ToArray()
             });
 
@@ -119,7 +117,6 @@ namespace SAL.Core.Rabbit
                 HasDeadLetter = true,
                 Expire = null,
                 Durable = true,
-                DeadLetterRoutingKey = NotHandledRoutingKey.CommandResult,
                 Bindings = new[]{ new QueueBinding
                 {
                     ExchangeName = ExchangeNames.CommandResultExchange,
@@ -143,7 +140,6 @@ namespace SAL.Core.Rabbit
                 HasDeadLetter = true,
                 Expire = null,
                 Durable = true,
-                DeadLetterRoutingKey = NotHandledRoutingKey.CommandResult,
                 Bindings = new[]{ new QueueBinding
                 {
                     ExchangeName = ExchangeNames.CommandResultExchange,
@@ -175,7 +171,6 @@ namespace SAL.Core.Rabbit
                 HasDeadLetter = true,
                 Expire = null,
                 Durable = true,
-                DeadLetterRoutingKey = NotHandledRoutingKey.CommandResult,
                 Bindings = new[]{ new QueueBinding
                 {
                     ExchangeName = ExchangeNames.CommandResultExchange,
@@ -190,7 +185,7 @@ namespace SAL.Core.Rabbit
 
             transport.UpdateTopology();
 
-            return new MultiConsumerSubscription(transport, "CommandResults", syncPrefetchCount, queueList.ToArray(), handler);
+            return new MultiConsumerSubscription(transport, "SyncCommandResults", syncPrefetchCount, queueList.ToArray(), handler);
         }
 
         public ISubscription CreateCommand(ushort globalPrefetchCount, ushort mainPrefetchCount, CommandInfo[] commands, Func<RabbitMessage, Action, Action, Task> handler)
@@ -215,7 +210,6 @@ namespace SAL.Core.Rabbit
                     HasDeadLetter = true,
                     Expire = null,
                     Durable = true,
-                    DeadLetterRoutingKey = NotHandledRoutingKey.Command,
                     Bindings = new[]{ new QueueBinding
                     {
                         ExchangeName = ExchangeNames.CommandExchange,
@@ -235,7 +229,6 @@ namespace SAL.Core.Rabbit
                 HasDeadLetter = true,
                 Expire = null,
                 Durable = true,
-                DeadLetterRoutingKey = NotHandledRoutingKey.Command,
                 Bindings = new[]{ new QueueBinding
                 {
                     ExchangeName = ExchangeNames.CommandExchange,

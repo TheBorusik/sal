@@ -19,7 +19,7 @@ using SAL.Infrastructure;
 
 namespace SAL.Core.Service
 {
-    public partial class AdapterRunner
+    internal partial class BackAdapter
     {
         protected IConfigWatcher ConfigWatcher;
         protected NLogFactoryAdapter nLogFactory;
@@ -161,7 +161,7 @@ namespace SAL.Core.Service
             Layout.Register<SalJsonLayout>("SalJsonLayout");
             LayoutRenderer.Register<SidLayoutRenderer>("sid");
             nLogFactory = new NLogFactoryAdapter(ConfigWatcher.GetSection(ConfigurationSectionNames.Nlog));
-            logger = nLogFactory.GetLogger(nameof(AdapterRunner));
+            logger = nLogFactory.GetLogger(nameof(BackAdapter));
         }
 
 

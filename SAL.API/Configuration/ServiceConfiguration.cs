@@ -19,5 +19,7 @@ namespace SAL.API
         public static int Revision { get; internal set; }
 
         public static string Contour { get; internal set; }
+
+        public static string FrontContour { get; internal set; }
     }
 }

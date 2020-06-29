@@ -11,7 +11,7 @@ using SAL.Core.WatchDog;
 
 namespace SAL.Core.Service
 {
-    public partial class AdapterRunner
+    internal partial class BackAdapter
     {
 
         protected virtual void ConfigureBuilder(ContainerBuilder builder)
@@ -34,7 +34,8 @@ namespace SAL.Core.Service
 
             builder.RegisterType<SalClient>()
                 .As<ISalClient>()
-                .As<ILoSalClient>();
+                .As<ILoSalClient>()
+                .WithParameter("prefix", "");
 
 
             builder.RegisterType<SalHandlerLogger>()
@@ -42,21 +43,6 @@ namespace SAL.Core.Service
                 .SingleInstance();
 
 
-
-            //todo придумать получше
-            BackConfigureContainer(builder);
-            FrontConfigureContainer(builder);
-
-            logger.Trace("ConfigureContainer Done.");
-        }
-
-        protected virtual void FrontConfigureContainer(ContainerBuilder builder)
-        {
-
-        }
-
-        protected virtual void BackConfigureContainer(ContainerBuilder builder)
-        {
             builder.RegisterType<CommandProcessor>().AsProcessor();
             builder.RegisterType<CommandResultProcessor>().AsProcessor();
             builder.RegisterType<EventProcessor>().AsProcessor();
@@ -64,16 +50,21 @@ namespace SAL.Core.Service
 
             builder.RegisterType<RabbitMQTransport>()
                 .As<ITransport>()
-                .AsSelf()
                 .WithParameter("prefix", "")
                 .SingleInstance();
 
-            builder.RegisterType<TransportMonitor>()
-                .As<IWatchDogMonitor>()
-                .SingleInstance();
 
-            builder.RegisterType<RabbitMQPublisher>()
-                .As<IPublisher>()
+
+
+            AdapterConfigureContainer(builder);
+
+            logger.Trace("ConfigureContainer Done.");
+        }
+
+        protected virtual void AdapterConfigureContainer(ContainerBuilder builder)
+        {
+            builder.RegisterType<BackTransportMonitor>()
+                .As<IWatchDogMonitor>()
                 .SingleInstance();
         }
 

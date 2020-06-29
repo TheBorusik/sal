@@ -24,7 +24,7 @@ using SAL.Infrastructure;
 
 namespace SAL.Core.Processors
 {
-    internal class CommandResultProcessor : IProcessor, ICommandResultProcessor
+    internal class FrontCommandResultProcessor : IProcessor, ICommandResultProcessor
     {
         private ILoggerProvider loggerProvider;
         private ILogger logger;
@@ -41,7 +41,7 @@ namespace SAL.Core.Processors
         private readonly LinkedList<CommandResultHandlerInfo> anyResultHandlers = new LinkedList<CommandResultHandlerInfo>();
         private readonly ConcurrentDictionary<string, SimpleCommandResultHandlerInfo> simpleCommandResultHandlers = new ConcurrentDictionary<string, SimpleCommandResultHandlerInfo>();
 
-        public CommandResultProcessor(ILifetimeScope container, ILoggerProvider loggerProvider, ISalLogger salLogger)
+        public FrontCommandResultProcessor(ILifetimeScope container, ILoggerProvider loggerProvider, ISalLogger salLogger)
         {
             this.container = container;
             this.loggerProvider = loggerProvider;
@@ -480,8 +480,5 @@ namespace SAL.Core.Processors
 
 
 
-    public interface ICommandResultProcessor
-    {
-        void RegisterSimpleCommandResultHandler(string correlationId, TaskCompletionSource<CommonCommandResult> completionSource, int timeOut);
-    }
+
 }

@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.Serialization;
 using System.Threading.Tasks;
 using Autofac;
+using Autofac.Features.AttributeFilters;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
 using SAL.API;
@@ -242,10 +244,10 @@ namespace SAL.Test
         private readonly ILogger<TestProcessor> logger;
         private readonly ISalClient client;
 
-        public TestProcessor(ILogger<TestProcessor> logger, ISalClient client)
+        public TestProcessor(ILogger<TestProcessor> logger, ILifetimeScope scope)
         {
             this.logger = logger;
-            this.client = client;
+            this.client = scope.ResolveNamed<ISalClient>("front");
         }
 
         public void Start()

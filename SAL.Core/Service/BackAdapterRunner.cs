@@ -11,7 +11,7 @@ namespace SAL.Core.Service
     {
         public async Task RunAsync()
         {
-            var adapter = new AdapterRunner();
+            var adapter = new BackAdapter();
             adapter.LoadConfiguration();
 
             var host = new HostBuilder()

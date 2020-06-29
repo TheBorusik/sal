@@ -2,7 +2,7 @@
 
 namespace SAL.Core.Service
 {
-    public partial class AdapterRunner
+    internal partial class BackAdapter
     {
         private IWatchDog watchDog;
         protected bool IsOnline = false;

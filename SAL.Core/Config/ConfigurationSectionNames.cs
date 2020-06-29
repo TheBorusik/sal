@@ -4,6 +4,8 @@
     {
         public const string Service = "service";
         public const string MessageBus = "messagebus";
+        public const string FrontMessageBus = "frontmessagebus";
+
         public const string BridgedMessageBus = "bridgedmessagebus";
         public const string Modules = "modules";
         public const string ConnectionManager = "connectionmanager";

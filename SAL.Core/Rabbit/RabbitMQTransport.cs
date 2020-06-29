@@ -2,6 +2,7 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.NetworkInformation;
 using Microsoft.Extensions.Logging;
 using RabbitMQ.Client;
 using SAL.API;
@@ -40,10 +41,12 @@ namespace SAL.Core.Rabbit
 
         private IConfigWatcher configWatcher;
         private readonly ILogger logger;
+        private readonly string prefix;
 
         public RabbitMQTransport(IConfigWatcher configWatcher, ILoggerProvider loggerProvider ,  string prefix)
         {
             this.configWatcher = configWatcher;
+            this.prefix = prefix;
             LoggerProvider = loggerProvider;
 
             var loggerName = $"RMQ.Transport.{prefix}";
@@ -66,46 +69,11 @@ namespace SAL.Core.Rabbit
             subscriptionFactory = new RabbitMQAsyncSubscriptionFactory(this);
             publisher = new RabbitMQPublisher(this, LoggerProvider);
 
-            exchanges.Add(new Exchange { Name = ExchangeNames.RejectedMessageExchange, Type = Topology.ExchangeType.Direct });
-            exchanges.Add(new Exchange { Name = ExchangeNames.CommandExchange, Type = Topology.ExchangeType.Direct, AlternateExchange = ExchangeNames.RejectedMessageExchange});
-            exchanges.Add(new Exchange { Name = ExchangeNames.CommandResultExchange, Type = Topology.ExchangeType.Direct, AlternateExchange = ExchangeNames.RejectedMessageExchange });
-            exchanges.Add(new Exchange { Name = ExchangeNames.EventExchange, Type = Topology.ExchangeType.Direct, AlternateExchange = ExchangeNames.RejectedMessageExchange });
+            exchanges.Add(new Exchange { Name = ExchangeNames.NotHandledExchange, Type = Topology.ExchangeType.Fanout });
+            exchanges.Add(new Exchange { Name = ExchangeNames.CommandExchange, Type = Topology.ExchangeType.Direct, AlternateExchange = ExchangeNames.NotHandledExchange });
+            exchanges.Add(new Exchange { Name = ExchangeNames.CommandResultExchange, Type = Topology.ExchangeType.Direct, AlternateExchange = ExchangeNames.NotHandledExchange });
+            exchanges.Add(new Exchange { Name = ExchangeNames.EventExchange, Type = Topology.ExchangeType.Direct, AlternateExchange = ExchangeNames.NotHandledExchange });
 
-            queues.Add(new Queue
-            {
-                Name = QueueNames.NotHandledCommand,
-                AutoDelete = false,
-                Exclusive = false,
-                Durable = true,
-                HasDeadLetter = false,
-                Expire = null,
-                MaxPriority = 0,
-                Bindings = new[] { new QueueBinding { ExchangeName = ExchangeNames.RejectedMessageExchange, RoutingKey = NotHandledRoutingKey.Command } },
-            });
-
-            queues.Add(new Queue
-            {
-                Name = QueueNames.NotHandledCommandResult,
-                AutoDelete = false,
-                Exclusive = false,
-                Durable = true,
-                HasDeadLetter = false,
-                Expire = null,
-                MaxPriority = 0,
-                Bindings = new[] { new QueueBinding { ExchangeName = ExchangeNames.RejectedMessageExchange, RoutingKey = NotHandledRoutingKey.CommandResult } },
-            });
-
-            queues.Add(new Queue
-            {
-                Name = QueueNames.NotHandledEvent,
-                AutoDelete = false,
-                Exclusive = false,
-                Durable = true,
-                HasDeadLetter = false,
-                Expire = null,
-                MaxPriority = 0,
-                Bindings = new[] { new QueueBinding { ExchangeName = ExchangeNames.RejectedMessageExchange, RoutingKey = NotHandledRoutingKey.Event } },
-            });
 
             queues.Add(new Queue
             {
@@ -116,7 +84,7 @@ namespace SAL.Core.Rabbit
                 HasDeadLetter = false,
                 Expire = null,
                 MaxPriority = 0,
-                Bindings = new[] { new QueueBinding { ExchangeName = ExchangeNames.RejectedMessageExchange } },
+                Bindings = new[] { new QueueBinding { ExchangeName = ExchangeNames.NotHandledExchange } },
             });
         }
 
@@ -150,8 +118,9 @@ namespace SAL.Core.Rabbit
 
             try
             {
-                IsConnected = true;
+
                 RestoreTopology();
+                IsConnected = true;
                 TopologyInited = true;
 
                 var handler = ConnectionRestore;
@@ -204,9 +173,7 @@ namespace SAL.Core.Rabbit
 
                 if (queue.HasDeadLetter)
                 {
-                    queueParams.Add("x-dead-letter-exchange", ExchangeNames.RejectedMessageExchange);
-                    if(!string.IsNullOrWhiteSpace(queue.DeadLetterRoutingKey))
-                        queueParams.Add("x-dead-letter-routing-key", queue.DeadLetterRoutingKey);
+                    queueParams.Add("x-dead-letter-exchange", ExchangeNames.NotHandledExchange);
                 }
 
                 if (queue.MaxPriority > 0)
