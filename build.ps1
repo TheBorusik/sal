@@ -25,6 +25,10 @@ Get-ChildItem -Filter *.csproj -Recurse | %{
 }
 
 dotnet build --configuration $configurationName;
+if($LastExitCode -ne 0) { Write-Error 'Ошибка сборки' -ErrorAction Stop }
 dotnet pack ./SAL.API/SAL.API.csproj  --no-build --output nupkgs
+if($LastExitCode -ne 0) { Write-Error 'Ошибка упаковки SAL.API' -ErrorAction Stop }
 dotnet pack ./SAL.Core/SAL.Core.csproj  --no-build --output nupkgs
+if($LastExitCode -ne 0) { Write-Error 'Ошибка упаковки SAL.Core' -ErrorAction Stop }
 dotnet pack ./SAL.Infrastructure/SAL.Infrastructure.csproj  --no-build --output nupkgs
+if($LastExitCode -ne 0) { Write-Error 'Ошибка упаковки SAL.Infrastructure' -ErrorAction Stop }
