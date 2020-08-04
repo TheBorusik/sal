@@ -57,7 +57,7 @@ namespace SAL.Core.Rabbit
 
             if (string.IsNullOrWhiteSpace(rabbitConfig.Host))
             {
-                throw SalError.CreateException(ResultCodes.Fatal, "RMQ Config section not found", properties: new { SectionName = $"{prefix}MessageBus" });
+                throw SalError.CreateException(SalErrorCodes.Fatal, "RMQ Config section not found", properties: new { SectionName = $"{prefix}MessageBus" });
             }
 
 

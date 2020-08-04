@@ -6,12 +6,13 @@ using SAL.Core.DB;
 using SAL.Core.Processors;
 using SAL.Core.Rabbit;
 using SAL.Core.Rabbit.Interfaces;
+using SAL.Core.SystemEventHandlers;
 using SAL.Core.Validators;
 using SAL.Core.WatchDog;
 
 namespace SAL.Core.Service
 {
-    internal partial class BackAdapter
+    public partial class BackAdapter
     {
 
         protected virtual void ConfigureBuilder(ContainerBuilder builder)
@@ -46,6 +47,8 @@ namespace SAL.Core.Service
             builder.RegisterType<CommandProcessor>().AsProcessor();
             builder.RegisterType<CommandResultProcessor>().AsProcessor();
             builder.RegisterType<EventProcessor>().AsProcessor();
+
+            builder.RegisterSalHandler<SystemWIWHandler>();
 
 
             builder.RegisterType<RabbitMQTransport>()

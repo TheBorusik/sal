@@ -107,7 +107,7 @@ namespace SAL.Core.Client
             {
                 Error = null,
                 Result = JObject.FromObject(result, SalSerializer.Create()),
-                ResultCode = ResultCodes.ResultOK
+                ResultCode = ResultCodes.Success
             }, commandDescriptor);
         }
 
@@ -127,7 +127,7 @@ namespace SAL.Core.Client
             {
                 Error = SalError.CreateValidationDto(validationErrors),
                 Result = null,
-                ResultCode = ResultCodes.ValidationFailed
+                ResultCode = ResultCodes.Error
             }, commandDescriptor);
 
         }
@@ -138,16 +138,15 @@ namespace SAL.Core.Client
             {
                 Error = null,
                 Result = JObject.FromObject(result, SalSerializer.Create()),
-                ResultCode = ResultCodes.ResultOK
+                ResultCode = ResultCodes.Success
             }, commandDescriptor);
         }
 
 
         public Task PublishEventAsync(IEvent evnt, TimeSpan? ttl = null, string handlerServiceType = null, string handlerServiceName = null)
         {
-            var eventType = evnt.GetType();
             return PublishEventAsync(
-                eventType.GetSourceName(),
+                evnt.GetType().GetSourceName(),
                 evnt,
                 ttl,
                 handlerServiceType,
@@ -242,7 +241,7 @@ namespace SAL.Core.Client
             var commandPayload = new CommandPayload
             {
                 Descriptor = commandDescriptor,
-                Body = JObject.FromObject(commandBody, SalSerializer.Create())
+                Payload = JObject.FromObject(commandBody, SalSerializer.Create())
             };
 
 
@@ -311,7 +310,7 @@ namespace SAL.Core.Client
             var commandPayload = new CommandPayload
             {
                 Descriptor = commandDescriptor,
-                Body = JObject.FromObject(commandBody, SalSerializer.Create())
+                Payload = JObject.FromObject(commandBody, SalSerializer.Create())
             };
             UpdateOprationId();
             salLogger.LogOutgoing(commandPayload);
@@ -373,7 +372,7 @@ namespace SAL.Core.Client
                 var commandResultPayload = new CommandResultPayload
                 {
                     Descriptor = commandResultDescriptor,
-                    Body = result
+                    Payload = result
                 };
 
                 UpdateOprationId();
@@ -421,7 +420,7 @@ namespace SAL.Core.Client
             var eventPayload = new EventPayload()
             {
                 Descriptor = eventDescriptor,
-                Body = JObject.FromObject(eventBody, SalSerializer.Create())
+                Payload = JObject.FromObject(eventBody, SalSerializer.Create())
             };
 
             UpdateOprationId();

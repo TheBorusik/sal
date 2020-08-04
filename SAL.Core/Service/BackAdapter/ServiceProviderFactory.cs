@@ -5,7 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace SAL.Core.Service
 {
-    internal partial class BackAdapter
+    public partial class BackAdapter
     {
         public ContainerBuilder CreateBuilder(IServiceCollection services)
         {

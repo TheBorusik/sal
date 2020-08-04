@@ -271,7 +271,7 @@ namespace SAL.Core.Processors
                 }
                 else
                 {
-                    var dto = SalError.CreateDto(ResultCodes.Fatal,
+                    var dto = SalError.CreateDto(SalErrorCodes.Fatal,
                         "При обработке команды произошла ошибка"
                         , innerException: ex.InnerException
                         , properties: new
@@ -286,7 +286,7 @@ namespace SAL.Core.Processors
             catch (Exception ex)
             {
                 nack();
-                var dto = SalError.CreateDto(ResultCodes.Fatal,
+                var dto = SalError.CreateDto(SalErrorCodes.Fatal,
                     "При обработке команды произошла ошибка"
                     , innerException: ex
                     , properties: new
@@ -332,8 +332,8 @@ namespace SAL.Core.Processors
             if (string.IsNullOrWhiteSpace(commandPayload.Descriptor.CommandName))
                 throw new Exception($"Пустой commandPayload.Descriptor.CommandName | CorrelationId:{transportMessage.CorrelationId}");
 
-            if (commandPayload.Body == null)
-                throw new Exception($"Отсутствует commandPayload.Body | CorrelationId:{transportMessage.CorrelationId}");
+            if (commandPayload.Payload == null)
+                throw new Exception($"Отсутствует commandPayload.Payload | CorrelationId:{transportMessage.CorrelationId}");
 
 
             if (commandPayload.Descriptor.ServiceType != ServiceConfiguration.AdapterType)
@@ -376,7 +376,7 @@ namespace SAL.Core.Processors
 
                 if (!commandHandlerInfo.IsCommon)
                 {
-                    var commandObject = commandPayload.Body.ConvertValue(commandHandlerInfo.CommandType);
+                    var commandObject = commandPayload.Payload.ConvertValue(commandHandlerInfo.CommandType);
                     var validator = scope.Resolve<ObjectValidator>();
 
                     var validationErrors = await validator.ValidateData(commandObject,
@@ -392,13 +392,13 @@ namespace SAL.Core.Processors
                 }
                 else
                 {
-                    await ExecuteCommonHandlerAsync(handler, commandPayload.Body);
+                    await ExecuteCommonHandlerAsync(handler, commandPayload.Payload);
 
                 }
             }
             else
             {
-                throw SalError.CreateException(ResultCodes.Fatal, "Обработчик команды не найден");
+                throw SalError.CreateException(SalErrorCodes.Fatal, "Обработчик команды не найден");
             }
         }
 
@@ -418,7 +418,7 @@ namespace SAL.Core.Processors
             }
             else
             {
-                throw SalError.CreateException(ResultCodes.Fatal, "Обработчик не являеться общим", properties: new { handlerType = handler.GetType().Name });
+                throw SalError.CreateException(SalErrorCodes.Fatal, "Обработчик не являеться общим", properties: new { handlerType = handler.GetType().Name });
             }
         }
 

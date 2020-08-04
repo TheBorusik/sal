@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using Autofac;
 using Autofac.Builder;
 using SAL.API.Command;
@@ -65,17 +66,12 @@ namespace SAL.API
             return registration;
         }
 
-
-
-
         public static IRegistrationBuilder<T, ConcreteReflectionActivatorData, SingleRegistrationStyle> RegisterProcessor<T>(this ContainerBuilder builder)
         {
             return builder.RegisterType<T>()
                 .AsProcessor()
                 .SingleInstance();
         }
-
-
 
         public static IRegistrationBuilder<T, ConcreteReflectionActivatorData, SingleRegistrationStyle> AsProcessor<T>(this IRegistrationBuilder<T, ConcreteReflectionActivatorData, SingleRegistrationStyle> builder)
         {
@@ -84,5 +80,11 @@ namespace SAL.API
                 .SingleInstance();
         }
 
+        public static IRegistrationBuilder<T, ConcreteReflectionActivatorData, SingleRegistrationStyle> RegisterRepository<T, TI>(this ContainerBuilder builder) where TI : IDisposable, IBaseRepository
+        {
+            return builder.RegisterType<T>()
+                .As<IBaseRepository<TI>>()
+                .As<TI>();
+        }
     }
 }

@@ -243,7 +243,7 @@ namespace SAL.Core.Processors
                 }
                 else
                 {
-                    var dto = SalError.CreateDto(ResultCodes.Fatal,
+                    var dto = SalError.CreateDto(SalErrorCodes.Fatal,
                         "При обработке результата команды произошла ошибка"
                         , innerException: ex.InnerException
                         , properties: new
@@ -258,7 +258,7 @@ namespace SAL.Core.Processors
             catch (Exception ex)
             {
                 nack();
-                var dto = SalError.CreateDto(ResultCodes.Fatal,
+                var dto = SalError.CreateDto(SalErrorCodes.Fatal,
                     "При обработке результата команды произошла ошибка"
                     , innerException: ex
                     , properties: new
@@ -297,7 +297,7 @@ namespace SAL.Core.Processors
                 }
                 else
                 {
-                    var dto = SalError.CreateDto(ResultCodes.Fatal,
+                    var dto = SalError.CreateDto(SalErrorCodes.Fatal,
                         "При обработке результата команды произошла ошибка"
                         , innerException: ex.InnerException
                         , properties: new
@@ -313,7 +313,7 @@ namespace SAL.Core.Processors
             catch (Exception ex)
             {
                 nack();
-                var dto = SalError.CreateDto(ResultCodes.Fatal,
+                var dto = SalError.CreateDto(SalErrorCodes.Fatal,
                     "При обработке результата команды произошла ошибка"
                     , innerException: ex
                     , properties: new
@@ -359,8 +359,8 @@ namespace SAL.Core.Processors
             if (string.IsNullOrWhiteSpace(commandResultPayload.Descriptor.CommandName))
                 throw new Exception($"Пустой commandPayload.Descriptor.CommandName | CorrelationId:{transportMessage.CorrelationId}");
 
-            if (commandResultPayload.Body == null)
-                throw new Exception($"Отсутствует commandPayload.Body | CorrelationId:{transportMessage.CorrelationId}");
+            if (commandResultPayload.Payload == null)
+                throw new Exception($"Отсутствует commandPayload.Payload | CorrelationId:{transportMessage.CorrelationId}");
 
 
             if (commandResultPayload.Descriptor.ServiceType != ServiceConfiguration.AdapterType)
@@ -405,7 +405,7 @@ namespace SAL.Core.Processors
                 {
 
                     HandlerContext.Name = rchi.HandlerType.Name;
-                    isHandled = await ExecuteResultHandlerAsync(scope, rchi, commandResultPayload.Body, context,
+                    isHandled = await ExecuteResultHandlerAsync(scope, rchi, commandResultPayload.Payload, context,
                         executingContext);
                     salLogger.LogHandler(commandResultPayload, rchi.HandlerType.Name, isHandled);
                     if (isHandled)
@@ -418,7 +418,7 @@ namespace SAL.Core.Processors
                     while (node != null && isHandled == false)
                     {
                         HandlerContext.Name = node.Value.HandlerType.Name;
-                        isHandled = await ExecuteResultHandlerAsync(scope, node.Value, commandResultPayload.Body,
+                        isHandled = await ExecuteResultHandlerAsync(scope, node.Value, commandResultPayload.Payload,
                             context, executingContext);
                         salLogger.LogHandler(commandResultPayload, node.Value.HandlerType.Name, isHandled);
                         node = node.Next;
@@ -437,7 +437,7 @@ namespace SAL.Core.Processors
         {
             if (simpleCommandResultHandlers.TryRemove(commandResultPayload.Descriptor.CorrelationId, out var simpleCommandResultHandler))
             {
-                salLogger.LogHandler(commandResultPayload, "Sync", simpleCommandResultHandler.CompletionSource.TrySetResult(commandResultPayload.Body));
+                salLogger.LogHandler(commandResultPayload, "Sync", simpleCommandResultHandler.CompletionSource.TrySetResult(commandResultPayload.Payload));
             }
             else
             {
@@ -472,7 +472,7 @@ namespace SAL.Core.Processors
             }
             else
             {
-                throw SalError.CreateException(ResultCodes.Fatal, "Обработчик не являеться общим", properties: new { handlerType = handler.GetType().Name });
+                throw SalError.CreateException(SalErrorCodes.Fatal, "Обработчик не являеться общим", properties: new { handlerType = handler.GetType().Name });
             }
         }
 

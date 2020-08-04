@@ -19,7 +19,7 @@ using SAL.Infrastructure;
 
 namespace SAL.Core.Service
 {
-    internal partial class FrontAdapter
+    public partial class FrontAdapter
     {
         protected override void ApplyConfiguration()
         {

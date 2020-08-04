@@ -5,7 +5,7 @@ using SAL.API;
 
 namespace SAL.Core.Service
 {
-    internal partial class FrontAdapter : BackAdapter
+    public partial class FrontAdapter : BackAdapter
     {
         protected override void ShowStartupInfo()
         {

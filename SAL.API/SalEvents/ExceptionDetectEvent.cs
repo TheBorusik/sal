@@ -4,7 +4,7 @@ using SAL.Infrastructure.EventAttributes;
 namespace SAL.API
 {
     [SalSystemEvent]
-    [SalServiceType("Error")]
+    [SalServiceType("System")]
     [SalEventName("ExceptionDetected")]
     public class ExceptionDetectedEvent : IEvent
     {

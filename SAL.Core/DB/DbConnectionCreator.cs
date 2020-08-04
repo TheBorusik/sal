@@ -58,7 +58,7 @@ namespace SAL.Core.DB
 
             var connection = cacheItem.ProviderFactory.CreateConnection();
             if (connection == null)
-                throw SalError.CreateException(ResultCodes.Fatal, "Неудалось создать Connection");
+                throw SalError.CreateException(SalErrorCodes.Fatal, "Неудалось создать Connection");
             connection.ConnectionString = cacheItem.ConnectionString;
             return connection;
         }
@@ -85,19 +85,19 @@ namespace SAL.Core.DB
         private (string connectionString, DbProviderFactory fact) BuildString(string connectionName)
         {
             if (config == null)
-                throw SalError.CreateException(ResultCodes.Fatal, $"Section '{mainSectionName}' not found");
+                throw SalError.CreateException(SalErrorCodes.Fatal, $"Section '{mainSectionName}' not found");
 
             var connectionSection = GetConnectionSection(connectionName);
 
             var providerName = GetProviderName(connectionSection);
 
             if (string.IsNullOrWhiteSpace(providerName))
-                throw SalError.CreateException(ResultCodes.Fatal, $"Connection '{connectionName}' ProviderName not set");
+                throw SalError.CreateException(SalErrorCodes.Fatal, $"Connection '{connectionName}' ProviderName not set");
 
             var fact = GetFactory(providerName);
             var builder = fact.CreateConnectionStringBuilder();
             if (builder == null)
-                throw SalError.CreateException(ResultCodes.Fatal, "Неудалось создать ConnectionStringBuilder");
+                throw SalError.CreateException(SalErrorCodes.Fatal, "Неудалось создать ConnectionStringBuilder");
 
             var ignoreKeys = new[] { userProperties, connectionProviderNameKeyName };
 
@@ -132,7 +132,7 @@ namespace SAL.Core.DB
         {
             if (scope.TryResolveNamed(providerName, typeof(DbProviderFactory), out var providerFactory))
                 return (DbProviderFactory)providerFactory;
-            throw SalError.CreateException(ResultCodes.Fatal, $"Data provider '{providerName}' not register in Autofac");
+            throw SalError.CreateException(SalErrorCodes.Fatal, $"Data provider '{providerName}' not register in Autofac");
         }
 
 
@@ -141,7 +141,7 @@ namespace SAL.Core.DB
             var connectionSection = GetConnectionSection(connectionName);
 
             if (!connectionSection.ContainsKey(properyName))
-                throw SalError.CreateException(ResultCodes.Fatal, $"Connection propety \"{properyName}\" not found");
+                throw SalError.CreateException(SalErrorCodes.Fatal, $"Connection propety \"{properyName}\" not found");
 
             return connectionSection.GetValue<T>(properyName);
         }
@@ -154,7 +154,7 @@ namespace SAL.Core.DB
         public string GetDefaultConnectionName()
         {
             if (config == null)
-                throw SalError.CreateException(ResultCodes.Fatal, $"Section '{mainSectionName}' not found");
+                throw SalError.CreateException(SalErrorCodes.Fatal, $"Section '{mainSectionName}' not found");
            return config.GetSafeValue(defaultConnectionKeyName, defaultConnectionName);
 
         }
@@ -167,7 +167,7 @@ namespace SAL.Core.DB
         private JObject GetConnectionSection(string connectionName = null)
         {
             if (config == null)
-                throw SalError.CreateException(ResultCodes.Fatal, $"Section '{mainSectionName}' not found");
+                throw SalError.CreateException(SalErrorCodes.Fatal, $"Section '{mainSectionName}' not found");
 
             if (string.IsNullOrWhiteSpace(connectionName))
                 connectionName = GetDefaultConnectionName();
@@ -175,12 +175,12 @@ namespace SAL.Core.DB
             var connectionData = config.GetValueIC(connectionsDataSectionName) as JObject;
 
             if (connectionData == null)
-                throw SalError.CreateException(ResultCodes.Fatal, $"Section '{mainSectionName}.{connectionsDataSectionName}' not found");
+                throw SalError.CreateException(SalErrorCodes.Fatal, $"Section '{mainSectionName}.{connectionsDataSectionName}' not found");
 
 
             var connectionSection = connectionData.GetValueIC(connectionName) as JObject;
             if (connectionSection == null)
-                throw SalError.CreateException(ResultCodes.Fatal, $"Connection name '{connectionName}' not found");
+                throw SalError.CreateException(SalErrorCodes.Fatal, $"Connection name '{connectionName}' not found");
 
             return connectionSection;
         }

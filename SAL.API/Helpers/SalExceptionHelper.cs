@@ -79,7 +79,7 @@ namespace SAL.API
                 StackTrace = ex.StackTrace,
                 // CallTrace = HandlerContext.CallTrace,
                 HandlerName = $"{HandlerContext.Type}.{HandlerContext.Name}",
-                InnerException = ex.InnerException.ToDto(ResultCodes.Fatal)
+                InnerException = ex.InnerException.ToDto(SalErrorCodes.Fatal)
             };
 
 
@@ -133,7 +133,7 @@ namespace SAL.API
         {
             var dto = new InternalExceptionDTO
             {
-                Code = ResultCodes.ValidationFailed,
+                Code = SalErrorCodes.ValidationFailed,
                 TimeStamp = DateTime.UtcNow,
                 Properties = JObject.FromObject(new { ValidationErrors  = validationErrors }) ,
                 AdapterName = $"{ServiceConfiguration.AdapterType}.{ServiceConfiguration.AdapterName}",

@@ -48,7 +48,7 @@ namespace SAL.Core.Processors
             }
 
             sb.AppendLine();
-            var body = loggerSettings.Formatting ? commandPayload.Body.ToIndentedJson() : commandPayload.Body.ToJson();
+            var body = loggerSettings.Formatting ? commandPayload.Payload.ToIndentedJson() : commandPayload.Payload.ToJson();
 
             if (loggerSettings.CropSize < 0)
                 sb.Append(body);
@@ -81,7 +81,7 @@ namespace SAL.Core.Processors
             }
 
             sb.AppendLine();
-            var body = loggerSettings.Formatting ? commandResultPayload.Body.ToIndentedJson() : commandResultPayload.Body.ToJson();
+            var body = loggerSettings.Formatting ? commandResultPayload.Payload.ToIndentedJson() : commandResultPayload.Payload.ToJson();
 
             if (loggerSettings.CropSize < 0)
                 sb.Append(body);
@@ -109,7 +109,7 @@ namespace SAL.Core.Processors
             }
 
             sb.AppendLine();
-            var body = loggerSettings.Formatting ? eventPayload.Body.ToIndentedJson() : eventPayload.Body.ToJson();
+            var body = loggerSettings.Formatting ? eventPayload.Payload.ToIndentedJson() : eventPayload.Payload.ToJson();
 
             if (loggerSettings.CropSize < 0)
                 sb.Append(body);
@@ -142,7 +142,7 @@ namespace SAL.Core.Processors
             }
 
             sb.AppendLine();
-            var body = loggerSettings.Formatting ? commandPayload.Body.ToIndentedJson() : commandPayload.Body.ToJson();
+            var body = loggerSettings.Formatting ? commandPayload.Payload.ToIndentedJson() : commandPayload.Payload.ToJson();
 
             if (loggerSettings.CropSize < 0)
                 sb.Append(body);
@@ -178,7 +178,7 @@ namespace SAL.Core.Processors
             }
 
             sb.AppendLine();
-            var body = loggerSettings.Formatting ? commandResultPayload.Body.ToIndentedJson() : commandResultPayload.Body.ToJson();
+            var body = loggerSettings.Formatting ? commandResultPayload.Payload.ToIndentedJson() : commandResultPayload.Payload.ToJson();
 
             if (loggerSettings.CropSize < 0)
                 sb.Append(body);
@@ -290,7 +290,7 @@ namespace SAL.Core.Processors
             }
 
             sb.AppendLine();
-            var body = loggerSettings.Formatting ? eventPayload.Body.ToIndentedJson() : eventPayload.Body.ToJson();
+            var body = loggerSettings.Formatting ? eventPayload.Payload.ToIndentedJson() : eventPayload.Payload.ToJson();
 
             if (loggerSettings.CropSize < 0)
                 sb.Append(body);

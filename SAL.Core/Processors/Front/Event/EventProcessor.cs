@@ -48,7 +48,7 @@ namespace SAL.Core.Processors
         {
             try
             {
-                salClient = container.Resolve<ISalClient>();
+                salClient = container.ResolveNamed<ISalClient>("front");
 
                 container.ComponentRegistry.Registrations
                     .Where(r => r.Services.OfType<TypedService>().Any(ts => ts.ServiceType == typeof(IEventHandler)))
@@ -70,7 +70,7 @@ namespace SAL.Core.Processors
                 }
 
 
-                var transport = container.Resolve<ITransport>();
+                var transport = container.ResolveNamed<ITransport>("front");
 
                 var subscriptionFactory = transport.CreateMessageSubscription();
 
@@ -211,7 +211,7 @@ namespace SAL.Core.Processors
                 }
                 else
                 {
-                    var dto = SalError.CreateDto(ResultCodes.Fatal,
+                    var dto = SalError.CreateDto(SalErrorCodes.Fatal,
                         "При обработке event произошла ошибка"
                         , innerException: ex.InnerException
                         , properties: new
@@ -226,7 +226,7 @@ namespace SAL.Core.Processors
             catch (Exception ex)
             {
                 nack();
-                var dto = SalError.CreateDto(ResultCodes.Fatal,
+                var dto = SalError.CreateDto(SalErrorCodes.Fatal,
                     "При обработке event произошла ошибка"
                     , innerException: ex
                     , properties: new
@@ -272,8 +272,8 @@ namespace SAL.Core.Processors
             if (string.IsNullOrWhiteSpace(eventPayload.Descriptor.EventName))
                 throw new Exception($"Пустой eventPayload.Descriptor.EventName | CorrelationId:{transportMessage.CorrelationId}");
 
-            if (eventPayload.Body == null)
-                throw new Exception($"Отсутствует eventPayload.Body | CorrelationId:{transportMessage.CorrelationId}");
+            if (eventPayload.Payload == null)
+                throw new Exception($"Отсутствует eventPayload.Payload | CorrelationId:{transportMessage.CorrelationId}");
 
             return Task.FromResult(eventPayload);
         }
@@ -302,7 +302,7 @@ namespace SAL.Core.Processors
             }
             else
             {
-                var dto = SalError.CreateDto(ResultCodes.Fatal, "Евент не обрабатываеться", properties: new { eventName });
+                var dto = SalError.CreateDto(SalErrorCodes.Fatal, "Евент не обрабатываеться", properties: new { eventName });
                 throw dto.ToException();
             }
         }
@@ -315,7 +315,7 @@ namespace SAL.Core.Processors
             var executingContext = new ExecutingContext
             {
                 Scope = scope,
-                SalClient = scope.Resolve<ISalClient>(),
+                SalClient = scope.ResolveNamed<ISalClient>("front"),
                 Logger = salLogger.GetLogger(eventPayload)
             };
 
@@ -331,10 +331,10 @@ namespace SAL.Core.Processors
             handler.SetContexts(context, executingContext);
 
             if (ehi.IsCommon)
-                return ExecuteCommonEventHandlerAsync(handler, eventPayload.Body);
+                return ExecuteCommonEventHandlerAsync(handler, eventPayload.Payload);
             else
             {
-                var evnt = eventPayload.Body.ConvertValue(ehi.EventType);
+                var evnt = eventPayload.Payload.ConvertValue(ehi.EventType);
                 return (Task)ehi.HandlerMethod.Invoke(handler, new[] { evnt });
             }
         }
@@ -347,7 +347,7 @@ namespace SAL.Core.Processors
             }
             else
             {
-                var dto = SalError.CreateDto(ResultCodes.Fatal, "Обработчик не являеться общим", properties: new { handlerType = handler.GetType().Name });
+                var dto = SalError.CreateDto(SalErrorCodes.Fatal, "Обработчик не являеться общим", properties: new { handlerType = handler.GetType().Name });
                 throw dto.ToException();
             }
         }

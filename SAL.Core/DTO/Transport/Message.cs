@@ -32,19 +32,19 @@ namespace SAL.Core.DTO.Transport
     public class EventPayload
     {
         public EventDescriptor Descriptor { get; set; }
-        public JObject Body { get; set; }
+        public JObject Payload { get; set; }
     }
 
 
     public class CommandPayload
     {
         public CommandDescriptor Descriptor { get; set; }
-        public JObject Body { get; set; }
+        public JObject Payload { get; set; }
     }
 
     public class CommandResultPayload
     {
         public CommandResultDescriptor Descriptor { get; set; }
-        public CommonCommandResult Body { get; set; }
+        public CommonCommandResult Payload { get; set; }
     }
 }

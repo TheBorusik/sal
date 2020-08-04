@@ -35,7 +35,7 @@ namespace SAL.Core.Validators
                 {
                     Path = string.Join(".", curDtdPath),
                     ErrorCode = ValidationCode.RequiredElementMissing,
-                    FieldName = "Body",
+                    FieldName = "Payload",
                     Description = "Root element: is not recognized."
                 });
                 return errors;
