@@ -1,9 +1,8 @@
 ﻿using System.Runtime.CompilerServices;
 
-[assembly: InternalsVisibleTo("SAL.Core")]
 [assembly: InternalsVisibleTo("SALTester")]
 
-namespace SAL.API
+namespace SAL.Core
 {
     internal class ApiMain
     {

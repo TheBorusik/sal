@@ -12,7 +12,7 @@ using SAL.Core.WatchDog;
 
 namespace SAL.Core.Service
 {
-    public partial class BackAdapter
+    internal partial class BackAdapter
     {
 
         protected virtual void ConfigureBuilder(ContainerBuilder builder)

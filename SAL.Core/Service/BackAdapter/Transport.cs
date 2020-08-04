@@ -5,7 +5,7 @@ using SAL.Core.Rabbit.Interfaces;
 
 namespace SAL.Core.Service
 {
-    public partial class BackAdapter
+    internal partial class BackAdapter
     {
         protected void StartTransport()
         {

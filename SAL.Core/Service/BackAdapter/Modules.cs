@@ -7,7 +7,7 @@ using SAL.Core.Config;
 
 namespace SAL.Core.Service
 {
-    public partial class BackAdapter
+    internal partial class BackAdapter
     {
         protected virtual void ConfigureModules(ContainerBuilder builder)
         {

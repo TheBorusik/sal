@@ -11,7 +11,7 @@ using SAL.API;
 
 namespace SAL.Core.Service
 {
-    public partial class BackAdapter : IServiceProviderFactory<ContainerBuilder>, ISalService
+    internal partial class BackAdapter : IServiceProviderFactory<ContainerBuilder>, ISalService
     {
         protected Logger logger;
         protected IContainer Container;

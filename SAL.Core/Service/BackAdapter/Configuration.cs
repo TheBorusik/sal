@@ -19,7 +19,7 @@ using SAL.Infrastructure;
 
 namespace SAL.Core.Service
 {
-    public partial class BackAdapter
+    internal partial class BackAdapter
     {
         protected IConfigWatcher ConfigWatcher;
         protected NLogFactoryAdapter nLogFactory;
