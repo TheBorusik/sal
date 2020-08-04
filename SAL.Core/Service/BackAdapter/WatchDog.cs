@@ -23,7 +23,7 @@ namespace SAL.Core.Service
             watchDog.Stop();
         }
 
-        protected void OnOnline()
+        protected virtual void OnOnline()
         {
             if (!IsOnline)
             {
@@ -32,7 +32,7 @@ namespace SAL.Core.Service
                 OnlineProcessors();
             }
         }
-        protected void OnOffline()
+        protected virtual void OnOffline()
         {
             if (IsOnline)
             {

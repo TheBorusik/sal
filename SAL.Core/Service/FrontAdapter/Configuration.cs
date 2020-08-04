@@ -92,5 +92,13 @@ namespace SAL.Core.Service
             ServiceConfiguration.FrontContour = frontMessageBus.VirtualHost.ToUpperInvariant();
 
         }
+
+        protected override void InitNLog()
+        {
+            Layout.Register<SalJsonLayout>("SalJsonLayout");
+            LayoutRenderer.Register<SidLayoutRenderer>("sid");
+            nLogFactory = new NLogFactoryAdapter(ConfigWatcher.GetSection(ConfigurationSectionNames.Nlog));
+            logger = nLogFactory.GetLogger(nameof(FrontAdapter));
+        }
     }
 }

@@ -35,7 +35,7 @@ namespace SAL.Core.Service
             ServiceConfiguration.ConfigPath = Path.Combine(ServiceConfiguration.RootPath, "config");
 
 
-            var assembly = AppDomain.CurrentDomain.GetAssemblies().FirstOrDefault(a => a.GetName().Name.Equals("TCB.SAL.Core", StringComparison.InvariantCultureIgnoreCase));
+            var assembly = AppDomain.CurrentDomain.GetAssemblies().FirstOrDefault(a => a.GetName().Name.Equals("SAL.Core", StringComparison.InvariantCultureIgnoreCase));
             if (assembly != null)
             {
                 var version = assembly.GetName().Version;
