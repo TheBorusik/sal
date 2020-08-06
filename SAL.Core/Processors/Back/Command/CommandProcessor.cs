@@ -19,6 +19,7 @@ using SAL.Core.DTO.Transport;
 using SAL.Core.Helpers;
 using SAL.Core.Rabbit;
 using SAL.Core.Rabbit.Interfaces;
+using SAL.Core.Service;
 using SAL.Core.Validators;
 using SAL.Infrastructure;
 using SessionManager = SAL.API.SessionManager;
@@ -31,6 +32,7 @@ namespace SAL.Core.Processors
         private ILogger logger;
         private ILoggerProvider loggerProvider;
         private ISalLogger salLogger;
+        private ISalService salService;
 
         private readonly ILifetimeScope container;
 
@@ -47,6 +49,7 @@ namespace SAL.Core.Processors
             this.salLogger = salLogger;
             logger = loggerProvider.CreateLogger(nameof(CommandProcessor));
             salClient = container.Resolve<ISalClient>();
+            salService = container.Resolve<ISalService>();
         }
 
         private CommandProcessorConfig commandProcessorConfig;
@@ -188,6 +191,23 @@ namespace SAL.Core.Processors
 
                 commandHandlers.Add(commandName, commandHandlerInfo);
                 logger.Info($"Для команды {commandName} добавлен обработчик {handlerType.Name}");
+
+
+                var dtos = new List<DtoInfo>();
+                dtos.AddRange(commandHandlerInfo.CommandType.GetDtoInfos());
+                dtos.AddRange(commandHandlerInfo.ResultType.GetDtoInfos());
+
+
+                salService.AddBackCommandHandler(new API.CommandHandlerInfo
+                {
+                    IsCommon = commandHandlerInfo.IsCommon,
+                    CommandName = commandHandlerInfo.CommandName,
+                    IsInstanceHandler = commandHandlerInfo.IsInstanceHandler,
+                    CommandDto = commandHandlerInfo.CommandType.Name,
+                    ResultDto = commandHandlerInfo.ResultType.Name,
+                    Dtos = dtos.ToArray()
+                });
+
             }
         }
 
@@ -224,6 +244,13 @@ namespace SAL.Core.Processors
                     commandHandlers.Add(commandName, commandHandlerInfo);
 
                     logger.Info($"Для команды {commandName} добавлен уневерсальный обработчик {handlerType.Name}");
+
+                    salService.AddBackCommandHandler(new API.CommandHandlerInfo
+                    {
+                        IsCommon = commandHandlerInfo.IsCommon,
+                        CommandName = commandHandlerInfo.CommandName,
+                        IsInstanceHandler = commandHandlerInfo.IsInstanceHandler
+                    });
 
                 });
 

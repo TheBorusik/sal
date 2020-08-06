@@ -18,7 +18,7 @@
           "Layout": {
             "Type": "SalJsonLayout"
           }
-        } 
+        }
       },
 
       "File": {
@@ -51,6 +51,21 @@
         "FileName": "${var:logDir}\\${date:format=yyyy-MM-dd}.${Logger}.Log",
         "CreateDirs": true
       },
+
+      "CommandFile": {
+        "Type": "File",
+        "Layout": "${longdate} ${sid:padding} ${message} ${exception:format=Type, Message}",
+        "FileName": "${var:logDir}\\Commands\\${date:format=yyyy-MM-dd}.${Logger}.Log",
+        "CreateDirs": true
+      },
+      "EventFile": {
+        "Type": "File",
+        "Layout": "${longdate} ${sid:padding} ${message} ${exception:format=Type, Message}",
+        "FileName": "${var:logDir}\\Events\\${date:format=yyyy-MM-dd}.${Logger}.Log",
+        "CreateDirs": true
+      },
+
+
       "ColoredConsole": {
         "Type": "ColoredConsole",
         "Layout": "${longdate} ${sid:padding} ${level}: ${Logger} -> ${message} ${exception:format=Message,StackTrace}",
@@ -90,13 +105,8 @@
       {
         "Pattern": "*",
         "Minlevel": "Trace",
-        "WriteTo": "LogStash"
-      },
-      {
-        "Pattern": "*",
-        "Minlevel": "Trace",
         "WriteTo": "ColoredConsole",
-        "Final": true
+        "Final": false
       },
       {
         "Pattern": "WatchDog*",
@@ -113,13 +123,13 @@
       {
         "Pattern": "*Command",
         "Minlevel": "Trace",
-        "WriteTo": "DataFile",
+        "WriteTo": "CommandFile",
         "Final": true
       },
       {
         "Pattern": "*Event",
         "Minlevel": "Trace",
-        "WriteTo": "DataFile",
+        "WriteTo": "EventFile",
         "Final": true
       },
       {

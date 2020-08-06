@@ -4,19 +4,31 @@ using System.Text;
 using System.Threading.Tasks;
 using SAL.API;
 using SAL.API.Events;
+using SAL.Core.Service;
 
 namespace SAL.Core.SystemEventHandlers
 {
     class SystemWIWHandler : IEventHandler<WhoIsWhoEvent>
     {
-        public Task Handle(WhoIsWhoEvent evnt)
+        private ISalService salService;
+
+        public SystemWIWHandler(ISalService salService)
         {
-            throw new NotImplementedException();
+            this.salService = salService;
         }
+
 
         public void SetContexts(EventContext eventContext, ExecutingContext executingContext)
         {
-            throw new NotImplementedException();
+
         }
+
+        public Task Handle(WhoIsWhoEvent evnt)
+        {
+            salService.SendIm();
+            return Task.CompletedTask;
+        }
+
+
     }
 }

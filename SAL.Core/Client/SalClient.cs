@@ -145,6 +145,8 @@ namespace SAL.Core.Client
 
         public Task PublishEventAsync(IEvent evnt, TimeSpan? ttl = null, string handlerServiceType = null, string handlerServiceName = null)
         {
+            if(evnt == null)
+                return Task.CompletedTask;
             return PublishEventAsync(
                 evnt.GetType().GetSourceName(),
                 evnt,

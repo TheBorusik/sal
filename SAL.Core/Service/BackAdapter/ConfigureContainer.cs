@@ -4,6 +4,7 @@ using SAL.API.Client;
 using SAL.Core.Client;
 using SAL.Core.DB;
 using SAL.Core.Processors;
+using SAL.Core.Processors.System;
 using SAL.Core.Rabbit;
 using SAL.Core.Rabbit.Interfaces;
 using SAL.Core.SystemEventHandlers;
@@ -48,15 +49,14 @@ namespace SAL.Core.Service
             builder.RegisterType<CommandResultProcessor>().AsProcessor();
             builder.RegisterType<EventProcessor>().AsProcessor();
 
-            builder.RegisterSalHandler<SystemWIWHandler>();
+            builder.RegisterType<HeartbeatBackProcessor>().AsProcessor();
 
+            builder.RegisterSalHandler<SystemWIWHandler>();
 
             builder.RegisterType<RabbitMQTransport>()
                 .As<ITransport>()
                 .WithParameter("prefix", "")
                 .SingleInstance();
-
-
 
 
             AdapterConfigureContainer(builder);
@@ -69,6 +69,7 @@ namespace SAL.Core.Service
             builder.RegisterType<BackTransportMonitor>()
                 .As<IWatchDogMonitor>()
                 .SingleInstance();
+
         }
 
 

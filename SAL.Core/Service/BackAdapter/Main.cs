@@ -32,9 +32,12 @@ namespace SAL.Core.Service
             InitUnhandledExceptionHandler();
             InitWatchDog();
             InitProcessors();
+            InitSystem();
             logger.Trace("Инициализация завершена");
             ShowStartupInfo();
         }
+
+
 
 
         public void Start()

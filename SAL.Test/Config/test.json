@@ -28,7 +28,7 @@
       "Items": {
         ".*": {
           "Ignore": false,
-          "СropSize": 0
+          "СropSize": -1
         }
       }
     }
@@ -37,12 +37,15 @@
     "GlobalPrefetchCount": 25,
     "Logging": {
       "Items": {
+        "HeartBit": {
+          "Ignore": true
+        },
         ".*": {
           "Ignore": false,
-          "СropSize": 0
+          "СropSize": -1
         }
       }
     }
-  } 
+  }
 
 }

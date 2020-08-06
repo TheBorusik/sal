@@ -30,6 +30,7 @@ namespace SAL.Core.Service
                 logger.Info("Переход в Online");
                 IsOnline = true;
                 OnlineProcessors();
+                SendOnline();
             }
         }
         protected virtual void OnOffline()
@@ -39,6 +40,7 @@ namespace SAL.Core.Service
                 logger.Info("Переход в Offline");
                 IsOnline = false;
                 OfflineProcessors();
+                SendOffline();
             }
         }
 

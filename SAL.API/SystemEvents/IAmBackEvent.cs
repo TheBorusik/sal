@@ -3,7 +3,7 @@ using Newtonsoft.Json.Linq;
 using SAL.Infrastructure;
 using SAL.Infrastructure.EventAttributes;
 
-namespace SAL.API.Events
+namespace SAL.API
 {
     [SalSystemEvent]
     [SalServiceType("System")]
@@ -17,7 +17,7 @@ namespace SAL.API.Events
         public CommandResultHandlerInfo[] CommandResultHandlers { get; set; }
         public EventHandlerInfo[] EventHandlers { get; set; }
 
-        public DtoInfo[] Dto { get; set; }
+
     }
 
 
@@ -28,6 +28,8 @@ namespace SAL.API.Events
         public bool IsInstanceHandler;
         public string CommandDto;
         public string ResultDto;
+
+        public DtoInfo[] Dtos { get; set; }
     }
 
     public class FrontCommandHandlerInfo : CommandHandlerInfo
@@ -41,6 +43,8 @@ namespace SAL.API.Events
         public string CommandDto;
         public string ResultDto;
         public bool IsCommon;
+
+        public DtoInfo[] Dtos { get; set; }
     }
 
     public class EventHandlerInfo
@@ -49,6 +53,8 @@ namespace SAL.API.Events
         public string EventDto;
         public bool IsSystem;
         public bool IsCommon;
+
+        public DtoInfo[] Dtos { get; set; }
     }
 
     public class DtoInfo
@@ -60,7 +66,6 @@ namespace SAL.API.Events
 
     public class FieldInfo
     {
-        public int Order { get; set; }
         public bool IsRequired { get; set; }
         public string Name { get; set; }
         public FieldType Type { get; set; }
@@ -74,6 +79,7 @@ namespace SAL.API.Events
     {
         None = 0,
         Object = 1,
+        Dictionary = 11,
         Array = 2,
         Integer =3,
         Float = 4,

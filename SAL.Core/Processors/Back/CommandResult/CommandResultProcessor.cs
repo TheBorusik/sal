@@ -20,6 +20,7 @@ using SAL.Core.Config;
 using SAL.Core.DTO.Transport;
 using SAL.Core.Helpers;
 using SAL.Core.Rabbit.Interfaces;
+using SAL.Core.Service;
 using SAL.Infrastructure;
 
 // ReSharper disable once CheckNamespace
@@ -35,6 +36,7 @@ namespace SAL.Core.Processors
         private ISubscription syncSubscription;
 
         private ISalClient salClient;
+        private ISalService salService;
 
         private readonly ILifetimeScope container;
 
@@ -42,12 +44,14 @@ namespace SAL.Core.Processors
         private readonly LinkedList<CommandResultHandlerInfo> anyResultHandlers = new LinkedList<CommandResultHandlerInfo>();
         private readonly ConcurrentDictionary<string, SimpleCommandResultHandlerInfo> simpleCommandResultHandlers = new ConcurrentDictionary<string, SimpleCommandResultHandlerInfo>();
 
+
         public CommandResultProcessor(ILifetimeScope container, ILoggerProvider loggerProvider, ISalLogger salLogger)
         {
             this.container = container;
             this.loggerProvider = loggerProvider;
             this.salLogger = salLogger;
             logger = loggerProvider.CreateLogger(nameof(CommandResultProcessor));
+            salService = container.Resolve<ISalService>();
         }
 
         public void Start()
@@ -121,6 +125,22 @@ namespace SAL.Core.Processors
                     handlers = new LinkedList<CommandResultHandlerInfo>();
                     handlers.AddLast(commandResultHandlerInfo);
                     resultHandlers.Add(commandName, handlers);
+
+
+                    var dtos = new List<DtoInfo>();
+                    dtos.AddRange(commandResultHandlerInfo.CommandType.GetDtoInfos());
+                    dtos.AddRange(commandResultHandlerInfo.ResultType.GetDtoInfos());
+
+
+
+                    salService.AddBackCommandResultHandler(new API.CommandResultHandlerInfo()
+                    {
+                        IsCommon = commandResultHandlerInfo.IsCommon,
+                        CommandName = commandResultHandlerInfo.CommandName,
+                        CommandDto = commandResultHandlerInfo.CommandType.Name,
+                        ResultDto = commandResultHandlerInfo.ResultType.Name,
+                        Dtos = dtos.ToArray()
+                    });
                 }
 
                 logger.Info($"Для команды {commandName} добавлен обработчик результата {handlerType.Name}");
@@ -161,6 +181,13 @@ namespace SAL.Core.Processors
                         handlers = new LinkedList<CommandResultHandlerInfo>();
                         handlers.AddLast(commandResultHandlerInfo);
                         resultHandlers.Add(commandName, handlers);
+
+                        salService.AddBackCommandResultHandler(new API.CommandResultHandlerInfo()
+                        { 
+                            IsCommon = commandResultHandlerInfo.IsCommon,
+                            CommandName = commandName
+
+                        });
                     }
 
                     logger.Info($"Для команды {commandName} добавлен уневерсальный обработчик результата {handlerType.Name}");
@@ -171,6 +198,7 @@ namespace SAL.Core.Processors
             {
                 anyResultHandlers.AddLast(commandResultHandlerInfo);
                 logger.Info($"Добавлен уневерсальный обработчик результата {handlerType.Name}");
+
             }
 
 
@@ -476,13 +504,5 @@ namespace SAL.Core.Processors
             }
         }
 
-    }
-
-
-
-
-    public interface ICommandResultProcessor
-    {
-        void RegisterSimpleCommandResultHandler(string correlationId, TaskCompletionSource<CommonCommandResult> completionSource, int timeOut);
     }
 }

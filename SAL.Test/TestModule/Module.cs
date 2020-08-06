@@ -247,7 +247,8 @@ namespace SAL.Test
         public TestProcessor(ILogger<TestProcessor> logger, ILifetimeScope scope)
         {
             this.logger = logger;
-            this.client = scope.ResolveNamed<ISalClient>("front");
+          // this.client = scope.ResolveNamed<ISalClient>("front");
+            this.client = scope.Resolve<ISalClient>();
         }
 
         public void Start()

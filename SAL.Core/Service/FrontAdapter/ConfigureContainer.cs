@@ -6,6 +6,7 @@ using SAL.API;
 using SAL.API.Client;
 using SAL.Core.Client;
 using SAL.Core.Processors;
+using SAL.Core.Processors.System;
 using SAL.Core.Rabbit;
 using SAL.Core.Rabbit.Interfaces;
 using SAL.Core.WatchDog;
@@ -31,6 +32,14 @@ namespace SAL.Core.Service
             builder.RegisterType<FrontTransportMonitor>()
                 .As<IWatchDogMonitor>()
                 .SingleInstance();
+
+            builder.RegisterType<FrontCommandProcessor>().AsProcessor();
+            builder.RegisterType<FrontCommandResultProcessor>().AsProcessor()
+                .Named<ICommandResultProcessor>("front");
+            builder.RegisterType<FrontEventProcessor>().AsProcessor();
+
+
+            builder.RegisterType<HeartbeatFrontProcessor>().AsProcessor();
 
 
         }
