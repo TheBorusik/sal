@@ -50,6 +50,14 @@ namespace SAL.API
                 anyHandler = true;
             }
 
+            if (interfaces.Any(i => i.IsAssignableTo<ICommonEventHandler>()))
+            {
+                registration = registration.As<ICommonEventHandler>();
+                anyHandler = true;
+            }
+
+            
+
             if (interfaces.Any(i => i.IsAssignableTo<IFrontCommandHandler>()))
             {
                 registration = registration.As<IFrontCommandHandler>();
