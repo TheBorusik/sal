@@ -45,11 +45,10 @@ namespace SAL.API.Command
 
         public Task PublishError(string code,
             string message = null,
-            string codeDescription = null,
             object properties = null,
             System.Exception innerException = null)
         {
-            return PublishResult(SalError.CreateDto(code, message, codeDescription, properties, innerException));
+            return PublishResult(SalError.CreateDto(code, message, properties, innerException));
         }
 
 

@@ -6,7 +6,6 @@ namespace SAL.API
     public class ExceptionDTO
     {
         public string Code { get; set; }
-        public string CodeDescription { get; set; }
         public DateTime TimeStamp { get; set; }
         public string Message { get; set; }
         public JObject Properties { get; set; }
@@ -31,7 +30,6 @@ namespace SAL.API
             return new InternalExceptionDTO
             {
                 Code = Code,
-                CodeDescription = CodeDescription,
                 TimeStamp = TimeStamp,
                 Message = Message,
                 Properties = (JObject)Properties.DeepClone(),

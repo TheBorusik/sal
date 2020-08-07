@@ -9,25 +9,22 @@ namespace SAL.API
         public static SalException CreateException(
             string code,
             string message = null,
-            string codeDescription = null,
             object properties = null,
             System.Exception innerException = null)
         {
-            return CreateDto(code, message, codeDescription, properties, innerException).ToException();
+            return CreateDto(code, message, properties, innerException).ToException();
         }
 
 
         public static InternalExceptionDTO CreateDto(
             string code, 
-            string message = null, 
-            string codeDescription = null, 
+            string message = null,
             object properties = null, 
             System.Exception innerException = null)
         {
             var dto = new InternalExceptionDTO
             {
                 Code = code,
-                CodeDescription = codeDescription,
                 TimeStamp = DateTime.UtcNow,
                 Message = message,
                 Properties = properties != null ? JObject.FromObject(properties) : new JObject(),
@@ -45,7 +42,6 @@ namespace SAL.API
 
         public static InternalExceptionDTO ToDto(this System.Exception ex, 
             string code = null,
-            string codeDescription = null,
             object properties = null)
         {
             if (ex == null)
@@ -57,8 +53,6 @@ namespace SAL.API
                 dto = sex.ToDto();
                 if (!string.IsNullOrWhiteSpace(code))
                     dto.Code = code;
-                if (!string.IsNullOrWhiteSpace(codeDescription))
-                    dto.CodeDescription = codeDescription;
                 if (properties != null)
                 {
                     dto.Properties.Merge(JObject.FromObject(properties), new JsonMergeSettings{MergeArrayHandling = MergeArrayHandling.Merge});
@@ -69,7 +63,6 @@ namespace SAL.API
             dto = new InternalExceptionDTO
             {
                 Code = code,
-                CodeDescription = codeDescription,
                 TimeStamp = DateTime.UtcNow,
                 Message = ex.Message,
                 ExceptionType = ex.GetType().Name,

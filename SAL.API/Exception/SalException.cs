@@ -8,7 +8,6 @@ namespace SAL.API
         internal readonly InternalExceptionDTO Dto;
 
         public string Code => Dto.Code;
-        public string CodeDescription => Dto.CodeDescription;
         public DateTime TimeStamp => Dto.TimeStamp;
         public JObject Properties => Dto.Properties;
         public new string StackTrace => Dto.StackTrace;
