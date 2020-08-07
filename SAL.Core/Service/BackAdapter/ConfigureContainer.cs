@@ -49,7 +49,7 @@ namespace SAL.Core.Service
             builder.RegisterType<CommandResultProcessor>().AsProcessor();
             builder.RegisterType<EventProcessor>().AsProcessor();
 
-            builder.RegisterType<HeartbeatBackProcessor>().AsProcessor();
+      //      builder.RegisterType<HeartbeatBackProcessor>().AsProcessor();
 
             builder.RegisterSalHandler<SystemWIWHandler>();
 

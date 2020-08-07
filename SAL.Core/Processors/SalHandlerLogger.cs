@@ -324,8 +324,7 @@ namespace SAL.Core.Processors
 
         private HandlerLogger GetHandlerLogger(CommandPayload commandPayload)
         {
-            var commandName = $"{commandPayload.Descriptor.ServiceType}.{commandPayload.Descriptor.CommandName}";
-            var loggerName = $"{commandName}.Command";
+            var loggerName = $"{commandPayload.Descriptor.CommandName}.Command";
 
             return loggers.GetOrAdd(loggerName, s =>
             {
@@ -345,7 +344,7 @@ namespace SAL.Core.Processors
 
                     foreach (var loggingConfigItem in loggingConfig.Items)
                     {
-                        if (Regex.IsMatch(commandName, loggingConfigItem.Key, RegexOptions.IgnoreCase))
+                        if (Regex.IsMatch(commandPayload.Descriptor.CommandName, loggingConfigItem.Key, RegexOptions.IgnoreCase))
                         {
                             return new HandlerLogger
                             {
@@ -366,8 +365,7 @@ namespace SAL.Core.Processors
 
         private HandlerLogger GetHandlerLogger(CommandDescriptor commandDescriptor)
         {
-            var commandName = $"{commandDescriptor.ServiceType}.{commandDescriptor.CommandName}";
-            var loggerName = $"{commandName}.Command";
+            var loggerName = $"{commandDescriptor.CommandName}.Command";
 
             return loggers.GetOrAdd(loggerName, s =>
             {
@@ -387,7 +385,7 @@ namespace SAL.Core.Processors
 
                     foreach (var loggingConfigItem in loggingConfig.Items)
                     {
-                        if (Regex.IsMatch(commandName, loggingConfigItem.Key, RegexOptions.IgnoreCase))
+                        if (Regex.IsMatch(commandDescriptor.CommandName, loggingConfigItem.Key, RegexOptions.IgnoreCase))
                         {
                             return new HandlerLogger
                             {
@@ -407,8 +405,8 @@ namespace SAL.Core.Processors
         }
         private HandlerLogger GetHandlerLogger(CommandResultPayload commandResultPayload)
         {
-            var commandName = $"{commandResultPayload.Descriptor.ServiceType}.{commandResultPayload.Descriptor.CommandName}";
-            var loggerName = $"{commandName}.Command";
+
+            var loggerName = $"{commandResultPayload.Descriptor.CommandName}.Command";
 
             return loggers.GetOrAdd(loggerName, s =>
             {
@@ -428,7 +426,7 @@ namespace SAL.Core.Processors
 
                     foreach (var loggingConfigItem in loggingConfig.Items)
                     {
-                        if (Regex.IsMatch(commandName, loggingConfigItem.Key, RegexOptions.IgnoreCase))
+                        if (Regex.IsMatch(commandResultPayload.Descriptor.CommandName, loggingConfigItem.Key, RegexOptions.IgnoreCase))
                         {
                             return new HandlerLogger
                             {

@@ -15,7 +15,7 @@ using SAL.API.Events;
 using SAL.Infrastructure;
 using SAL.Infrastructure.ValidationAttribute;
 
-[assembly: SalServiceType("SalTest")]
+[assembly: SalAdapterType("SalTest")]
 
 // ReSharper disable once CheckNamespace
 namespace SAL.Test

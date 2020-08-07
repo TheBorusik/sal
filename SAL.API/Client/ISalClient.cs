@@ -14,6 +14,7 @@ namespace SAL.API.Client
             string correlationId = null,
             CommandPriority priority = CommandPriority.Normal,
             TimeSpan? ttl = null,
+            string handlerServiceType = null,
             string handlerServiceName = null,
             string resultServiceType = null,
             string resultServiceName = null
@@ -25,6 +26,7 @@ namespace SAL.API.Client
             TCommand command,
             CommandPriority priority = CommandPriority.Normal,
             int ttls = 60,
+            string handlerServiceType = null,
             string handlerServiceName = null
             )
             where TCommand : class, IHaveResult<TCommandResult>, new()
@@ -32,6 +34,8 @@ namespace SAL.API.Client
 
 
         Task PublishResultAsync(ICommandResult result, CommandDescriptor commandDescriptor);
+
+        Task PublishResultAsync(object result, string code, CommandDescriptor commandDescriptor);
 
         Task PublishResultAsync(InternalExceptionDTO exceptionDTO, CommandDescriptor commandDescriptor);
 

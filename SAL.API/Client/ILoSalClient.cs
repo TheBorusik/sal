@@ -6,23 +6,23 @@ namespace SAL.API.Client
     public interface ILoSalClient
     {
         Task PublishCommandAsync(
-            string handlerServiceType,
-            string commandName, 
-            object commandBody, 
-            string correlationId, 
+            string commandName,
+            object commandBody,
+            string correlationId,
             CommandPriority priority,
             TimeSpan? ttl,
-            string handlerServiceName,
-            string resultServiceType,
-            string resultServiceName);
+            string handlerAdapterType,
+            string handlerAdapterName,
+            string resultAdapterType,
+            string resultAdapterName);
 
         Task<CommonCommandResult> ExecuteCommandAsync(
-            string handlerServiceType,
             string commandName,
             object commandBody,
             CommandPriority priority,
             int ttls,
-            string handlerServiceName
+            string handlerAdapterType,
+            string handlerAdapterName
         );
 
 

@@ -268,8 +268,13 @@ namespace SAL.Core.Processors
                 throw new Exception($"Отсутствует commandPayload.Payload | CorrelationId:{transportMessage.CorrelationId}");
 
 
-            if (commandPayload.Descriptor.ServiceType != ServiceConfiguration.AdapterType)
-                throw new Exception($"Не соответствие Descriptor.ServiceType и AdapterType для команды CorrelationId:{transportMessage.CorrelationId}");
+            if (!string.IsNullOrWhiteSpace(commandPayload.Descriptor.DestinationAdapterType) &&
+                !string.Equals(commandPayload.Descriptor.DestinationAdapterType, ServiceConfiguration.AdapterType, StringComparison.InvariantCultureIgnoreCase))
+                throw new Exception($"Не соответствие Descriptor.DestinationAdapterType и AdapterType для команды CorrelationId:{transportMessage.CorrelationId}");
+
+            if (!string.IsNullOrWhiteSpace(commandPayload.Descriptor.DestinationAdapterName) &&
+                !string.Equals(commandPayload.Descriptor.DestinationAdapterName, ServiceConfiguration.AdapterName, StringComparison.InvariantCultureIgnoreCase))
+                throw new Exception($"Не соответствие Descriptor.DestinationAdapterName и AdapterName для команды CorrelationId:{transportMessage.CorrelationId}");
 
             commandPayload.Descriptor.HandlerTimeStamp = DateTime.UtcNow;
 
@@ -278,12 +283,11 @@ namespace SAL.Core.Processors
 
         protected virtual async Task Processing(Message message, CommandPayload commandPayload)
         {
-            var fullCommandName = $"{commandPayload.Descriptor.ServiceType}.{commandPayload.Descriptor.CommandName}";
 
             HandlerContext.Type = HandlerTypes.CommandHandler;
             HandlerContext.Name = commandPayload.Descriptor.CommandName;
 
-            if (commandHandlers.TryGetValue(fullCommandName, out var commandHandlerInfo))
+            if (commandHandlers.TryGetValue(commandPayload.Descriptor.CommandName, out var commandHandlerInfo))
             {
                 HandlerContext.Name = commandHandlerInfo.HandlerType.Name;
 

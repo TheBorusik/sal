@@ -116,7 +116,7 @@ namespace SAL.Core.Processors
             foreach (var handlerInterface in handlerInterfaces)
             {
                 var eventType = handlerInterface.GetGenericArguments()[0];
-                var eventName = eventType.GetSourceName();
+                var eventName = eventType.GetRouteKey();
 
                 var isSystem = eventType
                     .GetCustomAttributes(typeof(SalSystemEventAttribute))
@@ -312,12 +312,12 @@ namespace SAL.Core.Processors
         {
             var eventName = eventPayload.Descriptor.EventName;
 
-            if (!string.IsNullOrWhiteSpace(eventPayload.Descriptor.ServiceType) &&
-                !string.Equals(eventPayload.Descriptor.ServiceType, ServiceConfiguration.AdapterType, StringComparison.InvariantCultureIgnoreCase))
+            if (!string.IsNullOrWhiteSpace(eventPayload.Descriptor.DestinationAdapterType) &&
+                !string.Equals(eventPayload.Descriptor.DestinationAdapterType, ServiceConfiguration.AdapterType, StringComparison.InvariantCultureIgnoreCase))
                 return;
 
-            if (!string.IsNullOrWhiteSpace(eventPayload.Descriptor.ServiceName) &&
-                !string.Equals(eventPayload.Descriptor.ServiceName, ServiceConfiguration.AdapterName, StringComparison.InvariantCultureIgnoreCase))
+            if (!string.IsNullOrWhiteSpace(eventPayload.Descriptor.DestinationAdapterName) &&
+                !string.Equals(eventPayload.Descriptor.DestinationAdapterName, ServiceConfiguration.AdapterName, StringComparison.InvariantCultureIgnoreCase))
                 return;
 
             HandlerContext.Type = HandlerTypes.EventHandler;

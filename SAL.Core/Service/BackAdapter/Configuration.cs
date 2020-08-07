@@ -54,11 +54,11 @@ namespace SAL.Core.Service
                     throw new ConfigurationErrorException("Не возможно получить тип первого модуля.");
 
                 var mainAssembly = firstModuleType.Assembly;
-                var ssAttribute = mainAssembly.GetCustomAttributes(typeof(SalServiceTypeAttribute))
+                var ssAttribute = mainAssembly.GetCustomAttributes(typeof(SalAdapterTypeAttribute))
                     .OfType<SalServiceTypeAttribute>().FirstOrDefault();
                 if (string.IsNullOrWhiteSpace(ssAttribute?.Type))
                 {
-                    throw new ConfigurationErrorException("Не заданно значение SalServiceTypeAttribute в главной сборке");
+                    throw new ConfigurationErrorException("Не заданно значение SalAdapterTypeAttribute в главной сборке");
                 }
                 ServiceConfiguration.AdapterType = ssAttribute.Type;
 

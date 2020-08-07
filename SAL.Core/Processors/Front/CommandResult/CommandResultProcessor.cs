@@ -362,17 +362,20 @@ namespace SAL.Core.Processors
                 throw new Exception($"Отсутствует commandPayload.Payload | CorrelationId:{transportMessage.CorrelationId}");
 
 
-            if (commandResultPayload.Descriptor.ServiceType != ServiceConfiguration.AdapterType)
-                throw new Exception($"Не соответствие Descriptor.ServiceType и AdapterType для команды CorrelationId:{transportMessage.CorrelationId}");
+            if (commandResultPayload.Descriptor.ResultAdaperType != ServiceConfiguration.AdapterType)
+                throw new Exception($"Не соответствие Descriptor.ResultAdaperType и AdapterType для результата CorrelationId:{transportMessage.CorrelationId}");
 
+
+            if (!string.IsNullOrWhiteSpace(commandResultPayload.Descriptor.ResultAdaperName) &&
+                !string.Equals(commandResultPayload.Descriptor.ResultAdaperName, ServiceConfiguration.AdapterName, StringComparison.InvariantCultureIgnoreCase))
+                throw new Exception($"Не соответствие Descriptor.ResultAdaperName и AdapterName для результата CorrelationId:{transportMessage.CorrelationId}");
 
             return Task.FromResult(commandResultPayload);
         }
 
         private async Task Processing(Message message, CommandResultPayload commandResultPayload)
         {
-            var сommandName =
-                $"{commandResultPayload.Descriptor.ServiceType}.{commandResultPayload.Descriptor.CommandName}";
+
 
 
             HandlerContext.Type = HandlerTypes.CommandResultHandler;
@@ -398,7 +401,7 @@ namespace SAL.Core.Processors
 
             var isHandled = false;
 
-            if (resultHandlers.TryGetValue(сommandName, out var resultCommandHandlersInfo))
+            if (resultHandlers.TryGetValue(commandResultPayload.Descriptor.CommandName, out var resultCommandHandlersInfo))
             {
                 foreach (var rchi in resultCommandHandlersInfo)
                 {

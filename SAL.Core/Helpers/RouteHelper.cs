@@ -27,17 +27,6 @@ namespace SAL.Core.Helpers
             return map.RoutingKey;
         }
 
-        public static string GetSourceTypeName(this Type type)
-        {
-            var map = routeMap.GetOrAdd(type, AddValueFactory);
-            return map.TypeName;
-        }
-
-        public static string GetSourceName(this Type type)
-        {
-            var map = routeMap.GetOrAdd(type, AddValueFactory);
-            return map.Name;
-        }
 
         public static bool IsResultTypeHandler(this Type type)
         {
@@ -56,7 +45,8 @@ namespace SAL.Core.Helpers
             }
             else
             {
-                sstAttribute = Assembly.GetEntryAssembly().GetCustomAttributes(typeof(SalServiceTypeAttribute)).OfType<SalServiceTypeAttribute>().FirstOrDefault();
+                
+                sstAttribute = type.Assembly.GetCustomAttributes(typeof(SalServiceTypeAttribute)).OfType<SalServiceTypeAttribute>().FirstOrDefault();
                 if (sstAttribute != null)
                     typeName = sstAttribute.Type;
             }

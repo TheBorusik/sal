@@ -45,6 +45,7 @@ namespace SAL.Core.Client
             string correlationId = null,
             CommandPriority priority = CommandPriority.Normal,
             TimeSpan? ttl = null,
+            string handlerServiceType = null,
             string handlerServiceName = null,
             string resultServiceType = null,
             string resultServiceName = null
@@ -65,12 +66,12 @@ namespace SAL.Core.Client
                 resultServiceName = ServiceConfiguration.AdapterName;
 
             await PublishCommandAsync(
-                commandType.GetSourceTypeName(),
-                commandType.GetSourceName(),
+                commandType.GetRouteKey(),
                 command,
                 correlationId,
                 priority,
                 ttl,
+                handlerServiceType,
                 handlerServiceName,
                 resultServiceType,
                 resultServiceName
@@ -83,16 +84,17 @@ namespace SAL.Core.Client
             TCommand command,
             CommandPriority priority = CommandPriority.Normal,
             int ttls = 60,
+            string handlerServiceType = null,
             string handlerServiceName = null
         ) where TCommand : class, IHaveResult<TCommandResult>, new() where TCommandResult : class, ICommandResult, new()
         {
             var commandType = command.GetType();
             var result = await ExecuteCommandAsync(
-                commandType.GetSourceTypeName(),
-                commandType.GetSourceName(),
+                commandType.GetRouteKey(),
                 command,
                 priority,
                 ttls,
+                handlerServiceType,
                 handlerServiceName
                 );
 
@@ -101,6 +103,7 @@ namespace SAL.Core.Client
 
         }
 
+
         public Task PublishResultAsync(ICommandResult result, CommandDescriptor commandDescriptor)
         {
             return PublishResultAsync(new CommonCommandResult
@@ -108,6 +111,16 @@ namespace SAL.Core.Client
                 Error = null,
                 Result = JObject.FromObject(result, SalSerializer.Create()),
                 ResultCode = ResultCodes.Success
+            }, commandDescriptor);
+        }
+
+        public Task PublishResultAsync(object result, string code, CommandDescriptor commandDescriptor)
+        {
+            return PublishResultAsync(new CommonCommandResult
+            {
+                Error = null,
+                Result = JObject.FromObject(result, SalSerializer.Create()),
+                ResultCode = code
             }, commandDescriptor);
         }
 
@@ -148,7 +161,7 @@ namespace SAL.Core.Client
             if(evnt == null)
                 return Task.CompletedTask;
             return PublishEventAsync(
-                evnt.GetType().GetSourceName(),
+                evnt.GetType().GetRouteKey(),
                 evnt,
                 ttl,
                 handlerServiceType,
@@ -193,48 +206,48 @@ namespace SAL.Core.Client
 
         //lo
         public Task PublishCommandAsync(
-            string handlerServiceType,
             string commandName,
             object commandBody,
             string correlationId,
             CommandPriority priority,
             TimeSpan? ttl,
-            string handlerServiceName,
-            string resultServiceType,
-            string resultServiceName)
+            string handlerAdapterType,
+            string handlerAdapterName,
+            string resultAdapterType,
+            string resultAdapterName)
         {
-            if (string.IsNullOrWhiteSpace(handlerServiceType))
-                throw new ArgumentNullException(nameof(handlerServiceType));
+
+            if (string.IsNullOrWhiteSpace(commandName))
+                throw new ArgumentNullException(nameof(commandName));
 
             if (string.IsNullOrWhiteSpace(correlationId))
                 throw new ArgumentNullException(nameof(correlationId));
 
-            if (string.IsNullOrWhiteSpace(resultServiceType))
-                throw new ArgumentNullException(nameof(resultServiceType));
+            if (string.IsNullOrWhiteSpace(resultAdapterType))
+                throw new ArgumentNullException(nameof(resultAdapterType));
 
-            if (string.IsNullOrWhiteSpace(commandName))
-                throw new ArgumentNullException(nameof(commandName));
+
 
             if (commandBody == null)
                 throw new ArgumentNullException(nameof(commandBody));
 
             var routingKey = "";
-            if (string.IsNullOrWhiteSpace(handlerServiceName))
-                routingKey = $"{handlerServiceType}.{commandName}";
+            if (string.IsNullOrWhiteSpace(handlerAdapterType) && string.IsNullOrWhiteSpace(handlerAdapterName))
+                routingKey = commandName;
             else
-                routingKey = $"{handlerServiceType}#{handlerServiceName}";
+                routingKey = $"{handlerAdapterType}#{handlerAdapterName}";
 
             var commandDescriptor = new CommandDescriptor
             {
                 CorrelationId = correlationId,
-                ServiceType = handlerServiceType,
-                ServiceName = handlerServiceName,
                 CommandName = commandName,
                 Priority = priority,
-                SourceServiceType = ServiceConfiguration.AdapterType,
-                SourceServiceName = ServiceConfiguration.AdapterName,
-                ResultServiceType = resultServiceType,
-                ResultServiceName = resultServiceName,
+                SourceAdapterType = ServiceConfiguration.AdapterType,
+                SourceAdapterName = ServiceConfiguration.AdapterName,
+                DestinationAdapterType = handlerAdapterType,
+                DestinationAdapterName = handlerAdapterName,
+                ResultAdaperType = resultAdapterType,
+                ResultAdaperName = resultAdapterName,
                 PublishTimeStamp = DateTime.UtcNow,
                 TTL = ttl,
                 IsSync = false
@@ -254,7 +267,7 @@ namespace SAL.Core.Client
             {
                 Type = MessageTypes.Command,
                 Payload = JObject.FromObject(commandPayload, SalSerializer.Create()),
-                Source = $"{commandDescriptor.SourceServiceType}.{commandDescriptor.SourceServiceName}",
+                Source = $"{commandDescriptor.SourceAdapterType}.{commandDescriptor.SourceAdapterName}",
                 Priority = (byte)commandDescriptor.Priority,
                 TimeStamp = commandDescriptor.PublishTimeStamp,
                 Destination = routingKey,
@@ -269,16 +282,13 @@ namespace SAL.Core.Client
         }
 
         public Task<CommonCommandResult> ExecuteCommandAsync(
-            string handlerServiceType,
             string commandName,
             object commandBody,
             CommandPriority priority,
             int ttls,
-            string handlerServiceName)
+            string handlerAdapterType,
+            string handlerAdapterName)
         {
-
-            if (string.IsNullOrWhiteSpace(handlerServiceType))
-                throw new ArgumentNullException(nameof(handlerServiceType));
 
             if (string.IsNullOrWhiteSpace(commandName))
                 throw new ArgumentNullException(nameof(commandName));
@@ -288,22 +298,24 @@ namespace SAL.Core.Client
 
             var completionSource = new TaskCompletionSource<CommonCommandResult>();
 
+            var routingKey = "";
+            if (string.IsNullOrWhiteSpace(handlerAdapterType) && string.IsNullOrWhiteSpace(handlerAdapterName))
+                routingKey = commandName;
+            else
+                routingKey = $"{handlerAdapterType}#{handlerAdapterName}";
 
-            var routingKey = string.IsNullOrWhiteSpace(handlerServiceName)
-                ? $"{handlerServiceType}.{commandName}"
-                : $"{handlerServiceType}#{handlerServiceName}";
 
             var commandDescriptor = new CommandDescriptor
             {
                 CorrelationId = correlationId,
-                ServiceType = handlerServiceType,
-                ServiceName = handlerServiceName,
                 CommandName = commandName,
                 Priority = priority,
-                SourceServiceType = ServiceConfiguration.AdapterType,
-                SourceServiceName = ServiceConfiguration.AdapterName,
-                ResultServiceType = ServiceConfiguration.AdapterType,
-                ResultServiceName = ServiceConfiguration.AdapterName,
+                DestinationAdapterType = handlerAdapterType,
+                DestinationAdapterName = handlerAdapterName,
+                SourceAdapterType = ServiceConfiguration.AdapterType,
+                SourceAdapterName = ServiceConfiguration.AdapterName,
+                ResultAdaperType = ServiceConfiguration.AdapterType,
+                ResultAdaperName = ServiceConfiguration.AdapterName,
                 PublishTimeStamp = DateTime.UtcNow,
                 TTL = TimeSpan.FromSeconds(ttls),
                 IsSync = true
@@ -321,7 +333,7 @@ namespace SAL.Core.Client
             {
                 Type = MessageTypes.Command,
                 Payload = JObject.FromObject(commandPayload, SalSerializer.Create()),
-                Source = $"{commandDescriptor.SourceServiceType}.{commandDescriptor.SourceServiceName}",
+                Source = $"{commandDescriptor.SourceAdapterType}.{commandDescriptor.SourceAdapterName}",
                 Priority = (byte)commandDescriptor.Priority,
                 TimeStamp = commandDescriptor.PublishTimeStamp,
                 Destination = routingKey,
@@ -362,13 +374,13 @@ namespace SAL.Core.Client
 
                 if (commandResultDescriptor.IsSync)
                 {
-                    routingKey = $"{commandResultDescriptor.ResultServiceType}#{commandResultDescriptor.ResultServiceName}#Sync";
+                    routingKey = $"{commandResultDescriptor.ResultAdaperType}#{commandResultDescriptor.ResultAdaperName}#Sync";
                 }
                 else
                 {
-                    routingKey = string.IsNullOrWhiteSpace(commandResultDescriptor.ResultServiceName) ?
-                        commandResultDescriptor.ResultServiceType :
-                        $"{commandResultDescriptor.ResultServiceType}#{commandResultDescriptor.ResultServiceName}";
+                    routingKey = string.IsNullOrWhiteSpace(commandResultDescriptor.ResultAdaperName) ?
+                        commandResultDescriptor.ResultAdaperType :
+                        $"{commandResultDescriptor.ResultAdaperType}#{commandResultDescriptor.ResultAdaperName}";
                 }
 
                 var commandResultPayload = new CommandResultPayload
@@ -411,8 +423,8 @@ namespace SAL.Core.Client
             {
                 CorrelationId = correlationId,
                 EventName = eventName,
-                ServiceType = handlerServiceType,
-                ServiceName = handlerServiceName,
+                DestinationAdapterType = handlerServiceType,
+                DestinationAdapterName = handlerServiceName,
                 SourceServiceType = ServiceConfiguration.AdapterType,
                 SourceServiceName = ServiceConfiguration.AdapterName,
                 PublishTimeStamp = DateTime.UtcNow,

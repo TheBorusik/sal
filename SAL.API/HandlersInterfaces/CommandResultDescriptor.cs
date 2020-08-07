@@ -18,14 +18,14 @@ namespace SAL.API
         public CommandResultDescriptor(CommandDescriptor commandDescriptor)
         {
             CorrelationId = commandDescriptor.CorrelationId;
-            ServiceType = commandDescriptor.ResultServiceType;
-            ServiceName = commandDescriptor.ResultServiceName;
             CommandName = commandDescriptor.CommandName;
             Priority = commandDescriptor.Priority;
-            SourceServiceType = commandDescriptor.SourceServiceType;
-            SourceServiceName = commandDescriptor.SourceServiceName;
-            ResultServiceType = commandDescriptor.ResultServiceType;
-            ResultServiceName = commandDescriptor.ResultServiceName;
+            SourceAdapterType = commandDescriptor.SourceAdapterType;
+            SourceAdapterName = commandDescriptor.SourceAdapterName;
+            DestinationAdapterName = commandDescriptor.DestinationAdapterName;
+            DestinationAdapterType = commandDescriptor.DestinationAdapterType;
+            ResultAdaperType = commandDescriptor.ResultAdaperType;
+            ResultAdaperName = commandDescriptor.ResultAdaperName;
             PublishTimeStamp = commandDescriptor.PublishTimeStamp;
             HandlerTimeStamp = commandDescriptor.HandlerTimeStamp;
             TTL = commandDescriptor.TTL;
