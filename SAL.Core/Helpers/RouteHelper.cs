@@ -45,7 +45,6 @@ namespace SAL.Core.Helpers
             }
             else
             {
-                
                 sstAttribute = type.Assembly.GetCustomAttributes(typeof(SalServiceTypeAttribute)).OfType<SalServiceTypeAttribute>().FirstOrDefault();
                 if (sstAttribute != null)
                     typeName = sstAttribute.Type;

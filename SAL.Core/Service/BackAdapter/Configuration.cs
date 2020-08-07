@@ -55,7 +55,7 @@ namespace SAL.Core.Service
 
                 var mainAssembly = firstModuleType.Assembly;
                 var ssAttribute = mainAssembly.GetCustomAttributes(typeof(SalAdapterTypeAttribute))
-                    .OfType<SalServiceTypeAttribute>().FirstOrDefault();
+                    .OfType<SalAdapterTypeAttribute>().FirstOrDefault();
                 if (string.IsNullOrWhiteSpace(ssAttribute?.Type))
                 {
                     throw new ConfigurationErrorException("Не заданно значение SalAdapterTypeAttribute в главной сборке");
