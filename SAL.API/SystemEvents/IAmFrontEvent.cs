@@ -15,6 +15,5 @@ namespace SAL.API
         public CommandResultHandlerInfo[] CommandResultHandlers { get; set; }
         public EventHandlerInfo[] EventHandlers { get; set; }
 
-        public DtoInfo[] Dto { get; set; }
     }
 }

@@ -58,6 +58,10 @@ namespace SAL.Core.Service
                 .WithParameter("prefix", "")
                 .SingleInstance();
 
+            builder.RegisterType<BackTransportMonitor>()
+                .As<IWatchDogMonitor>()
+                .SingleInstance();
+
 
             AdapterConfigureContainer(builder);
 
@@ -66,9 +70,7 @@ namespace SAL.Core.Service
 
         protected virtual void AdapterConfigureContainer(ContainerBuilder builder)
         {
-            builder.RegisterType<BackTransportMonitor>()
-                .As<IWatchDogMonitor>()
-                .SingleInstance();
+
 
         }
 

@@ -21,5 +21,4 @@ namespace SAL.Core.NLogEx.LayoutRenderer
             }
         }
     }
-
 }

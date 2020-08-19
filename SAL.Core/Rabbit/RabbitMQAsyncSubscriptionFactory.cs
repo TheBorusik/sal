@@ -20,7 +20,7 @@ namespace SAL.Core.Rabbit
             this.transport = transport;
         }
 
-        public ISubscription CreateSystemEvent(ushort prefetchCount, string[] eventNames, Func<RabbitMessage, Action, Action, Task> handler)
+        public ISubscription CreateSystemEvent(ushort prefetchCount, string[] eventNames, Func<RabbitMessage, Action, Action, Task> handler, string subscriptionName = "SystemEvent")
         {
             var queueList = new List<QueueInfo>();
 
@@ -58,10 +58,10 @@ namespace SAL.Core.Rabbit
 
             transport.UpdateTopology();
 
-            return new MultiConsumerSubscription(transport, "SystemEvent", prefetchCount, queueList.ToArray(), handler);
+            return new MultiConsumerSubscription(transport, subscriptionName, prefetchCount, queueList.ToArray(), handler);
         }
 
-        public ISubscription CreateEvent(ushort prefetchCount, string[] eventNames, Func<RabbitMessage, Action, Action, Task> handler)
+        public ISubscription CreateEvent(ushort prefetchCount, string[] eventNames, Func<RabbitMessage, Action, Action, Task> handler, string subscriptionName = "Event")
         {
             var queueList = new List<QueueInfo>();
 
@@ -99,10 +99,10 @@ namespace SAL.Core.Rabbit
 
             transport.UpdateTopology();
 
-            return new MultiConsumerSubscription(transport, "Event", prefetchCount, queueList.ToArray(), handler);
+            return new MultiConsumerSubscription(transport, subscriptionName, prefetchCount, queueList.ToArray(), handler);
         }
 
-        public ISubscription CreateCommandResult(ushort globalPrefetchCount, ushort instancePrefetchCount, ushort typePrefetchCount, Func<RabbitMessage, Action, Action, Task> handler)
+        public ISubscription CreateCommandResult(ushort globalPrefetchCount, ushort instancePrefetchCount, ushort typePrefetchCount, Func<RabbitMessage, Action, Action, Task> handler, string subscriptionName = "CommandResults")
         {
 
             var queueList = new List<QueueInfo>();
@@ -154,10 +154,10 @@ namespace SAL.Core.Rabbit
 
             transport.UpdateTopology();
 
-            return new MultiConsumerSubscription(transport, "CommandResults", globalPrefetchCount, queueList.ToArray(), handler);
+            return new MultiConsumerSubscription(transport, subscriptionName, globalPrefetchCount, queueList.ToArray(), handler);
         }
 
-        public ISubscription CreateSyncCommandResult(ushort syncPrefetchCount, Func<RabbitMessage, Action, Action, Task> handler)
+        public ISubscription CreateSyncCommandResult(ushort syncPrefetchCount, Func<RabbitMessage, Action, Action, Task> handler, string subscriptionName = "SyncCommandResults")
         {
             var queueList = new List<QueueInfo>();
 
@@ -185,10 +185,10 @@ namespace SAL.Core.Rabbit
 
             transport.UpdateTopology();
 
-            return new MultiConsumerSubscription(transport, "SyncCommandResults", syncPrefetchCount, queueList.ToArray(), handler);
+            return new MultiConsumerSubscription(transport, subscriptionName, syncPrefetchCount, queueList.ToArray(), handler);
         }
 
-        public ISubscription CreateCommand(ushort globalPrefetchCount, ushort mainPrefetchCount, CommandInfo[] commands, Func<RabbitMessage, Action, Action, Task> handler)
+        public ISubscription CreateCommand(ushort globalPrefetchCount, ushort mainPrefetchCount, CommandInfo[] commands, Func<RabbitMessage, Action, Action, Task> handler, string subscriptionName = "Command")
         {
             var queueList = new List<QueueInfo>();
 
@@ -244,7 +244,7 @@ namespace SAL.Core.Rabbit
 
             transport.UpdateTopology();
 
-            return new MultiConsumerSubscription(transport, "Command", globalPrefetchCount, queueList.ToArray(), handler);
+            return new MultiConsumerSubscription(transport, subscriptionName, globalPrefetchCount, queueList.ToArray(), handler);
         }
 
         public void Dispose()

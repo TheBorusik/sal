@@ -29,8 +29,9 @@ namespace SAL.Core.Service
             {
                 logger.Info("Переход в Online");
                 IsOnline = true;
-                OnlineProcessors();
                 SendOnline();
+                OnlineProcessors();
+
             }
         }
         protected virtual void OnOffline()

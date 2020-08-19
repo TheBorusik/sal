@@ -5,6 +5,7 @@ using Autofac.Builder;
 using SAL.API.Command;
 using SAL.API.CommandResult;
 using SAL.API.Events;
+using SAL.API.FrontCommand;
 
 namespace SAL.API
 {

@@ -16,6 +16,7 @@ using SAL.Core.Config;
 using SAL.Core.DTO.Transport;
 using SAL.Core.Helpers;
 using SAL.Core.Rabbit.Interfaces;
+using SAL.Core.Service;
 using SAL.Infrastructure.EventAttributes;
 
 // ReSharper disable once CheckNamespace
@@ -26,6 +27,7 @@ namespace SAL.Core.Processors
         private ILoggerProvider loggerProvider;
         private ILogger logger;
         private ISalLogger salLogger;
+        private ISalService salService;
 
         private ISubscription subscription;
         private ISubscription systemSubscription;
@@ -42,6 +44,7 @@ namespace SAL.Core.Processors
             this.loggerProvider = loggerProvider;
             this.salLogger = salLogger;
             logger = loggerProvider.CreateLogger(nameof(EventProcessor));
+            salService = container.Resolve<ISalService>();
         }
 
         public void Start()
@@ -61,7 +64,7 @@ namespace SAL.Core.Processors
                     .ForEach(RegisterCommonEventHandler);
 
                 var configWatcher = container.Resolve<IConfigWatcher>();
-                var jsonConfig = configWatcher.GetSection(ConfigurationSectionNames.EventProcessor);
+                var jsonConfig = configWatcher.GetSection(ConfigurationSectionNames.FrontEventProcessor);
                 var config = new EventProcessorConfig();
 
                 if (jsonConfig != null)
@@ -77,8 +80,8 @@ namespace SAL.Core.Processors
                 var eventList = eventHandlers.Where(eh => eh.Value.Any(h => h.IsSystem == false)).Select(eh => eh.Key).ToArray();
                 var systemEventList = eventHandlers.Where(eh => eh.Value.Any(h => h.IsSystem == true)).Select(eh => eh.Key).ToArray();
 
-                subscription = subscriptionFactory.CreateEvent(config.PrefetchCount, eventList, Handler);
-                systemSubscription = subscriptionFactory.CreateSystemEvent(config.SystemPrefetchCount, systemEventList, Handler);
+                subscription = subscriptionFactory.CreateEvent(config.PrefetchCount, eventList, Handler, "FrontEvent");
+                systemSubscription = subscriptionFactory.CreateSystemEvent(config.SystemPrefetchCount, systemEventList, Handler, "FrontSystemEvent");
 
             }
             catch (Exception ex)
@@ -140,6 +143,14 @@ namespace SAL.Core.Processors
                     handlers = new List<EventHandlerInfo>();
                     handlers.Add(eventHandlerInfo);
                     eventHandlers.Add(eventName, handlers);
+                    salService.AddFrontEventHandler(new API.EventHandlerInfo
+                    {
+                        IsSystem = eventHandlerInfo.IsSystem,
+                        IsCommon = eventHandlerInfo.IsCommon,
+                        EventName = eventName,
+                        EventDto = eventType.Name,
+                        Dtos = eventType.GetDtoInfos()
+                    });
                 }
 
                 logger.Info($"Для евента {eventName} добавлен обработчик результата {handlerType.Name}");
@@ -172,12 +183,19 @@ namespace SAL.Core.Processors
                 if (eventHandlers.TryGetValue(eventName, out var handlers))
                 {
                     handlers.Add(eventHandlerInfo);
+
                 }
                 else
                 {
                     handlers = new List<EventHandlerInfo>();
                     handlers.Add(eventHandlerInfo);
                     eventHandlers.Add(eventName, handlers);
+                    salService.AddFrontEventHandler(new API.EventHandlerInfo
+                    {
+                        IsSystem = eventHandlerInfo.IsSystem,
+                        IsCommon = eventHandlerInfo.IsCommon,
+                        EventName = eventName
+                    });
                 }
 
                 logger.Info($"Для евента {eventName} добавлен уневерсальный обработчик результата {handlerType.Name}");

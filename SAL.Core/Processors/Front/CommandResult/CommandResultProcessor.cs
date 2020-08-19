@@ -20,6 +20,7 @@ using SAL.Core.Config;
 using SAL.Core.DTO.Transport;
 using SAL.Core.Helpers;
 using SAL.Core.Rabbit.Interfaces;
+using SAL.Core.Service;
 using SAL.Infrastructure;
 
 namespace SAL.Core.Processors
@@ -34,6 +35,7 @@ namespace SAL.Core.Processors
         private ISubscription syncSubscription;
 
         private ISalClient salClient;
+        private ISalService salService;
 
         private readonly ILifetimeScope container;
 
@@ -47,6 +49,7 @@ namespace SAL.Core.Processors
             this.loggerProvider = loggerProvider;
             this.salLogger = salLogger;
             logger = loggerProvider.CreateLogger(nameof(CommandResultProcessor));
+            salService = container.Resolve<ISalService>();
         }
 
         public void Start()
@@ -66,7 +69,7 @@ namespace SAL.Core.Processors
                     .ForEach(RegisterCommonCommandResultHandler);
 
                 var configWatcher = container.Resolve<IConfigWatcher>();
-                var jsonConfig = configWatcher.GetSection(ConfigurationSectionNames.CommandResultProcessor);
+                var jsonConfig = configWatcher.GetSection(ConfigurationSectionNames.FrontCommandResultProcessor);
                 CommandResultProcessorConfig config = new CommandResultProcessorConfig();
 
                 if (jsonConfig != null)
@@ -79,8 +82,8 @@ namespace SAL.Core.Processors
 
                 var subscriptionFactory = transport.CreateMessageSubscription();
 
-                subscription = subscriptionFactory.CreateCommandResult(config.GlobalPrefetchCount, config.InstancePrefetchCount, config.TypePrefetchCount, Handler);
-                syncSubscription = subscriptionFactory.CreateSyncCommandResult(config.SyncPrefetchCount, SyncHandler);
+                subscription = subscriptionFactory.CreateCommandResult(config.GlobalPrefetchCount, config.InstancePrefetchCount, config.TypePrefetchCount, Handler, "FrontCommandResult");
+                syncSubscription = subscriptionFactory.CreateSyncCommandResult(config.SyncPrefetchCount, SyncHandler, "FrontSyncCommandResults");
 
             }
             catch (Exception ex)
@@ -120,6 +123,22 @@ namespace SAL.Core.Processors
                     handlers = new LinkedList<CommandResultHandlerInfo>();
                     handlers.AddLast(commandResultHandlerInfo);
                     resultHandlers.Add(commandName, handlers);
+
+                    var dtos = new List<DtoInfo>();
+                    dtos.AddRange(commandResultHandlerInfo.CommandType.GetDtoInfos());
+                    dtos.AddRange(commandResultHandlerInfo.ResultType.GetDtoInfos());
+
+
+
+                    salService.AddFrontCommandResultHandler(new API.CommandResultHandlerInfo()
+                    {
+                        IsCommon = commandResultHandlerInfo.IsCommon,
+                        CommandName = commandResultHandlerInfo.CommandName,
+                        CommandDto = commandResultHandlerInfo.CommandType.Name,
+                        ResultDto = commandResultHandlerInfo.ResultType.Name,
+                        Dtos = dtos.ToArray()
+                    });
+
                 }
 
                 logger.Info($"Для команды {commandName} добавлен обработчик результата {handlerType.Name}");
@@ -160,6 +179,14 @@ namespace SAL.Core.Processors
                         handlers = new LinkedList<CommandResultHandlerInfo>();
                         handlers.AddLast(commandResultHandlerInfo);
                         resultHandlers.Add(commandName, handlers);
+
+
+                        salService.AddFrontCommandResultHandler(new API.CommandResultHandlerInfo()
+                        {
+                            IsCommon = commandResultHandlerInfo.IsCommon,
+                            CommandName = commandName
+
+                        });
                     }
 
                     logger.Info($"Для команды {commandName} добавлен уневерсальный обработчик результата {handlerType.Name}");

@@ -1,8 +1,10 @@
 ﻿using System.Threading.Tasks;
 using SAL.Infrastructure;
 
+/*
 namespace SAL.API.Command
 {
+    
     public interface IFrontCommandHandler
     {
 
@@ -18,3 +20,4 @@ namespace SAL.API.Command
         Task<byte[]> Serialize(TCommandResult result);
     }
 }
+*/

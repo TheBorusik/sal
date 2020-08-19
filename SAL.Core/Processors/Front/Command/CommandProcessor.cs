@@ -12,6 +12,7 @@ using Newtonsoft.Json.Linq;
 using SAL.API;
 using SAL.API.Client;
 using SAL.API.Command;
+using SAL.API.FrontCommand;
 using SAL.API.LoggerHelper;
 using SAL.API.Monad;
 using SAL.Core.Config;
@@ -19,8 +20,10 @@ using SAL.Core.DTO.Transport;
 using SAL.Core.Helpers;
 using SAL.Core.Rabbit;
 using SAL.Core.Rabbit.Interfaces;
+using SAL.Core.Service;
 using SAL.Core.Validators;
 using SAL.Infrastructure;
+using SAL.Infrastructure.FrontAttributes;
 using SessionManager = SAL.API.SessionManager;
 
 namespace SAL.Core.Processors
@@ -30,12 +33,13 @@ namespace SAL.Core.Processors
         private ILogger logger;
         private ILoggerProvider loggerProvider;
         private ISalLogger salLogger;
+        private ISalService salService;
 
         private readonly ILifetimeScope container;
 
         private ISalClient salClient;
 
-        private readonly IDictionary<string, CommandHandlerInfo> commandHandlers = new Dictionary<string, CommandHandlerInfo>();
+        private readonly IDictionary<string, FrontCommandHandlerInfo> commandHandlers = new Dictionary<string, FrontCommandHandlerInfo>();
 
         private ISubscription subscription;
 
@@ -46,6 +50,7 @@ namespace SAL.Core.Processors
             this.salLogger = salLogger;
             logger = loggerProvider.CreateLogger(nameof(CommandProcessor));
             salClient = container.ResolveNamed<ISalClient>("front");
+            salService = container.Resolve<ISalService>();
         }
 
         private CommandProcessorConfig commandProcessorConfig;
@@ -56,12 +61,12 @@ namespace SAL.Core.Processors
             try
             {
                 container.ComponentRegistry.Registrations
-                    .Where(r => r.Services.OfType<TypedService>().Any(ts => ts.ServiceType == typeof(ICommandHandler)))
+                    .Where(r => r.Services.OfType<TypedService>().Any(ts => ts.ServiceType == typeof(IFrontCommandHandler)))
                     .Select(a => a.Activator.LimitType)
                     .ForEach(RegisterCommandHandler);
 
 
-                var processingCommand = commandHandlers.Where(h => h.Value.IsInstanceHandler == false).ToArray();
+                var processingCommand = commandHandlers.ToArray();
 
                 var baseJsonConfig = new CommandProcessorConfig
                 {
@@ -76,16 +81,16 @@ namespace SAL.Core.Processors
 
                 var configWatcher = container.Resolve<IConfigWatcher>();
 
-                var config = configWatcher.GetSection(ConfigurationSectionNames.CommandProcessor);
+                var config = configWatcher.GetSection(ConfigurationSectionNames.FrontCommandProcessor);
                 if (config != null)
                 {
-                    baseJsonConfig.Merge(config, new JsonMergeSettings { MergeArrayHandling = MergeArrayHandling.Merge });
+                    baseJsonConfig.Merge(config, new JsonMergeSettings {MergeArrayHandling = MergeArrayHandling.Merge});
                 }
 
                 commandProcessorConfig = baseJsonConfig.ToObject<CommandProcessorConfig>();
 
                 var configStr = commandProcessorConfig.ToIndentedJson();
-                File.WriteAllText(Path.Combine(ServiceConfiguration.ConfigPath, $"{ConfigurationSectionNames.CommandProcessor}.txt"), configStr);
+                File.WriteAllText(Path.Combine(ServiceConfiguration.ConfigPath, $"{ConfigurationSectionNames.FrontCommandProcessor}.txt"), configStr);
 
                 logger.Info($"Command processing config \n{configStr}");
 
@@ -102,8 +107,8 @@ namespace SAL.Core.Processors
                         CommandName = k.Key,
                         PrefetchCount = commandProcessorConfig.CommandProcessingSettings[k.Key].PrefetchCount
                     }).ToArray(),
-                    Handler);
-
+                    Handler,
+                    "FrontCommand");
             }
             catch (Exception ex)
             {
@@ -117,21 +122,38 @@ namespace SAL.Core.Processors
             var genericValidator = typeof(IValidator<>);
 
             var handlerInterfaces = handlerType.GetInterfaces()
-                .Where(i => i.IsAssignableTo<ICommandHandler>() && i.IsGenericType).ToArray();
+                .Where(i => i.IsAssignableTo<IFrontCommandHandler>() && i.IsGenericType).ToArray();
 
-            var isInstanceHandler = handlerType.GetCustomAttributes(typeof(SalInstanceHandlerAttribute)).Any();
+
+            if (handlerInterfaces.Length == 0)
+                return;
+
+            if (handlerInterfaces.Length > 1)
+                throw new Exception($"Для обработчика {handlerType.Name} заданно больше чем один обрабатываемый внешний метод");
+
+
+            var externalServiceMethod = handlerType.GetCustomAttributes(typeof(SalExternalMethodAttribute))
+                .OfType<SalExternalMethodAttribute>().FirstOrDefault();
+
+            if (externalServiceMethod == null)
+                throw new Exception($"Для обработчика {handlerType.Name} не заданно имя внешнего метода.");
+
+
+            var externalUris = handlerType.GetCustomAttributes(typeof(SalExternalUriAttribute))
+                .OfType<SalExternalUriAttribute>().Select(a => a.Uri).ToArray();
+
 
             foreach (var handlerInterface in handlerInterfaces)
             {
                 var commandType = handlerInterface.GetGenericArguments()[0];
 
-                var commandName = commandType.GetRouteKey();
+                var commandName = externalServiceMethod.ServiceMethod;
 
                 if (commandHandlers.ContainsKey(commandName))
-                    throw new Exception($"{commandName} уже имеет обработчик");
+                    throw new Exception($"метод {commandName} уже имеет обработчик");
 
 
-                var commandHandlerInfo = new CommandHandlerInfo
+                var commandHandlerInfo = new FrontCommandHandlerInfo
                 {
                     CommandName = commandName,
                     CommandType = commandType,
@@ -141,10 +163,6 @@ namespace SAL.Core.Processors
 
                     HandlerMethod = handlerInterface.GetMethod("Handle"),
                     ValidationMethod = null,
-
-                    IsCommon = false,
-                    IsInstanceHandler = isInstanceHandler
-
                 };
 
 
@@ -157,6 +175,20 @@ namespace SAL.Core.Processors
 
                 commandHandlers.Add(commandName, commandHandlerInfo);
                 logger.Info($"Для команды {commandName} добавлен обработчик {handlerType.Name}");
+
+                var dtos = new List<DtoInfo>();
+                dtos.AddRange(commandHandlerInfo.CommandType.GetDtoInfos());
+                dtos.AddRange(commandHandlerInfo.ResultType.GetDtoInfos());
+
+                salService.AddFrontCommandHandler(new API.FrontCommandHandlerInfo
+                {
+                    CommandName = commandHandlerInfo.CommandName,
+                    CommandDto = commandHandlerInfo.CommandType.Name,
+                    ResultDto = commandHandlerInfo.ResultType.Name,
+                    Dtos = dtos.ToArray(),
+                    ExternalMethod = externalServiceMethod.ServiceMethod,
+                    ExternalUri = externalUris
+                });
             }
         }
 
@@ -255,7 +287,6 @@ namespace SAL.Core.Processors
 
         protected Task<CommandPayload> ExtractCommandPayload(Message transportMessage)
         {
-
             var commandPayload = transportMessage.Payload.ConvertValue<CommandPayload>();
 
             if (commandPayload.Descriptor == null)
@@ -283,7 +314,6 @@ namespace SAL.Core.Processors
 
         protected virtual async Task Processing(Message message, CommandPayload commandPayload)
         {
-
             HandlerContext.Type = HandlerTypes.CommandHandler;
             HandlerContext.Name = commandPayload.Descriptor.CommandName;
 
@@ -294,7 +324,7 @@ namespace SAL.Core.Processors
                 salLogger.LogHandler(commandPayload, HandlerContext.Name);
 
                 using var scope = container.BeginLifetimeScope();
-                var handler = (ICommandHandler)scope.Resolve(commandHandlerInfo.HandlerType);
+                var handler = (ICommandHandler) scope.Resolve(commandHandlerInfo.HandlerType);
                 var executingContext = new ExecutingContext
                 {
                     Scope = scope,
@@ -310,27 +340,20 @@ namespace SAL.Core.Processors
 
                 handler.SetContexts(commandContext, executingContext);
 
-                if (!commandHandlerInfo.IsCommon)
+
+                var commandObject = commandPayload.Payload.ConvertValue(commandHandlerInfo.CommandType);
+                var validator = scope.Resolve<ObjectValidator>();
+
+                var validationErrors = await validator.ValidateData(commandObject,
+                    o => Validate(handler, commandHandlerInfo, o));
+
+                if (validationErrors.Any())
                 {
-                    var commandObject = commandPayload.Payload.ConvertValue(commandHandlerInfo.CommandType);
-                    var validator = scope.Resolve<ObjectValidator>();
-
-                    var validationErrors = await validator.ValidateData(commandObject,
-                        o => Validate(handler, commandHandlerInfo, o));
-
-                    if (validationErrors.Any())
-                    {
-                        await salClient.PublishResultAsync(validationErrors, commandPayload.Descriptor);
-                        return;
-                    }
-
-                    await (Task)commandHandlerInfo.HandlerMethod.Invoke(handler, new[] { commandObject });
+                    await salClient.PublishResultAsync(validationErrors, commandPayload.Descriptor);
+                    return;
                 }
-                else
-                {
-                    await ExecuteCommonHandlerAsync(handler, commandPayload.Payload);
 
-                }
+                await (Task) commandHandlerInfo.HandlerMethod.Invoke(handler, new[] {commandObject});
             }
             else
             {
@@ -338,26 +361,13 @@ namespace SAL.Core.Processors
             }
         }
 
-        private Task<IEnumerable<FieldError>> Validate(object handler, CommandHandlerInfo handlerInfo, object validateObject)
+        private Task<IEnumerable<FieldError>> Validate(object handler, FrontCommandHandlerInfo handlerInfo, object validateObject)
         {
             if (handlerInfo.ValidationMethod == null)
                 return Task.FromResult(new List<FieldError>().AsEnumerable());
 
-            return (Task<IEnumerable<FieldError>>)handlerInfo.ValidationMethod.Invoke(handler, new[] { validateObject });
+            return (Task<IEnumerable<FieldError>>) handlerInfo.ValidationMethod.Invoke(handler, new[] {validateObject});
         }
-
-        private Task ExecuteCommonHandlerAsync(object handler, JObject command)
-        {
-            if (handler is ICommonCommandHandler ccha)
-            {
-                return ccha.Handle(command);
-            }
-            else
-            {
-                throw SalError.CreateException(SalErrorCodes.Fatal, "Обработчик не являеться общим", properties: new { handlerType = handler.GetType().Name });
-            }
-        }
-
 
     }
 }

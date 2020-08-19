@@ -8,17 +8,17 @@ namespace SAL.API
     {
         public static SalException CreateException(
             string code,
-            string message = null,
+            string message = "",
             object properties = null,
             System.Exception innerException = null)
         {
             return CreateDto(code, message, properties, innerException).ToException();
         }
 
-
+        
         public static InternalExceptionDTO CreateDto(
             string code, 
-            string message = null,
+            string message = "",
             object properties = null, 
             System.Exception innerException = null)
         {

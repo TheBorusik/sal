@@ -12,7 +12,9 @@ using SAL.API.Client;
 using SAL.API.Command;
 using SAL.API.CommandResult;
 using SAL.API.Events;
+using SAL.API.FrontCommand;
 using SAL.Infrastructure;
+using SAL.Infrastructure.FrontAttributes;
 using SAL.Infrastructure.ValidationAttribute;
 
 [assembly: SalAdapterType("SalTest")]
@@ -25,14 +27,16 @@ namespace SAL.Test
     {
         public void Configure(ContainerBuilder builder)
         {
-            builder.RegisterSalHandler<TestCommandHandler>(); 
-           // builder.RegisterSalHandler<CommonCommandHandler>();
+            builder.RegisterSalHandler<TestFrontHandler>();
+
+//            builder.RegisterSalHandler<TestCommandHandler>();
+            // builder.RegisterSalHandler<CommonCommandHandler>();
             // builder.RegisterSalHandler<Test2CommonCommandHandler>();
 
 
-            builder.RegisterSalHandler<CommonCommandResultHandler>();
+            //  builder.RegisterSalHandler<CommonCommandResultHandler>();
 
-            builder.RegisterSalHandler<EventHandler>();
+            //  builder.RegisterSalHandler<EventHandler>();
 
 
             builder.RegisterProcessor<TestProcessor>();
@@ -263,6 +267,7 @@ namespace SAL.Test
         public void Online()
         {
 
+            /*
             SessionManager.SetNewSession();
 
             var testCommand = new TestCommand
@@ -298,7 +303,7 @@ namespace SAL.Test
             client.PublishEventAsync(new TestEvent());
 
             client.PublishEventAsync(new Test2Event());
-
+            */
             /*
             client.PublishCommandAsync(new TestCommand
             {
@@ -320,6 +325,39 @@ namespace SAL.Test
 
 
 
+    }
+
+
+
+
+    [SalExternalMethod("Test.J1")]
+    [SalExternalUri("/api/v1/test/j1")]
+    public class TestFrontHandler : IFrontCommandHandlerAsync<Test2Command, TestCommandResult>
+    {
+        private CommandContext commandContext;
+        private ExecutingContext executingContext;
+
+        public void SetContexts(CommandContext commandContext, ExecutingContext executingContext)
+        {
+            this.commandContext = commandContext;
+            this.executingContext = executingContext;
+        }
+
+        public async Task Handle(Test2Command command)
+        {
+
+            await executingContext.SalClient.PublishEventAsync(new TestEvent());
+            await executingContext.SalClient.PublishResultAsync(new TestCommandResult
+            {
+                TestTimeSpan = TimeSpan.FromHours(1.5),
+                TestDate = DateTime.Now,
+                TestInt = 1234567,
+                TestStr = "Testtt"
+
+            }, commandContext.Descriptor);
+
+            await Task.Delay(10000);
+        }
     }
 
 }

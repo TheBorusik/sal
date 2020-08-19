@@ -21,6 +21,21 @@ namespace SAL.Core.Processors
         public CommandProcessingSettings CommandProcessingSettings;
     }
 
+
+    internal class FrontCommandHandlerInfo
+    {
+        public string CommandName;
+        public Type CommandType;
+        public Type ResultType;
+
+        public Type HandlerType;
+
+        public MethodInfo HandlerMethod;
+        public MethodInfo ValidationMethod;
+
+        public CommandProcessingSettings CommandProcessingSettings;
+    }
+
     public class CommandProcessingSettings
     {
         public ushort PrefetchCount { get; set; }

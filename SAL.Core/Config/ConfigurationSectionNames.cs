@@ -15,5 +15,9 @@
         public const string CommandResultProcessor = "CommandResultProcessor";
         public const string EventProcessor = "EventProcessor";
 
+        public const string FrontCommandProcessor = "FrontCommandProcessor";
+        public const string FrontCommandResultProcessor = "FrontCommandResultProcessor";
+        public const string FrontEventProcessor = "FrontEventProcessor";
+
     }
 }

@@ -181,18 +181,19 @@ namespace SAL.Core.Processors
                     if (eventHandlers.TryGetValue(eventName, out var handlers))
                     {
                         handlers.Add(eventHandlerInfo);
-                        salService.AddBackEventHandler(new API.EventHandlerInfo
-                        {
-                            IsSystem = eventHandlerInfo.IsSystem,
-                            IsCommon = eventHandlerInfo.IsCommon,
-                            EventName = eventName
-                        });
+      
                     }
                     else
                     {
                         handlers = new List<EventHandlerInfo>();
                         handlers.Add(eventHandlerInfo);
                         eventHandlers.Add(eventName, handlers);
+                        salService.AddBackEventHandler(new API.EventHandlerInfo
+                        {
+                            IsSystem = eventHandlerInfo.IsSystem,
+                            IsCommon = eventHandlerInfo.IsCommon,
+                            EventName = eventName
+                        });
                     }
 
                     logger.Info($"Для евента {eventName} добавлен уневерсальный обработчик результата {handlerType.Name}");

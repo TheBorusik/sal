@@ -104,30 +104,6 @@ namespace SAL.Core.Processors
 
                 var subscriptionFactory = transport.CreateMessageSubscription();
 
-                /*
-                commandProcessorConfig.CommandShaping.ForEach(kv =>
-                {
-
-                    var shaperList = new List<ICommandShaper>();
-
-                    kv.Value.Shaping.ForEach(s =>
-                    {
-
-                        var shaperType = s.GetSafeValue("Type", "");
-                        if (!string.IsNullOrWhiteSpace(shaperType))
-                        {
-                            var shaper = container.ResolveNamed<ICommandShaper>(shaperType, 
-                                new NamedParameter("commandName", kv.Key),
-                                new NamedParameter("config", (JObject)s),
-                                new NamedParameter("dateDatabase", commandDatabase));
-                            shaperList.Add(shaper);
-                        }
-                    });
-
-
-                    commandHandlers[kv.Key].CommandShapers = shaperList.ToArray();
-                });*/
-
                 subscription = subscriptionFactory.CreateCommand(
                     commandProcessorConfig.GlobalPrefetchCount,
                     commandProcessorConfig.CommandPrefetchCount,
