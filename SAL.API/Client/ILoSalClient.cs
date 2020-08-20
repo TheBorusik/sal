@@ -34,6 +34,7 @@ namespace SAL.API.Client
             string eventName, 
             object eventBody, 
             TimeSpan? ttl,
+            bool isSystem,
             string handlerServiceType,
             string handlerServiceName);
     }

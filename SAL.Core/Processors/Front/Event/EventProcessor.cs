@@ -118,9 +118,7 @@ namespace SAL.Core.Processors
                 var eventType = handlerInterface.GetGenericArguments()[0];
                 var eventName = eventType.GetRouteKey();
 
-                var isSystem = eventType
-                    .GetCustomAttributes(typeof(SalSystemEventAttribute))
-                    .OfType<SalSystemEventAttribute>().Any();
+                var isSystem = eventType.IsSystemEvent();
 
                 var eventHandlerInfo = new EventHandlerInfo
                 {

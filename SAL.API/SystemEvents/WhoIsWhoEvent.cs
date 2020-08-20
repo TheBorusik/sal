@@ -7,7 +7,6 @@ using SAL.Infrastructure.EventAttributes;
 namespace SAL.API
 {
     [SalSystemEvent]
-    [SalServiceType("System")]
     [SalEventName("WhoIsWho")]
     public class WhoIsWhoEvent : IEvent
     {

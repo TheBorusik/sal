@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using System.Linq;
 using System.Reflection;
 using System.Text.RegularExpressions;
+using Autofac;
 using SAL.Infrastructure;
 using SAL.Infrastructure.EventAttributes;
 
@@ -15,6 +16,7 @@ namespace SAL.Core.Helpers
         internal string TypeName;
         internal string Name;
         internal bool IsResultTypeHandler;
+        internal bool IsSystemEvent;
     }
 
     public static class RouteHelper
@@ -27,6 +29,12 @@ namespace SAL.Core.Helpers
             return map.RoutingKey;
         }
 
+        public static bool IsSystemEvent(this Type type)
+        {
+            var map = routeMap.GetOrAdd(type, AddValueFactory);
+            return map.IsSystemEvent;
+        }
+
 
         public static bool IsResultTypeHandler(this Type type)
         {
@@ -36,7 +44,23 @@ namespace SAL.Core.Helpers
 
         private static RouteKeyMap AddValueFactory(Type type)
         {
+            if (type.IsAssignableTo<ICommand>())
+                return ProcessCommand(type);
+            if (type.IsAssignableTo<IEvent>())
+                return ProcessEvent(type);
+            return null;
+
+        }
+
+
+
+        private static RouteKeyMap ProcessCommand(Type type)
+        {
             var typeName = string.Empty;
+
+            if (type.IsAssignableFrom(typeof(ICommand)))
+                return ProcessCommand(type);
+
 
             var sstAttribute = type.GetCustomAttributes(typeof(SalServiceTypeAttribute)).OfType<SalServiceTypeAttribute>().FirstOrDefault();
             if (sstAttribute != null)
@@ -64,18 +88,7 @@ namespace SAL.Core.Helpers
 
             if (string.IsNullOrWhiteSpace(name))
             {
-                var evnAttribute = type.GetCustomAttributes(typeof(SalEventNameAttribute)).OfType<SalEventNameAttribute>().FirstOrDefault();
-                if (evnAttribute != null)
-                {
-                    name = evnAttribute.Name;
-                }
-            }
-
-
-            if(string.IsNullOrWhiteSpace(name))
-            {
                 name = Regex.Replace(type.Name, "(.+)command$", "$1", RegexOptions.IgnoreCase);
-                name = Regex.Replace(name, "(.+)event", "$1", RegexOptions.IgnoreCase);
             }
 
             var routeKey = $"{typeName}.{name}";
@@ -88,11 +101,38 @@ namespace SAL.Core.Helpers
                 RoutingKey = routeKey,
                 TypeName = typeName,
                 Name = name,
-                IsResultTypeHandler = rthAttributePresent
+                IsResultTypeHandler = rthAttributePresent,
+                IsSystemEvent = false
             };
-
         }
 
 
+
+        private static RouteKeyMap ProcessEvent(Type type)
+        {
+            var name = string.Empty;
+            var evnAttribute = type.GetCustomAttributes(typeof(SalEventNameAttribute)).OfType<SalEventNameAttribute>().FirstOrDefault();
+            if (evnAttribute != null)
+            {
+                name = evnAttribute.Name;
+            }
+
+            if (string.IsNullOrWhiteSpace(name))
+            {
+                name = Regex.Replace(name, "(.+)event", "$1", RegexOptions.IgnoreCase);
+            }
+
+            var isSystem = type.GetCustomAttributes(typeof(SalSystemEventAttribute)).Any();
+
+            return new RouteKeyMap
+            {
+                Type = type,
+                RoutingKey = isSystem ? $"System.{name}" : name,
+                TypeName = string.Empty,
+                Name = name,
+                IsResultTypeHandler = false,
+                IsSystemEvent = isSystem
+            };
+        }
     }
 }

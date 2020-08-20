@@ -6,7 +6,6 @@ using SAL.Infrastructure.EventAttributes;
 namespace SAL.API
 {
     [SalSystemEvent]
-    [SalServiceType("System")]
     [SalEventName("IAmBack")]
     public class IAmBackEvent : IEvent
     {

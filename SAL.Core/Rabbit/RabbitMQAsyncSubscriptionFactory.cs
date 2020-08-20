@@ -35,7 +35,7 @@ namespace SAL.Core.Rabbit
             bindings.Add(new QueueBinding
             {
                 ExchangeName = ExchangeNames.EventExchange,
-                RoutingKey = $"{ServiceConfiguration.AdapterType}#{ServiceConfiguration.AdapterName}"
+                RoutingKey = $"System#{ServiceConfiguration.AdapterType}#{ServiceConfiguration.AdapterName}"
             });
 
             transport.AddQueue(new Queue

@@ -4,7 +4,6 @@ using SAL.Infrastructure.EventAttributes;
 namespace SAL.API
 {
     [SalSystemEvent]
-    [SalServiceType("System")]
     [SalEventName("IAmOffline")]
     public class IAmOffline : IEvent
     {
