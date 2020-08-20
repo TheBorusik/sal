@@ -169,7 +169,7 @@ namespace SAL.Core.Config
         {
             var config = new JObject();
 
-            Directory.EnumerateFiles(ServiceConfiguration.ConfigPath, "*.json").ForEach(fn =>
+            Directory.EnumerateFiles(AdapterConfiguration.ConfigPath, "*.json").ForEach(fn =>
             {
                 if (fn.EndsWith("service.json", StringComparison.InvariantCultureIgnoreCase))
                     return;

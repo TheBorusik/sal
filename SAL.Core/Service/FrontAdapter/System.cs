@@ -35,8 +35,8 @@ namespace SAL.Core.Service
             {
                 frontClient.PublishEventAsync(new IAmOffline
                 {
-                    Type = ServiceConfiguration.AdapterType,
-                    Name = ServiceConfiguration.AdapterName
+                    Type = AdapterConfiguration.AdapterType,
+                    Name = AdapterConfiguration.AdapterName
                 }).Wait();
             }
             catch (Exception ex)
@@ -69,8 +69,8 @@ namespace SAL.Core.Service
             {
                 return frontClient.PublishEventAsync(new IAmFrontEvent
                 {
-                    Type = ServiceConfiguration.AdapterType,
-                    Name = ServiceConfiguration.AdapterName,
+                    Type = AdapterConfiguration.AdapterType,
+                    Name = AdapterConfiguration.AdapterName,
                     CommandHandlers = frontCommands.ToArray(),
                     CommandResultHandlers = frontCommandResults.ToArray(),
                     EventHandlers = frontEvents.ToArray()

@@ -35,8 +35,8 @@ namespace SAL.Core.Service
             {
                 backClient.PublishEventAsync(new IAmOffline
                 {
-                    Type = ServiceConfiguration.AdapterType,
-                    Name = ServiceConfiguration.AdapterName
+                    Type = AdapterConfiguration.AdapterType,
+                    Name = AdapterConfiguration.AdapterName
                 }).Wait();
             }
             catch (Exception ex)
@@ -82,8 +82,8 @@ namespace SAL.Core.Service
             {
                 return backClient.PublishEventAsync(new IAmBackEvent
                 {
-                    Type = ServiceConfiguration.AdapterType,
-                    Name = ServiceConfiguration.AdapterName,
+                    Type = AdapterConfiguration.AdapterType,
+                    Name = AdapterConfiguration.AdapterName,
                     CommandHandlers = backCommands.ToArray(),
                     CommandResultHandlers = backCommandResults.ToArray(),
                     EventHandlers = backEvents.ToArray()

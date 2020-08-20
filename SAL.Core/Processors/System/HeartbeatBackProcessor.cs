@@ -27,8 +27,8 @@ namespace SAL.Core.Processors.System
             {
                 await salClient.PublishEventAsync(new HeartbeatEvent
                 {
-                    Type = ServiceConfiguration.AdapterType,
-                    Name = ServiceConfiguration.AdapterName,
+                    Type = AdapterConfiguration.AdapterType,
+                    Name = AdapterConfiguration.AdapterName,
                     Timestamp = DateTime.UtcNow
                 });
             }

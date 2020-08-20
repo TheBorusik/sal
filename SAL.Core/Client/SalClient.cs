@@ -54,10 +54,10 @@ namespace SAL.Core.Client
             var commandType = command.GetType();
 
             if (string.IsNullOrWhiteSpace(resultServiceType))
-                resultServiceType = ServiceConfiguration.AdapterType;
+                resultServiceType = AdapterConfiguration.AdapterType;
 
             if (string.IsNullOrWhiteSpace(resultServiceName) && !commandType.IsResultTypeHandler())
-                resultServiceName = ServiceConfiguration.AdapterName;
+                resultServiceName = AdapterConfiguration.AdapterName;
 
             await PublishCommandAsync(
                 commandType.GetRouteKey(),
@@ -165,8 +165,8 @@ namespace SAL.Core.Client
             return PublishEventAsync(new ExceptionDetectedEvent
             {
                 ExceptionDto = exceptionDTO,
-                ServiceName = ServiceConfiguration.AdapterName,
-                ServiceType = ServiceConfiguration.AdapterType
+                ServiceName = AdapterConfiguration.AdapterName,
+                ServiceType = AdapterConfiguration.AdapterType
             });
         }
 
@@ -175,8 +175,8 @@ namespace SAL.Core.Client
             return PublishEventAsync(new ExceptionDetectedEvent
             {
                 ExceptionDto = ex.ToDto(SalErrorCodes.Fatal),
-                ServiceName = ServiceConfiguration.AdapterName,
-                ServiceType = ServiceConfiguration.AdapterType
+                ServiceName = AdapterConfiguration.AdapterName,
+                ServiceType = AdapterConfiguration.AdapterType
             });
         }
 
@@ -230,8 +230,8 @@ namespace SAL.Core.Client
                 CorrelationId = correlationId,
                 CommandName = commandName,
                 Priority = priority,
-                SourceAdapterType = ServiceConfiguration.AdapterType,
-                SourceAdapterName = ServiceConfiguration.AdapterName,
+                SourceAdapterType = AdapterConfiguration.AdapterType,
+                SourceAdapterName = AdapterConfiguration.AdapterName,
                 DestinationAdapterType = handlerAdapterType,
                 DestinationAdapterName = handlerAdapterName,
                 ResultAdapterType = resultAdapterType,
@@ -299,10 +299,10 @@ namespace SAL.Core.Client
                 Priority = priority,
                 DestinationAdapterType = handlerAdapterType,
                 DestinationAdapterName = handlerAdapterName,
-                SourceAdapterType = ServiceConfiguration.AdapterType,
-                SourceAdapterName = ServiceConfiguration.AdapterName,
-                ResultAdapterType = ServiceConfiguration.AdapterType,
-                ResultAdapterName = ServiceConfiguration.AdapterName,
+                SourceAdapterType = AdapterConfiguration.AdapterType,
+                SourceAdapterName = AdapterConfiguration.AdapterName,
+                ResultAdapterType = AdapterConfiguration.AdapterType,
+                ResultAdapterName = AdapterConfiguration.AdapterName,
                 PublishTimeStamp = DateTime.UtcNow,
                 TTL = TimeSpan.FromSeconds(ttls),
                 IsSync = true
@@ -352,8 +352,8 @@ namespace SAL.Core.Client
                 if (commandResultDescriptor.HandlerTimeStamp.HasValue)
                     commandResultDescriptor.HandlerDuration = DateTime.UtcNow - commandResultDescriptor.HandlerTimeStamp.Value;
 
-                commandResultDescriptor.HandlerServiceType = ServiceConfiguration.AdapterType;
-                commandResultDescriptor.HandlerServiceName = ServiceConfiguration.AdapterName;
+                commandResultDescriptor.HandlerServiceType = AdapterConfiguration.AdapterType;
+                commandResultDescriptor.HandlerServiceName = AdapterConfiguration.AdapterName;
 
 
                 var routingKey = "";
@@ -380,7 +380,7 @@ namespace SAL.Core.Client
                 {
                     Type = MessageTypes.CommandResult,
                     Payload = JObject.FromObject(commandResultPayload, SalSerializer.Create()),
-                    Source = $"{ServiceConfiguration.AdapterType}.{ServiceConfiguration.AdapterName}",
+                    Source = $"{AdapterConfiguration.AdapterType}.{AdapterConfiguration.AdapterName}",
                     Priority = (byte) commandResultDescriptor.Priority,
                     TimeStamp = commandResultDescriptor.PublishTimeStamp,
                     Destination = routingKey,
@@ -409,8 +409,8 @@ namespace SAL.Core.Client
                 EventName = eventName,
                 DestinationAdapterType = handlerServiceType,
                 DestinationAdapterName = handlerServiceName,
-                SourceAdapterType = ServiceConfiguration.AdapterType,
-                SourceAdapterName = ServiceConfiguration.AdapterName,
+                SourceAdapterType = AdapterConfiguration.AdapterType,
+                SourceAdapterName = AdapterConfiguration.AdapterName,
                 PublishTimeStamp = DateTime.UtcNow,
                 TTL = ttl
             };

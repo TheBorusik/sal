@@ -1,6 +1,6 @@
 namespace SAL.API
 {
-    public static class ServiceConfiguration
+    public static class AdapterConfiguration
     {
         public static string AdapterName { get; internal set; }
         public static string AdapterType { get; internal set; }

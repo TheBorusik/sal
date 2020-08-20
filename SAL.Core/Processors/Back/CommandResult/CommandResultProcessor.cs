@@ -391,7 +391,7 @@ namespace SAL.Core.Processors
                 throw new Exception($"Отсутствует commandPayload.Payload | CorrelationId:{transportMessage.CorrelationId}");
 
 
-            if (commandResultPayload.Descriptor.ResultAdapterType != ServiceConfiguration.AdapterType)
+            if (commandResultPayload.Descriptor.ResultAdapterType != AdapterConfiguration.AdapterType)
                 throw new Exception($"Не соответствие Descriptor.ResultAdapterType и AdapterType для команды CorrelationId:{transportMessage.CorrelationId}");
 
 

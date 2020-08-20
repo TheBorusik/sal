@@ -312,11 +312,11 @@ namespace SAL.Core.Processors
             var eventName = eventPayload.Descriptor.EventName;
 
             if (!string.IsNullOrWhiteSpace(eventPayload.Descriptor.DestinationAdapterType) &&
-                !string.Equals(eventPayload.Descriptor.DestinationAdapterType, ServiceConfiguration.AdapterType, StringComparison.InvariantCultureIgnoreCase))
+                !string.Equals(eventPayload.Descriptor.DestinationAdapterType, AdapterConfiguration.AdapterType, StringComparison.InvariantCultureIgnoreCase))
                 return;
 
             if (!string.IsNullOrWhiteSpace(eventPayload.Descriptor.DestinationAdapterName) &&
-                !string.Equals(eventPayload.Descriptor.DestinationAdapterName, ServiceConfiguration.AdapterName, StringComparison.InvariantCultureIgnoreCase))
+                !string.Equals(eventPayload.Descriptor.DestinationAdapterName, AdapterConfiguration.AdapterName, StringComparison.InvariantCultureIgnoreCase))
                 return;
 
             HandlerContext.Type = HandlerTypes.EventHandler;

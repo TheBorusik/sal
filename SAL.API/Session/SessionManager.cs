@@ -35,7 +35,7 @@ namespace SAL.API
             }
             else
             {
-                session.AddOrUpdate(SessionNames.SessionId, $"{ServiceConfiguration.AdapterType}#{ServiceConfiguration.AdapterName}");
+                session.AddOrUpdate(SessionNames.SessionId, $"{AdapterConfiguration.AdapterType}#{AdapterConfiguration.AdapterName}");
 
             }
             session.AddOrUpdate(SessionNames.OperationId, 1L);

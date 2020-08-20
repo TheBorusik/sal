@@ -389,12 +389,12 @@ namespace SAL.Core.Processors
                 throw new Exception($"Отсутствует commandPayload.Payload | CorrelationId:{transportMessage.CorrelationId}");
 
 
-            if (commandResultPayload.Descriptor.ResultAdapterType != ServiceConfiguration.AdapterType)
+            if (commandResultPayload.Descriptor.ResultAdapterType != AdapterConfiguration.AdapterType)
                 throw new Exception($"Не соответствие Descriptor.ResultAdapterType и AdapterType для результата CorrelationId:{transportMessage.CorrelationId}");
 
 
             if (!string.IsNullOrWhiteSpace(commandResultPayload.Descriptor.ResultAdapterName) &&
-                !string.Equals(commandResultPayload.Descriptor.ResultAdapterName, ServiceConfiguration.AdapterName, StringComparison.InvariantCultureIgnoreCase))
+                !string.Equals(commandResultPayload.Descriptor.ResultAdapterName, AdapterConfiguration.AdapterName, StringComparison.InvariantCultureIgnoreCase))
                 throw new Exception($"Не соответствие Descriptor.ResultAdapterName и AdapterName для результата CorrelationId:{transportMessage.CorrelationId}");
 
             return Task.FromResult(commandResultPayload);

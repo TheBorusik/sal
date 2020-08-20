@@ -90,7 +90,7 @@ namespace SAL.Core.Processors
                 commandProcessorConfig = baseJsonConfig.ToObject<CommandProcessorConfig>();
 
                 var configStr = commandProcessorConfig.ToIndentedJson();
-                File.WriteAllText(Path.Combine(ServiceConfiguration.ConfigPath, $"{ConfigurationSectionNames.FrontCommandProcessor}.txt"), configStr);
+                File.WriteAllText(Path.Combine(AdapterConfiguration.ConfigPath, $"{ConfigurationSectionNames.FrontCommandProcessor}.txt"), configStr);
 
                 logger.Info($"Command processing config \n{configStr}");
 
@@ -300,11 +300,11 @@ namespace SAL.Core.Processors
 
 
             if (!string.IsNullOrWhiteSpace(commandPayload.Descriptor.DestinationAdapterType) &&
-                !string.Equals(commandPayload.Descriptor.DestinationAdapterType, ServiceConfiguration.AdapterType, StringComparison.InvariantCultureIgnoreCase))
+                !string.Equals(commandPayload.Descriptor.DestinationAdapterType, AdapterConfiguration.AdapterType, StringComparison.InvariantCultureIgnoreCase))
                 throw new Exception($"Не соответствие Descriptor.DestinationAdapterType и AdapterType для команды CorrelationId:{transportMessage.CorrelationId}");
 
             if (!string.IsNullOrWhiteSpace(commandPayload.Descriptor.DestinationAdapterName) &&
-                !string.Equals(commandPayload.Descriptor.DestinationAdapterName, ServiceConfiguration.AdapterName, StringComparison.InvariantCultureIgnoreCase))
+                !string.Equals(commandPayload.Descriptor.DestinationAdapterName, AdapterConfiguration.AdapterName, StringComparison.InvariantCultureIgnoreCase))
                 throw new Exception($"Не соответствие Descriptor.DestinationAdapterName и AdapterName для команды CorrelationId:{transportMessage.CorrelationId}");
 
             commandPayload.Descriptor.HandlerTimeStamp = DateTime.UtcNow;

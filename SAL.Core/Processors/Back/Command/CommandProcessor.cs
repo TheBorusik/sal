@@ -96,7 +96,7 @@ namespace SAL.Core.Processors
                 commandProcessorConfig = baseJsonConfig.ToObject<CommandProcessorConfig>();
 
                 var configStr = commandProcessorConfig.ToIndentedJson();
-                File.WriteAllText(Path.Combine(ServiceConfiguration.ConfigPath, $"{ConfigurationSectionNames.CommandProcessor}.txt"), configStr);
+                File.WriteAllText(Path.Combine(AdapterConfiguration.ConfigPath, $"{ConfigurationSectionNames.CommandProcessor}.txt"), configStr);
 
                 logger.Info($"Command processing config \n{configStr}");
 
@@ -341,11 +341,11 @@ namespace SAL.Core.Processors
 
 
             if (!string.IsNullOrWhiteSpace(commandPayload.Descriptor.DestinationAdapterType) 
-                && commandPayload.Descriptor.DestinationAdapterType != ServiceConfiguration.AdapterType)
+                && commandPayload.Descriptor.DestinationAdapterType != AdapterConfiguration.AdapterType)
                 throw new Exception($"Не соответствие Descriptor.DestinationAdapterType и AdapterType для команды CorrelationId:{transportMessage.CorrelationId}");
 
             if (!string.IsNullOrWhiteSpace(commandPayload.Descriptor.DestinationAdapterName)
-                && commandPayload.Descriptor.DestinationAdapterName != ServiceConfiguration.AdapterName)
+                && commandPayload.Descriptor.DestinationAdapterName != AdapterConfiguration.AdapterName)
                 throw new Exception($"Не соответствие Descriptor.DestinationAdapterType и AdapterType для команды CorrelationId:{transportMessage.CorrelationId}");
 
 

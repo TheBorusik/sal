@@ -37,13 +37,13 @@ namespace SAL.Core.Service
                 throw new ConfigurationErrorException($"AdapterName должен содержать только буквы или цифры (^[A-z0-9]+$)");
             }
 
-            ServiceConfiguration.AdapterName = service.AdapterName;
+            AdapterConfiguration.AdapterName = service.AdapterName;
 
             if (string.IsNullOrWhiteSpace(service.LogRoot))
                 service.LogRoot = "c:\\.Logs";
 
-            ServiceConfiguration.LogRootPath = !Path.IsPathRooted(service.LogRoot)
-                ? Path.Combine(ServiceConfiguration.RootPath, service.LogRoot)
+            AdapterConfiguration.LogRootPath = !Path.IsPathRooted(service.LogRoot)
+                ? Path.Combine(AdapterConfiguration.RootPath, service.LogRoot)
                 : service.LogRoot;
 
             if (string.IsNullOrWhiteSpace(service.DataPath))
@@ -53,26 +53,26 @@ namespace SAL.Core.Service
             if (string.IsNullOrWhiteSpace(service.DiskStorePath))
                 service.DiskStorePath = "Store";
 
-            ServiceConfiguration.DiskStorePath = !Path.IsPathRooted(service.DiskStorePath)
-                ? Path.Combine(ServiceConfiguration.RootPath, service.DiskStorePath)
+            AdapterConfiguration.DiskStorePath = !Path.IsPathRooted(service.DiskStorePath)
+                ? Path.Combine(AdapterConfiguration.RootPath, service.DiskStorePath)
                 : service.DiskStorePath;
 
-            if (!Directory.Exists(ServiceConfiguration.DiskStorePath))
-                Directory.CreateDirectory(ServiceConfiguration.DiskStorePath);
+            if (!Directory.Exists(AdapterConfiguration.DiskStorePath))
+                Directory.CreateDirectory(AdapterConfiguration.DiskStorePath);
 
             try
             {
-                if (!Directory.Exists(ServiceConfiguration.DiskStorePath))
-                    Directory.CreateDirectory(ServiceConfiguration.DiskStorePath);
+                if (!Directory.Exists(AdapterConfiguration.DiskStorePath))
+                    Directory.CreateDirectory(AdapterConfiguration.DiskStorePath);
 
 
-                var fn = Path.Combine(ServiceConfiguration.DiskStorePath, Guid.NewGuid().ToString());
+                var fn = Path.Combine(AdapterConfiguration.DiskStorePath, Guid.NewGuid().ToString());
                 File.WriteAllText(fn, "Тест");
                 File.Delete(fn);
             }
             catch (Exception)
             {
-                throw new ConfigurationErrorException($"DiskStore - Ошибка конфигурации. Проверте  доступность \"{ServiceConfiguration.DiskStorePath}\".");
+                throw new ConfigurationErrorException($"DiskStore - Ошибка конфигурации. Проверте  доступность \"{AdapterConfiguration.DiskStorePath}\".");
             }
 
             var messageBus = ConfigWatcher.GetSection(ConfigurationSectionNames.MessageBus)?.ConvertValue<RabbitConfig>();
@@ -81,7 +81,7 @@ namespace SAL.Core.Service
                 throw new ConfigurationErrorException("Не найдена секция MessageBus");
             }
 
-            ServiceConfiguration.Contour = messageBus.VirtualHost.ToUpperInvariant();
+            AdapterConfiguration.Contour = messageBus.VirtualHost.ToUpperInvariant();
 
             var frontMessageBus = ConfigWatcher.GetSection(ConfigurationSectionNames.FrontMessageBus)?.ConvertValue<RabbitConfig>();
             if (frontMessageBus == null)
@@ -89,7 +89,7 @@ namespace SAL.Core.Service
                 throw new ConfigurationErrorException("Не найдена секция FrontMessageBus");
             }
             
-            ServiceConfiguration.FrontContour = frontMessageBus.VirtualHost.ToUpperInvariant();
+            AdapterConfiguration.FrontContour = frontMessageBus.VirtualHost.ToUpperInvariant();
 
         }
 

@@ -42,7 +42,7 @@ namespace SAL.API
             get
             {
                 var val = CallContext.GetData(callTraceName) as string;
-                return string.IsNullOrWhiteSpace(val) ? ServiceConfiguration.AdapterName : val;
+                return string.IsNullOrWhiteSpace(val) ? AdapterConfiguration.AdapterName : val;
             }
             set => CallContext.SetData(callTraceName, value);
         }

@@ -27,24 +27,24 @@ namespace SAL.Core.Service
         public virtual void InitConfiguration()
         {
 
-            ServiceConfiguration.AdapterHostName = System.Net.Dns.GetHostName();
-            ServiceConfiguration.AdapterHostIp = System.Net.Dns.GetHostAddresses(ServiceConfiguration.AdapterHostName).Where(ip => ip.AddressFamily == AddressFamily.InterNetwork).Select(ip => ip.ToString()).ToArray();
+            AdapterConfiguration.AdapterHostName = System.Net.Dns.GetHostName();
+            AdapterConfiguration.AdapterHostIp = System.Net.Dns.GetHostAddresses(AdapterConfiguration.AdapterHostName).Where(ip => ip.AddressFamily == AddressFamily.InterNetwork).Select(ip => ip.ToString()).ToArray();
 
 
-            ServiceConfiguration.RootPath = AppDomain.CurrentDomain.BaseDirectory;
-            ServiceConfiguration.ConfigPath = Path.Combine(ServiceConfiguration.RootPath, "config");
+            AdapterConfiguration.RootPath = AppDomain.CurrentDomain.BaseDirectory;
+            AdapterConfiguration.ConfigPath = Path.Combine(AdapterConfiguration.RootPath, "config");
 
 
             var assembly = AppDomain.CurrentDomain.GetAssemblies().FirstOrDefault(a => a.GetName().Name.Equals("SAL.Core", StringComparison.InvariantCultureIgnoreCase));
             if (assembly != null)
             {
                 var version = assembly.GetName().Version;
-                ServiceConfiguration.SalVersion = version.CalculateVersion();
-                ServiceConfiguration.Revision = version.Revision;
+                AdapterConfiguration.SalVersion = version.CalculateVersion();
+                AdapterConfiguration.Revision = version.Revision;
             }
             var configWatcher = new ConfigWatcher();
 
-            var firstConfig = configWatcher.Init(ServiceConfiguration.ConfigPath);
+            var firstConfig = configWatcher.Init(AdapterConfiguration.ConfigPath);
             var modules = firstConfig.GetSafeValue<string[]>("Modules", null);
             if (modules != null && modules.Any())
             {
@@ -60,13 +60,13 @@ namespace SAL.Core.Service
                 {
                     throw new ConfigurationErrorException("Не заданно значение SalAdapterTypeAttribute в главной сборке");
                 }
-                ServiceConfiguration.AdapterType = ssAttribute.Type;
+                AdapterConfiguration.AdapterType = ssAttribute.Type;
 
                 var fileVersionAttribute = mainAssembly.GetCustomAttributes(typeof(AssemblyFileVersionAttribute))
                     .OfType<AssemblyFileVersionAttribute>().FirstOrDefault();
 
 
-                ServiceConfiguration.AdapterVersion = fileVersionAttribute?.Version ?? "unknown";
+                AdapterConfiguration.AdapterVersion = fileVersionAttribute?.Version ?? "unknown";
 
 
             }
@@ -107,13 +107,13 @@ namespace SAL.Core.Service
                 throw new ConfigurationErrorException($"AdapterName должен содержать только буквы или цифры (^[A-z0-9]+$)");
             }
 
-            ServiceConfiguration.AdapterName = service.AdapterName;
+            AdapterConfiguration.AdapterName = service.AdapterName;
 
             if (string.IsNullOrWhiteSpace(service.LogRoot))
                 service.LogRoot = "c:\\.Logs";
 
-            ServiceConfiguration.LogRootPath = !Path.IsPathRooted(service.LogRoot)
-                ? Path.Combine(ServiceConfiguration.RootPath, service.LogRoot)
+            AdapterConfiguration.LogRootPath = !Path.IsPathRooted(service.LogRoot)
+                ? Path.Combine(AdapterConfiguration.RootPath, service.LogRoot)
                 : service.LogRoot;
 
             if (string.IsNullOrWhiteSpace(service.DataPath))
@@ -123,26 +123,26 @@ namespace SAL.Core.Service
             if (string.IsNullOrWhiteSpace(service.DiskStorePath))
                 service.DiskStorePath = "Store";
 
-            ServiceConfiguration.DiskStorePath = !Path.IsPathRooted(service.DiskStorePath)
-                ? Path.Combine(ServiceConfiguration.RootPath, service.DiskStorePath)
+            AdapterConfiguration.DiskStorePath = !Path.IsPathRooted(service.DiskStorePath)
+                ? Path.Combine(AdapterConfiguration.RootPath, service.DiskStorePath)
                 : service.DiskStorePath;
 
-            if (!Directory.Exists(ServiceConfiguration.DiskStorePath))
-                Directory.CreateDirectory(ServiceConfiguration.DiskStorePath);
+            if (!Directory.Exists(AdapterConfiguration.DiskStorePath))
+                Directory.CreateDirectory(AdapterConfiguration.DiskStorePath);
 
             try
             {
-                if (!Directory.Exists(ServiceConfiguration.DiskStorePath))
-                    Directory.CreateDirectory(ServiceConfiguration.DiskStorePath);
+                if (!Directory.Exists(AdapterConfiguration.DiskStorePath))
+                    Directory.CreateDirectory(AdapterConfiguration.DiskStorePath);
 
 
-                var fn = Path.Combine(ServiceConfiguration.DiskStorePath, Guid.NewGuid().ToString());
+                var fn = Path.Combine(AdapterConfiguration.DiskStorePath, Guid.NewGuid().ToString());
                 File.WriteAllText(fn, "Тест");
                 File.Delete(fn);
             }
             catch (Exception)
             {
-                throw new ConfigurationErrorException($"DiskStore - Ошибка конфигурации. Проверте  доступность \"{ServiceConfiguration.DiskStorePath}\".");
+                throw new ConfigurationErrorException($"DiskStore - Ошибка конфигурации. Проверте  доступность \"{AdapterConfiguration.DiskStorePath}\".");
             }
 
             var messageBus = ConfigWatcher.GetSection(ConfigurationSectionNames.MessageBus)?.ConvertValue<RabbitConfig>();
@@ -151,7 +151,7 @@ namespace SAL.Core.Service
                 throw new ConfigurationErrorException("Не найдена секция MessageBus");
             }
 
-            ServiceConfiguration.Contour = messageBus.VirtualHost.ToUpperInvariant();
+            AdapterConfiguration.Contour = messageBus.VirtualHost.ToUpperInvariant();
 
 
         }
