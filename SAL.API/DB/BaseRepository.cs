@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Data;
 using System.Data.Common;
+using System.Runtime.CompilerServices;
 using Autofac;
 
 namespace SAL.API
@@ -33,7 +34,7 @@ namespace SAL.API
         protected virtual DbConnection OpenConnection()
         {
             if (connection != null)
-                return new DbConnectionWrapper(connection, transaction);
+                return SalDBObjectFactory.CreateConnection(connection, transaction);
             var con = connectionCreator.GetConnection(ConnectionName);
             con.Open();
             return con;
@@ -69,8 +70,8 @@ namespace SAL.API
             }
 
             return scope.Resolve<TT>(
-                new TypedParameter(typeof(DbConnection), new DbConnectionWrapper(connection, transaction)),
-                new TypedParameter(typeof(DbTransaction), new DbTransactionWrapper(transaction)));
+                new TypedParameter(typeof(DbConnection), SalDBObjectFactory.CreateConnection(connection, transaction)),
+                new TypedParameter(typeof(DbTransaction), SalDBObjectFactory.CreateTransaction(transaction)));
         }
 
         private bool commited = false;

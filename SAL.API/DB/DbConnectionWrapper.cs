@@ -8,8 +8,8 @@ namespace SAL.API
 {
     public class DbConnectionWrapper : DbConnection
     {
-        private readonly DbConnection externalConnection;
-        private readonly DbTransaction externalTransaction;
+        protected readonly DbConnection externalConnection;
+        protected readonly DbTransaction externalTransaction;
 
         public DbConnectionWrapper(DbConnection externalConnection, DbTransaction externalTransaction)
         {
@@ -22,7 +22,7 @@ namespace SAL.API
         {
             if (externalTransaction == null)
                 return externalConnection.BeginTransaction(isolationLevel);
-            return new DbTransactionWrapper(externalTransaction);
+            return SalDBObjectFactory.CreateTransaction(externalTransaction);
         }
 
         protected override DbCommand CreateDbCommand()

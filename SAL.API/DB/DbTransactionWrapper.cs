@@ -5,7 +5,7 @@ namespace SAL.API
 {
     public class DbTransactionWrapper : DbTransaction
     {
-        private readonly DbTransaction externalTransaction;
+        protected readonly DbTransaction externalTransaction;
 
         public DbTransactionWrapper(DbTransaction externalConnection)
         {
@@ -22,5 +22,6 @@ namespace SAL.API
 
         protected override DbConnection DbConnection => externalTransaction.Connection;
         public override IsolationLevel IsolationLevel => externalTransaction.IsolationLevel;
+
     }
 }
