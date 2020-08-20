@@ -24,8 +24,8 @@ namespace SAL.API
             SourceAdapterName = commandDescriptor.SourceAdapterName;
             DestinationAdapterName = commandDescriptor.DestinationAdapterName;
             DestinationAdapterType = commandDescriptor.DestinationAdapterType;
-            ResultAdaperType = commandDescriptor.ResultAdaperType;
-            ResultAdaperName = commandDescriptor.ResultAdaperName;
+            ResultAdapterType = commandDescriptor.ResultAdapterType;
+            ResultAdapterName = commandDescriptor.ResultAdapterName;
             PublishTimeStamp = commandDescriptor.PublishTimeStamp;
             HandlerTimeStamp = commandDescriptor.HandlerTimeStamp;
             TTL = commandDescriptor.TTL;

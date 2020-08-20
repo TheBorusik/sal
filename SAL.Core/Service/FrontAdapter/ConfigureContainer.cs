@@ -39,7 +39,7 @@ namespace SAL.Core.Service
             builder.RegisterType<FrontEventProcessor>().AsProcessor();
 
 
-            builder.RegisterType<HeartbeatFrontProcessor>().AsProcessor();
+         //   builder.RegisterType<HeartbeatFrontProcessor>().AsProcessor();
 
 
         }

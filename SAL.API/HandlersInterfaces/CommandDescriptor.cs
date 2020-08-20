@@ -11,8 +11,8 @@ namespace SAL.API
         public CommandPriority Priority { get; set; }
         public string SourceAdapterType { get; set; }
         public string SourceAdapterName { get; set; }
-        public string ResultAdaperType { get; set; }
-        public string ResultAdaperName { get; set; }
+        public string ResultAdapterType { get; set; }
+        public string ResultAdapterName { get; set; }
         public DateTime PublishTimeStamp { get; set; }
         public DateTime? HandlerTimeStamp { get; set; }
         public TimeSpan? TTL { get; set; }

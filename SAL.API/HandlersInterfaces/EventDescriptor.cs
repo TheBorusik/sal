@@ -9,8 +9,8 @@ namespace SAL.API
         public string DestinationAdapterType { get; set; }
         public string DestinationAdapterName { get; set; }
 
-        public string SourceServiceType { get; set; }
-        public string SourceServiceName { get; set; }
+        public string SourceAdapterType { get; set; }
+        public string SourceAdapterName { get; set; }
         public DateTime PublishTimeStamp { get; set; }
 
         public TimeSpan? TTL { get; set; }

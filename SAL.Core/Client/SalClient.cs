@@ -155,7 +155,6 @@ namespace SAL.Core.Client
                 evnt.GetType().GetRouteKey(),
                 evnt,
                 ttl,
-                evnt.GetType().IsSystemEvent(),
                 handlerServiceType,
                 handlerServiceName
             );
@@ -235,8 +234,8 @@ namespace SAL.Core.Client
                 SourceAdapterName = ServiceConfiguration.AdapterName,
                 DestinationAdapterType = handlerAdapterType,
                 DestinationAdapterName = handlerAdapterName,
-                ResultAdaperType = resultAdapterType,
-                ResultAdaperName = resultAdapterName,
+                ResultAdapterType = resultAdapterType,
+                ResultAdapterName = resultAdapterName,
                 PublishTimeStamp = DateTime.UtcNow,
                 TTL = ttl,
                 IsSync = false
@@ -302,8 +301,8 @@ namespace SAL.Core.Client
                 DestinationAdapterName = handlerAdapterName,
                 SourceAdapterType = ServiceConfiguration.AdapterType,
                 SourceAdapterName = ServiceConfiguration.AdapterName,
-                ResultAdaperType = ServiceConfiguration.AdapterType,
-                ResultAdaperName = ServiceConfiguration.AdapterName,
+                ResultAdapterType = ServiceConfiguration.AdapterType,
+                ResultAdapterName = ServiceConfiguration.AdapterName,
                 PublishTimeStamp = DateTime.UtcNow,
                 TTL = TimeSpan.FromSeconds(ttls),
                 IsSync = true
@@ -361,11 +360,11 @@ namespace SAL.Core.Client
 
                 if (commandResultDescriptor.IsSync)
                 {
-                    routingKey = $"{commandResultDescriptor.ResultAdaperType}#{commandResultDescriptor.ResultAdaperName}#Sync";
+                    routingKey = $"{commandResultDescriptor.ResultAdapterType}#{commandResultDescriptor.ResultAdapterName}#Sync";
                 }
                 else
                 {
-                    routingKey = string.IsNullOrWhiteSpace(commandResultDescriptor.ResultAdaperName) ? commandResultDescriptor.ResultAdaperType : $"{commandResultDescriptor.ResultAdaperType}#{commandResultDescriptor.ResultAdaperName}";
+                    routingKey = string.IsNullOrWhiteSpace(commandResultDescriptor.ResultAdapterName) ? commandResultDescriptor.ResultAdapterType : $"{commandResultDescriptor.ResultAdapterType}#{commandResultDescriptor.ResultAdapterName}";
                 }
 
                 var commandResultPayload = new CommandResultPayload
@@ -400,7 +399,7 @@ namespace SAL.Core.Client
             return Task.CompletedTask;
         }
 
-        public Task PublishEventAsync(string eventName, object eventBody, TimeSpan? ttl, bool isSystem, string handlerServiceType, string handlerServiceName)
+        public Task PublishEventAsync(string eventName, object eventBody, TimeSpan? ttl, string handlerServiceType, string handlerServiceName)
         {
             var correlationId = Guid.NewGuid().ToString("N");
 
@@ -410,8 +409,8 @@ namespace SAL.Core.Client
                 EventName = eventName,
                 DestinationAdapterType = handlerServiceType,
                 DestinationAdapterName = handlerServiceName,
-                SourceServiceType = ServiceConfiguration.AdapterType,
-                SourceServiceName = ServiceConfiguration.AdapterName,
+                SourceAdapterType = ServiceConfiguration.AdapterType,
+                SourceAdapterName = ServiceConfiguration.AdapterName,
                 PublishTimeStamp = DateTime.UtcNow,
                 TTL = ttl
             };
@@ -427,27 +426,18 @@ namespace SAL.Core.Client
 
             var routingKey = string.Empty;
 
-            if (isSystem)
-            {
-                if (!string.IsNullOrWhiteSpace(handlerServiceType) && !string.IsNullOrWhiteSpace(handlerServiceName))
-                    routingKey = $"System#{handlerServiceType}#{handlerServiceName}";
-                else
-                    routingKey = $"System.{eventName}";
-            }
+
+            if (!string.IsNullOrWhiteSpace(handlerServiceType) && !string.IsNullOrWhiteSpace(handlerServiceName))
+                routingKey = $"{handlerServiceType}#{handlerServiceName}";
             else
-            {
-                if (!string.IsNullOrWhiteSpace(handlerServiceType) && !string.IsNullOrWhiteSpace(handlerServiceName))
-                    routingKey = $"{handlerServiceType}#{handlerServiceName}";
-                else
-                    routingKey = eventName;
-            }
+                routingKey = eventName;
 
 
             var transportMessage = new Message
             {
                 Type = MessageTypes.Event,
                 Payload = JObject.FromObject(eventPayload, SalSerializer.Create()),
-                Source = $"{eventDescriptor.SourceServiceType}.{eventDescriptor.SourceServiceName}",
+                Source = $"{eventDescriptor.SourceAdapterType}.{eventDescriptor.SourceAdapterName}",
                 Priority = 0,
                 TimeStamp = eventDescriptor.PublishTimeStamp,
                 Destination = routingKey,
