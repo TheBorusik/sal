@@ -14,6 +14,8 @@ namespace SAL.API
 
         T BeginTransaction(string connectionName = null, IsolationLevel il = IsolationLevel.Unspecified);
 
-        TT GetRepository<TT>(IsolationLevel il = IsolationLevel.Unspecified) where TT : IDisposable, IBaseRepository;
+        TT GetRepository<TT>() where TT : IDisposable, IBaseRepository;
+
+        T GetCurrentRepository();
     }
 }

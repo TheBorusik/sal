@@ -62,7 +62,7 @@ namespace SAL.API
             return scope.Resolve<T>(new TypedParameter(typeof(DbConnection), con), new TypedParameter(typeof(DbTransaction), tran));
         }
 
-        public virtual TT GetRepository<TT>(IsolationLevel il = IsolationLevel.Unspecified) where TT : IDisposable, IBaseRepository
+        public virtual TT GetRepository<TT>() where TT : IDisposable, IBaseRepository
         {
             if (connectionCreator != null)
             {
@@ -73,6 +73,12 @@ namespace SAL.API
                 new TypedParameter(typeof(DbConnection), SalDBObjectFactory.CreateConnection(connection, transaction)),
                 new TypedParameter(typeof(DbTransaction), SalDBObjectFactory.CreateTransaction(transaction)));
         }
+
+        public virtual T GetCurrentRepository()
+        {
+            return GetRepository<T>();
+        }
+
 
         private bool commited = false;
 
