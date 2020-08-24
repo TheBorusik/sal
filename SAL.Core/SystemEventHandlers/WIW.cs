@@ -11,6 +11,7 @@ namespace SAL.Core.SystemEventHandlers
     class SystemWIWHandler : IEventHandler<WhoIsWhoEvent>
     {
         private ISalService salService;
+        private EventContext context;
 
         public SystemWIWHandler(ISalService salService)
         {
@@ -20,11 +21,16 @@ namespace SAL.Core.SystemEventHandlers
 
         public void SetContexts(EventContext eventContext, ExecutingContext executingContext)
         {
-
+            this.context = eventContext;
         }
 
         public Task Handle(WhoIsWhoEvent evnt)
         {
+            if (context.Descriptor.SourceAdapterName == AdapterConfiguration.AdapterName &&
+                context.Descriptor.SourceAdapterType == AdapterConfiguration.AdapterType)
+                return Task.CompletedTask;
+            
+
             salService.SendIm();
             return Task.CompletedTask;
         }
