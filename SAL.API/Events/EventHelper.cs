@@ -14,7 +14,7 @@ namespace SAL.API.Events
 
         public static bool CheckIsExpire(this EventContext context, TimeSpan ttl)
         {
-            return context.Descriptor.PublishTimeStamp + ttl >= DateTime.UtcNow;
+            return context.Descriptor.PublishTimeStamp + ttl <= DateTime.UtcNow;
         }
     }
 }
