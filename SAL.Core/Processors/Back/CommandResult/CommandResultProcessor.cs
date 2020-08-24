@@ -259,7 +259,7 @@ namespace SAL.Core.Processors
             {
                 nack();
                 logger.Error("При обработке результата команды произошла ошибка", ex);
-                await salClient.RaiseExceptionDetectEvent(ex.ToDto());
+                await salClient.RaiseExceptionDetectEvent(rabbitMessage.CorrelationId, ex.ToDto());
             }
             catch (TargetInvocationException ex)
             {
@@ -267,7 +267,7 @@ namespace SAL.Core.Processors
                 if (ex.InnerException is SalException sex)
                 {
                     logger.Error("При обработке результата команды произошла ошибка", ex);
-                    await salClient.RaiseExceptionDetectEvent(ex.ToDto());
+                    await salClient.RaiseExceptionDetectEvent(rabbitMessage.CorrelationId, ex.ToDto());
                 }
                 else
                 {
@@ -280,7 +280,7 @@ namespace SAL.Core.Processors
                             rabbitMessage.QueueName
                         });
                     logger.Error(dto, ex.InnerException);
-                    await salClient.RaiseExceptionDetectEvent(dto);
+                    await salClient.RaiseExceptionDetectEvent(rabbitMessage.CorrelationId, dto);
                 }
             }
             catch (Exception ex)
@@ -295,7 +295,7 @@ namespace SAL.Core.Processors
                         rabbitMessage.QueueName
                     });
                 logger.Error(dto, ex);
-                await salClient.RaiseExceptionDetectEvent(dto);
+                await salClient.RaiseExceptionDetectEvent(rabbitMessage.CorrelationId, dto);
             }
         }
 
@@ -313,7 +313,7 @@ namespace SAL.Core.Processors
             {
                 nack();
                 logger.Error("При обработке результата команды произошла ошибка", ex);
-                await salClient.RaiseExceptionDetectEvent(ex.ToDto());
+                await salClient.RaiseExceptionDetectEvent(rabbitMessage.CorrelationId, ex.ToDto());
             }
             catch (TargetInvocationException ex)
             {
@@ -321,7 +321,7 @@ namespace SAL.Core.Processors
                 if (ex.InnerException is SalException sex)
                 {
                     logger.Error("При обработке результата команды произошла ошибка", ex);
-                    await salClient.RaiseExceptionDetectEvent(ex.ToDto());
+                    await salClient.RaiseExceptionDetectEvent(rabbitMessage.CorrelationId, ex.ToDto());
                 }
                 else
                 {
@@ -334,7 +334,7 @@ namespace SAL.Core.Processors
                             rabbitMessage.QueueName
                         });
                     logger.Error(dto, ex.InnerException);
-                    await salClient.RaiseExceptionDetectEvent(dto);
+                    await salClient.RaiseExceptionDetectEvent(rabbitMessage.CorrelationId, dto);
                 }
             }
 
@@ -350,7 +350,7 @@ namespace SAL.Core.Processors
                         rabbitMessage.QueueName
                     });
                 logger.Error(dto, ex);
-                await salClient.RaiseExceptionDetectEvent(dto);
+                await salClient.RaiseExceptionDetectEvent(rabbitMessage.CorrelationId, dto);
             }
         }
 

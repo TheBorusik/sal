@@ -162,26 +162,6 @@ namespace SAL.Core.Client
             );
         }
 
-        public Task RaiseExceptionDetectEvent(InternalExceptionDTO exceptionDTO)
-        {
-            return PublishEventAsync(new ExceptionDetectedEvent
-            {
-                ExceptionDto = exceptionDTO,
-                ServiceName = AdapterConfiguration.AdapterName,
-                ServiceType = AdapterConfiguration.AdapterType
-            });
-        }
-
-        public Task RaiseExceptionDetectEvent(Exception ex)
-        {
-            return PublishEventAsync(new ExceptionDetectedEvent
-            {
-                ExceptionDto = ex.ToDto(SalErrorCodes.Fatal),
-                ServiceName = AdapterConfiguration.AdapterName,
-                ServiceType = AdapterConfiguration.AdapterType
-            });
-        }
-
         public Task RaiseExceptionDetectEvent(string cid, InternalExceptionDTO exceptionDTO)
         {
             return PublishEventAsync(new ExceptionDetectedEvent

@@ -7,7 +7,6 @@ namespace SAL.API.Client
 {
     public interface ISalClient
     {
-
         // hi level
         Task<string> PublishCommandAsync<TCommand>(
             TCommand command,
@@ -28,7 +27,7 @@ namespace SAL.API.Client
             TimeSpan? ttl = null,
             string handlerServiceType = null,
             string handlerServiceName = null
-            )
+        )
             where TCommand : class, IHaveResult<TCommandResult>, new()
             where TCommandResult : class, ICommandResult, new();
 
@@ -46,11 +45,8 @@ namespace SAL.API.Client
 
         Task PublishEventAsync(IEvent evnt, TimeSpan? ttl = null, string handlerServiceType = null, string handlerServiceName = null);
 
-        Task RaiseExceptionDetectEvent(InternalExceptionDTO exceptionDTO);
-        Task RaiseExceptionDetectEvent(Exception ex);
 
-        Task RaiseExceptionDetectEvent(string cid,InternalExceptionDTO exceptionDTO);
-        Task RaiseExceptionDetectEvent(string cid,Exception ex);
-
+        Task RaiseExceptionDetectEvent(string cid, InternalExceptionDTO exceptionDTO);
+        Task RaiseExceptionDetectEvent(string cid, Exception ex);
     }
 }
