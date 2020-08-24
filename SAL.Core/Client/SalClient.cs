@@ -77,17 +77,19 @@ namespace SAL.Core.Client
         public async Task<CommandResult<TCommandResult>> ExecuteCommandAsync<TCommand, TCommandResult>(
             TCommand command,
             CommandPriority priority = CommandPriority.Normal,
-            int ttls = 60,
+            TimeSpan? ttl = null,
             string handlerServiceType = null,
             string handlerServiceName = null
         ) where TCommand : class, IHaveResult<TCommandResult>, new() where TCommandResult : class, ICommandResult, new()
         {
+            ttl ??= TimeSpan.FromSeconds(60);
+
             var commandType = command.GetType();
             var result = await ExecuteCommandAsync(
                 commandType.GetRouteKey(),
                 command,
                 priority,
-                ttls,
+                ttl.Value,
                 handlerServiceType,
                 handlerServiceName
             );
@@ -273,7 +275,7 @@ namespace SAL.Core.Client
             string commandName,
             object commandBody,
             CommandPriority priority,
-            int ttls,
+            TimeSpan ttl,
             string handlerAdapterType,
             string handlerAdapterName)
         {
@@ -304,7 +306,7 @@ namespace SAL.Core.Client
                 ResultAdapterType = AdapterConfiguration.AdapterType,
                 ResultAdapterName = AdapterConfiguration.AdapterName,
                 PublishTimeStamp = DateTime.UtcNow,
-                TTL = TimeSpan.FromSeconds(ttls),
+                TTL = ttl,
                 IsSync = true
             };
 
@@ -329,7 +331,7 @@ namespace SAL.Core.Client
                 Session = SessionManager.Current
             };
 
-            commandResultProcessor.RegisterSimpleCommandResultHandler(correlationId, completionSource, ttls);
+            commandResultProcessor.RegisterSimpleCommandResultHandler(correlationId, completionSource, ttl);
 
             publisher.PublishCommand(Pack(transportMessage));
 

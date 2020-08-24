@@ -37,8 +37,8 @@
     "GlobalPrefetchCount": 25,
     "Logging": {
       "Items": {
-        "HeartBit": {
-          "Ignore": true
+        "System.*": {
+          "Ignore": false
         },
         ".*": {
           "Ignore": false,

@@ -309,15 +309,31 @@ namespace SAL.Core.Processors
 
         private async Task Processing(Message message, EventPayload eventPayload)
         {
-            var eventName = eventPayload.Descriptor.EventName;
+            var eventLogger = salLogger.GetLogger(eventPayload);
+
+            if (eventPayload.Descriptor.TTL.HasValue &&
+                eventPayload.Descriptor.PublishTimeStamp + eventPayload.Descriptor.TTL.Value <= DateTime.UtcNow)
+            {
+                eventLogger.Trace("Event - протух");
+                return;
+            }
 
             if (!string.IsNullOrWhiteSpace(eventPayload.Descriptor.DestinationAdapterType) &&
                 !string.Equals(eventPayload.Descriptor.DestinationAdapterType, AdapterConfiguration.AdapterType, StringComparison.InvariantCultureIgnoreCase))
+            {
+                eventLogger.Trace("Event - не соответсвие DestinationAdapterType");
                 return;
+            }
 
             if (!string.IsNullOrWhiteSpace(eventPayload.Descriptor.DestinationAdapterName) &&
                 !string.Equals(eventPayload.Descriptor.DestinationAdapterName, AdapterConfiguration.AdapterName, StringComparison.InvariantCultureIgnoreCase))
+            {
+                eventLogger.Trace("Event - не соответсвие DestinationAdapterName");
                 return;
+            }
+
+
+            var eventName = eventPayload.Descriptor.EventName;
 
             HandlerContext.Type = HandlerTypes.EventHandler;
             HandlerContext.Name = eventName;
@@ -327,7 +343,7 @@ namespace SAL.Core.Processors
             foreach (var eventHandlerInfo in anyEventHandlers)
             {
                 salLogger.LogHandler(eventPayload, eventHandlerInfo.HandlerType.Name);
-                handlerTasks.Add(ExecuteEventHandlerAsync(eventHandlerInfo, message, eventPayload));
+                handlerTasks.Add(ExecuteEventHandlerAsync(eventHandlerInfo, message, eventPayload, eventLogger));
             }
 
             if (eventHandlers.TryGetValue(eventName, out var eventHandlerInfos))
@@ -335,7 +351,7 @@ namespace SAL.Core.Processors
                 foreach (var eventHandlerInfo in eventHandlerInfos)
                 {
                     salLogger.LogHandler(eventPayload, eventHandlerInfo.HandlerType.Name);
-                    handlerTasks.Add(ExecuteEventHandlerAsync(eventHandlerInfo, message, eventPayload));
+                    handlerTasks.Add(ExecuteEventHandlerAsync(eventHandlerInfo, message, eventPayload, eventLogger));
                 }
             }
 
@@ -350,7 +366,7 @@ namespace SAL.Core.Processors
             }
         }
 
-        public Task ExecuteEventHandlerAsync(EventHandlerInfo ehi, Message message, EventPayload eventPayload)
+        public Task ExecuteEventHandlerAsync(EventHandlerInfo ehi, Message message, EventPayload eventPayload, ILogger eventLogger)
         {
             using var scope = container.BeginLifetimeScope();
 
@@ -359,7 +375,7 @@ namespace SAL.Core.Processors
             {
                 Scope = scope,
                 SalClient = scope.Resolve<ISalClient>(),
-                Logger = salLogger.GetLogger(eventPayload)
+                Logger = eventLogger
             };
 
             var context = new EventContext()

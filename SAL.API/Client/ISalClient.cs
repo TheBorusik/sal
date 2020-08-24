@@ -25,7 +25,7 @@ namespace SAL.API.Client
         Task<CommandResult<TCommandResult>> ExecuteCommandAsync<TCommand, TCommandResult>(
             TCommand command,
             CommandPriority priority = CommandPriority.Normal,
-            int ttls = 60,
+            TimeSpan? ttl = null,
             string handlerServiceType = null,
             string handlerServiceName = null
             )

@@ -82,7 +82,6 @@ namespace SAL.Core.Processors
 
                 subscription = subscriptionFactory.CreateEvent(config.PrefetchCount, eventList, Handler, "FrontEvent");
                 systemSubscription = subscriptionFactory.CreateSystemEvent(config.SystemPrefetchCount, systemEventList, Handler, "FrontSystemEvent");
-
             }
             catch (Exception ex)
             {
@@ -153,19 +152,16 @@ namespace SAL.Core.Processors
 
                 logger.Info($"Для евента {eventName} добавлен обработчик результата {handlerType.Name}");
             }
-
         }
 
         private void RegisterCommonEventHandler(Type handlerType)
         {
-
             var attrs = handlerType
                 .GetCustomAttributes(typeof(SalEventHandlerAttribute)).OfType<SalEventHandlerAttribute>().ToArray();
 
 
             attrs.ForEach(a =>
             {
-
                 var eventName = a.EventName;
 
                 var eventHandlerInfo = new EventHandlerInfo
@@ -181,7 +177,6 @@ namespace SAL.Core.Processors
                 if (eventHandlers.TryGetValue(eventName, out var handlers))
                 {
                     handlers.Add(eventHandlerInfo);
-
                 }
                 else
                 {
@@ -197,7 +192,6 @@ namespace SAL.Core.Processors
                 }
 
                 logger.Info($"Для евента {eventName} добавлен уневерсальный обработчик результата {handlerType.Name}");
-
             });
         }
 
@@ -296,6 +290,32 @@ namespace SAL.Core.Processors
 
         private async Task Processing(Message message, EventPayload eventPayload)
         {
+            var eventLogger = salLogger.GetLogger(eventPayload);
+
+            if (eventPayload.Descriptor.TTL.HasValue &&
+                eventPayload.Descriptor.PublishTimeStamp + eventPayload.Descriptor.TTL.Value <= DateTime.UtcNow)
+            {
+                eventLogger.Trace("Event - протух");
+                return;
+            }
+
+            if (!string.IsNullOrWhiteSpace(eventPayload.Descriptor.DestinationAdapterType) &&
+                !string.Equals(eventPayload.Descriptor.DestinationAdapterType, AdapterConfiguration.AdapterType, StringComparison.InvariantCultureIgnoreCase))
+            {
+                eventLogger.Trace("Event - не соответсвие DestinationAdapterType");
+                return;
+            }
+
+            if (!string.IsNullOrWhiteSpace(eventPayload.Descriptor.DestinationAdapterName) &&
+                !string.Equals(eventPayload.Descriptor.DestinationAdapterName, AdapterConfiguration.AdapterName, StringComparison.InvariantCultureIgnoreCase))
+            {
+                eventLogger.Trace("Event - не соответсвие DestinationAdapterName");
+                return;
+            }
+
+
+
+
             var eventName = eventPayload.Descriptor.EventName;
 
 
@@ -310,20 +330,19 @@ namespace SAL.Core.Processors
                 foreach (var eventHandlerInfo in eventHandlerInfos)
                 {
                     salLogger.LogHandler(eventPayload, eventHandlerInfo.HandlerType.Name);
-                    handlerTasks.Add(ExecuteEventHandlerAsync(eventHandlerInfo, message, eventPayload));
+                    handlerTasks.Add(ExecuteEventHandlerAsync(eventHandlerInfo, message, eventPayload, eventLogger));
                 }
 
                 await Task.WhenAll(handlerTasks.ToArray());
-
             }
             else
             {
-                var dto = SalError.CreateDto(SalErrorCodes.Fatal, "Евент не обрабатываеться", properties: new { eventName });
+                var dto = SalError.CreateDto(SalErrorCodes.Fatal, "Евент не обрабатываеться", properties: new {eventName});
                 throw dto.ToException();
             }
         }
 
-        public Task ExecuteEventHandlerAsync(EventHandlerInfo ehi, Message message, EventPayload eventPayload)
+        public Task ExecuteEventHandlerAsync(EventHandlerInfo ehi, Message message, EventPayload eventPayload, ILogger eventLogger)
         {
             using var scope = container.BeginLifetimeScope();
 
@@ -332,7 +351,7 @@ namespace SAL.Core.Processors
             {
                 Scope = scope,
                 SalClient = scope.ResolveNamed<ISalClient>("front"),
-                Logger = salLogger.GetLogger(eventPayload)
+                Logger = eventLogger
             };
 
             var context = new EventContext()
@@ -342,7 +361,7 @@ namespace SAL.Core.Processors
             };
 
 
-            var handler = (IEventHandler)scope.Resolve(ehi.HandlerType);
+            var handler = (IEventHandler) scope.Resolve(ehi.HandlerType);
 
             handler.SetContexts(context, executingContext);
 
@@ -351,7 +370,7 @@ namespace SAL.Core.Processors
             else
             {
                 var evnt = eventPayload.Payload.ConvertValue(ehi.EventType);
-                return (Task)ehi.HandlerMethod.Invoke(handler, new[] { evnt });
+                return (Task) ehi.HandlerMethod.Invoke(handler, new[] {evnt});
             }
         }
 
@@ -363,7 +382,7 @@ namespace SAL.Core.Processors
             }
             else
             {
-                var dto = SalError.CreateDto(SalErrorCodes.Fatal, "Обработчик не являеться общим", properties: new { handlerType = handler.GetType().Name });
+                var dto = SalError.CreateDto(SalErrorCodes.Fatal, "Обработчик не являеться общим", properties: new {handlerType = handler.GetType().Name});
                 throw dto.ToException();
             }
         }

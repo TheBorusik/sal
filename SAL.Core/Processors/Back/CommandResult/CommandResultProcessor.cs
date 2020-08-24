@@ -206,12 +206,12 @@ namespace SAL.Core.Processors
 
         }
 
-        public void RegisterSimpleCommandResultHandler(string correlationId, TaskCompletionSource<CommonCommandResult> completionSource, int timeOut)
+        public void RegisterSimpleCommandResultHandler(string correlationId, TaskCompletionSource<CommonCommandResult> completionSource, TimeSpan timeOut)
         {
             var simpleCommandResultHandler = new SimpleCommandResultHandlerInfo
             {
                 CommandCorrelationId = correlationId,
-                ExpireDate = DateTime.UtcNow + TimeSpan.FromSeconds(timeOut),
+                ExpireDate = DateTime.UtcNow + timeOut,
                 CompletionSource = completionSource,
                 CancellationTokenSource = new CancellationTokenSource()
             };
@@ -225,7 +225,7 @@ namespace SAL.Core.Processors
                     scrh.CompletionSource.TrySetException(new SalCommandTimeoutException());
                 }
             });
-            simpleCommandResultHandler.CancellationTokenSource.CancelAfter(TimeSpan.FromSeconds(timeOut));
+            simpleCommandResultHandler.CancellationTokenSource.CancelAfter(timeOut);
         }
 
         public void Online()
@@ -400,7 +400,14 @@ namespace SAL.Core.Processors
 
         private async Task Processing(Message message, CommandResultPayload commandResultPayload)
         {
+            var commandResLogger = salLogger.GetLogger(commandResultPayload);
 
+            if (commandResultPayload.Descriptor.TTL.HasValue &&
+                commandResultPayload.Descriptor.PublishTimeStamp + commandResultPayload.Descriptor.TTL.Value <= DateTime.UtcNow)
+            {
+                commandResLogger.Trace("Результат команды - протух");
+                return;
+            }
 
 
             HandlerContext.Type = HandlerTypes.CommandResultHandler;
@@ -413,7 +420,7 @@ namespace SAL.Core.Processors
             {
                 Scope = scope,
                 SalClient = scope.Resolve<ISalClient>(),
-                Logger = salLogger.GetLogger(commandResultPayload)
+                Logger = commandResLogger
             };
 
             var context = new CommandResultContext

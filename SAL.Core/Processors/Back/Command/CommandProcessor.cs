@@ -356,6 +356,16 @@ namespace SAL.Core.Processors
 
         protected virtual async Task Processing(Message message, CommandPayload commandPayload)
         {
+            var commandLogger = salLogger.GetLogger(commandPayload);
+
+            if (commandPayload.Descriptor.TTL.HasValue &&
+                commandPayload.Descriptor.PublishTimeStamp + commandPayload.Descriptor.TTL.Value <= DateTime.UtcNow)
+            {
+                commandLogger.Trace("Команда - протухла");
+                return;
+            }
+
+
             HandlerContext.Type = HandlerTypes.CommandHandler;
             HandlerContext.Name = commandPayload.Descriptor.CommandName;
 
@@ -371,7 +381,7 @@ namespace SAL.Core.Processors
                 {
                     Scope = scope,
                     SalClient = scope.Resolve<ISalClient>(),
-                    Logger = salLogger.GetLogger(commandPayload)
+                    Logger = commandLogger
                 };
 
                 var commandContext = new CommandContext

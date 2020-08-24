@@ -20,7 +20,7 @@ namespace SAL.API.Client
             string commandName,
             object commandBody,
             CommandPriority priority,
-            int ttls,
+            TimeSpan ttl,
             string handlerAdapterType,
             string handlerAdapterName
         );
