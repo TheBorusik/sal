@@ -7,6 +7,7 @@ using Microsoft.Extensions.Logging;
 using SAL.API;
 using SAL.API.Client;
 using SAL.API.LoggerHelper;
+using SAL.Core.SystemEventHandlers;
 
 namespace SAL.Core.Processors.System
 {
@@ -30,7 +31,7 @@ namespace SAL.Core.Processors.System
                     Type = AdapterConfiguration.AdapterType,
                     Name = AdapterConfiguration.AdapterName,
                     Timestamp = DateTime.UtcNow
-                });
+                }, SystemEventTimes.BaseTTL);
             }
             catch (Exception ex)
             {

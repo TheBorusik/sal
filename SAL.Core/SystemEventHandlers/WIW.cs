@@ -26,8 +26,10 @@ namespace SAL.Core.SystemEventHandlers
 
         public Task Handle(WhoIsWhoEvent evnt)
         {
-            if (context.Descriptor.SourceAdapterName == AdapterConfiguration.AdapterName &&
-                context.Descriptor.SourceAdapterType == AdapterConfiguration.AdapterType)
+            if (context.CheckIsMyEvent())
+                return Task.CompletedTask;
+
+            if (context.CheckIsExpire(SystemEventTimes.BaseTTL))
                 return Task.CompletedTask;
             
 

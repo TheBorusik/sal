@@ -6,6 +6,7 @@ using NLog;
 using SAL.API;
 using SAL.API.Client;
 using SAL.API.Events;
+using SAL.Core.SystemEventHandlers;
 
 namespace SAL.Core.Service
 {
@@ -37,7 +38,7 @@ namespace SAL.Core.Service
                 {
                     Type = AdapterConfiguration.AdapterType,
                     Name = AdapterConfiguration.AdapterName
-                }).Wait();
+                }, SystemEventTimes.BaseTTL).Wait();
             }
             catch (Exception ex)
             {
@@ -87,7 +88,7 @@ namespace SAL.Core.Service
                     CommandHandlers = backCommands.ToArray(),
                     CommandResultHandlers = backCommandResults.ToArray(),
                     EventHandlers = backEvents.ToArray()
-                });
+                }, SystemEventTimes.BaseTTL);
             }
             catch (Exception ex)
             {
