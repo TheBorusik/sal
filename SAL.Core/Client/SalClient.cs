@@ -182,6 +182,29 @@ namespace SAL.Core.Client
             });
         }
 
+        public Task RaiseExceptionDetectEvent(string cid, InternalExceptionDTO exceptionDTO)
+        {
+            return PublishEventAsync(new ExceptionDetectedEvent
+            {
+                CorrelationId = cid,
+                ExceptionDto = exceptionDTO,
+                ServiceName = AdapterConfiguration.AdapterName,
+                ServiceType = AdapterConfiguration.AdapterType
+            });
+        }
+
+        public Task RaiseExceptionDetectEvent(string cid, Exception ex)
+        {
+            return PublishEventAsync(new ExceptionDetectedEvent
+            {
+                CorrelationId = cid,
+                ExceptionDto = ex.ToDto(SalErrorCodes.Fatal),
+                ServiceName = AdapterConfiguration.AdapterName,
+                ServiceType = AdapterConfiguration.AdapterType
+            });
+        }
+
+        //lo
 
         private RabbitMessage Pack(Message transportMessage)
         {
@@ -195,8 +218,6 @@ namespace SAL.Core.Client
             };
         }
 
-
-        //lo
         public Task PublishCommandAsync(
             string commandName,
             object commandBody,

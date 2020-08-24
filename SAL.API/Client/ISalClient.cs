@@ -49,8 +49,8 @@ namespace SAL.API.Client
         Task RaiseExceptionDetectEvent(InternalExceptionDTO exceptionDTO);
         Task RaiseExceptionDetectEvent(Exception ex);
 
- //       Task RaiseExceptionDetectEvent(string cid,InternalExceptionDTO exceptionDTO);
- //       Task RaiseExceptionDetectEvent(string cid,Exception ex);
+        Task RaiseExceptionDetectEvent(string cid,InternalExceptionDTO exceptionDTO);
+        Task RaiseExceptionDetectEvent(string cid,Exception ex);
 
     }
 }
