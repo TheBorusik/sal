@@ -2,14 +2,6 @@
   "CommandProcessor": {
     "GlobalPrefetchCount": 100,
     "CommandPrefetchCount": 0,
-    "CommandProcessingSettings": {
-      "WFM.Test": {
-        "PrefetchCount": 10
-      },
-      "WFM2.Test": {
-        "PrefetchCount": 50
-      }
-    },
     "Logging": {
       "Items": {
         ".*": {

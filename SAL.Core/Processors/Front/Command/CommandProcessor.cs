@@ -334,7 +334,7 @@ namespace SAL.Core.Processors
                 salLogger.LogHandler(commandPayload, HandlerContext.Name);
 
                 using var scope = container.BeginLifetimeScope();
-                var handler = (ICommandHandler) scope.Resolve(commandHandlerInfo.HandlerType);
+                var handler = (IFrontCommandHandler) scope.Resolve(commandHandlerInfo.HandlerType);
                 var executingContext = new ExecutingContext
                 {
                     Scope = scope,

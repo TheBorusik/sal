@@ -247,13 +247,15 @@ namespace SAL.Test
         TestProcessor : IProcessor
     {
         private readonly ILogger<TestProcessor> logger;
-        private readonly ISalClient client;
+        private readonly ILifetimeScope scope;
+
 
         public TestProcessor(ILogger<TestProcessor> logger, ILifetimeScope scope)
         {
             this.logger = logger;
-          // this.client = scope.ResolveNamed<ISalClient>("front");
-            this.client = scope.Resolve<ISalClient>();
+            this.scope = scope;
+            // this.client = scope.ResolveNamed<ISalClient>("front");
+           // this.client = scope.Resolve<ISalClient>();
         }
 
         public void Start()
@@ -266,6 +268,8 @@ namespace SAL.Test
 
         public void Online()
         {
+            var client = scope.ResolveNamed<ILoSalClient>("front");
+            var res = client.ExecuteCommandAsync("Test.J1", new { }, CommandPriority.Normal, TimeSpan.FromMinutes(1), null, null).Result;
 
             /*
             SessionManager.SetNewSession();
