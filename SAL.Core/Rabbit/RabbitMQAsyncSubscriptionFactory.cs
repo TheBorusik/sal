@@ -136,7 +136,7 @@ namespace SAL.Core.Rabbit
                 Name = queueName,
                 AutoDelete = false,
                 MaxPriority = 9,
-                Exclusive = true,
+                Exclusive = false,
                 HasDeadLetter = true,
                 Expire = null,
                 Durable = true,

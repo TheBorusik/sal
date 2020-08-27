@@ -350,18 +350,48 @@ namespace SAL.Test
         public async Task Handle(Test2Command command)
         {
 
-            await executingContext.SalClient.PublishEventAsync(new TestEvent());
+    //        await executingContext.SalClient.PublishEventAsync(new TestEvent());
             await executingContext.SalClient.PublishResultAsync(new TestCommandResult
             {
                 TestTimeSpan = TimeSpan.FromHours(1.5),
                 TestDate = DateTime.Now,
                 TestInt = 1234567,
-                TestStr = "Testtt"
+                TestStr = "Testtt.J1"
 
             }, commandContext.Descriptor);
 
-            await Task.Delay(10000);
         }
+
+    }
+
+    [SalExternalMethod("Test.J2")]
+    [SalExternalUri("/api/v1/test/j2")]
+    public class TestFrontHandler2 : IFrontCommandHandlerAsync<Test2Command, TestCommandResult>
+    {
+        private CommandContext commandContext;
+        private ExecutingContext executingContext;
+
+        public void SetContexts(CommandContext commandContext, ExecutingContext executingContext)
+        {
+            this.commandContext = commandContext;
+            this.executingContext = executingContext;
+        }
+
+        public async Task Handle(Test2Command command)
+        {
+
+            //        await executingContext.SalClient.PublishEventAsync(new TestEvent());
+            await executingContext.SalClient.PublishResultAsync(new TestCommandResult
+            {
+                TestTimeSpan = TimeSpan.FromHours(1.5),
+                TestDate = DateTime.Now,
+                TestInt = 1234567,
+                TestStr = "Testtt.J2"
+
+            }, commandContext.Descriptor);
+
+        }
+
     }
 
 }
