@@ -14,6 +14,8 @@ namespace SAL.Core.WatchDog
         private readonly ILogger<WatchDog> logger;
         private IWatchDogMonitor[] monitors;
 
+
+
         private Action OnOnline;
         private Action OnOffline;
 
@@ -52,7 +54,7 @@ namespace SAL.Core.WatchDog
 
         private void OnMonitorFailure(object sender, MonitorFailureEventArgs monitorFailureEventArgs)
         {
-            if(!AggStatus)
+            if (!AggStatus)
                 return;
             CheckStatus();
         }
@@ -66,27 +68,28 @@ namespace SAL.Core.WatchDog
 
         public void Stop()
         {
-            AggStatus = false;
-            OnOffline?.Invoke();
-
             monitors.ForEach(m =>
             {
                 m.Stop();
                 m.MonitorFailure -= OnMonitorFailure;
                 m.MonitorRestore -= OnMonitorRestore;
             });
+            AggStatus = false;
+            OnOffline?.Invoke();
         }
 
 
         private void CheckStatus()
         {
+
             AggStatus = monitors.Aggregate(true, (s, m) => s &= m.Status);
             if (AggStatus)
                 OnOnline?.Invoke();
             else
                 OnOffline?.Invoke();
+
         }
 
 
-}
+    }
 }

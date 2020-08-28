@@ -23,25 +23,32 @@ namespace SAL.Core.Service
             watchDog.Stop();
         }
 
+        private object onlineLocker = new object();
+
         protected virtual void OnOnline()
         {
-            if (!IsOnline)
+            lock (onlineLocker)
             {
-                logger.Info("Переход в Online");
-                IsOnline = true;
-                SendOnline();
-                OnlineProcessors();
-
+                if (!IsOnline && !stoping)
+                {
+                    logger.Info("Переход в Online");
+                    IsOnline = true;
+                    SendOnline();
+                    OnlineProcessors();
+                }
             }
         }
         protected virtual void OnOffline()
         {
-            if (IsOnline)
+            lock (onlineLocker)
             {
-                logger.Info("Переход в Offline");
-                IsOnline = false;
-                OfflineProcessors();
-                SendOffline();
+                if (IsOnline)
+                {
+                    logger.Info("Переход в Offline");
+                    IsOnline = false;
+                    OfflineProcessors();
+                    SendOffline();
+                }
             }
         }
 

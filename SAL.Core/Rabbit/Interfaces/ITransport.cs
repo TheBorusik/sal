@@ -16,6 +16,6 @@ namespace SAL.Core.Rabbit.Interfaces
 
         bool IsConnected { get; }
 
-        bool TopologyInited { get; }
+
     }
 }

@@ -51,13 +51,14 @@ namespace SAL.Core.Service
         }
 
 
-
+        private bool stoping = false;
         public void Stop()
         {
             SessionManager.SetNewSession("Stop");
             Log.Trace("Остановка...");
-            StopProcessors();
+            stoping = true;
             StopWatchDog();
+            StopProcessors();
             StopTransport();
             Log.Trace("Сервис остановлен.");
         }

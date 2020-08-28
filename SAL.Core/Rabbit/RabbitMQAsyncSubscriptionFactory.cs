@@ -56,8 +56,6 @@ namespace SAL.Core.Rabbit
                 PrefetchCount = prefetchCount
             });
 
-            transport.UpdateTopology();
-
             return new MultiConsumerSubscription(transport, subscriptionName, prefetchCount, queueList.ToArray(), handler);
         }
 
@@ -97,7 +95,6 @@ namespace SAL.Core.Rabbit
                 PrefetchCount = prefetchCount
             });
 
-            transport.UpdateTopology();
 
             return new MultiConsumerSubscription(transport, subscriptionName, prefetchCount, queueList.ToArray(), handler);
         }
@@ -152,8 +149,6 @@ namespace SAL.Core.Rabbit
                 PrefetchCount = typePrefetchCount
             });
 
-            transport.UpdateTopology();
-
             return new MultiConsumerSubscription(transport, subscriptionName, globalPrefetchCount, queueList.ToArray(), handler);
         }
 
@@ -182,8 +177,6 @@ namespace SAL.Core.Rabbit
                 QueueName = queueName,
                 PrefetchCount = syncPrefetchCount
             });
-
-            transport.UpdateTopology();
 
             return new MultiConsumerSubscription(transport, subscriptionName, syncPrefetchCount, queueList.ToArray(), handler);
         }
@@ -242,10 +235,39 @@ namespace SAL.Core.Rabbit
                 PrefetchCount = mainPrefetchCount
             });
 
-            transport.UpdateTopology();
-
             return new MultiConsumerSubscription(transport, subscriptionName, globalPrefetchCount, queueList.ToArray(), handler);
         }
+
+        public bool AddSystemEvent(string eventName)
+        {
+            var queueName = $"#{AdapterConfiguration.AdapterType}#{AdapterConfiguration.AdapterName}" + "#SystemEvent";
+            try
+            {
+                using var channel = transport.CreateModel();
+                channel.QueueBind(queueName, ExchangeNames.EventExchange, eventName, null);
+                return true;
+            }
+            catch (Exception e)
+            {
+                return false;
+            }
+        }
+
+        public bool AddEvent(string eventName)
+        {
+            var queueName = $"#{AdapterConfiguration.AdapterType}#{AdapterConfiguration.AdapterName}" + "#Event";
+            try
+            {
+                using var channel = transport.CreateModel();
+                channel.QueueBind(queueName, ExchangeNames.EventExchange, eventName, null);
+                return true;
+            }
+            catch (Exception e)
+            {
+                return false;
+            }
+        }
+
 
         public void Dispose()
         {

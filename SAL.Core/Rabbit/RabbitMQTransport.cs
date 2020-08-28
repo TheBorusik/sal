@@ -3,6 +3,8 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.NetworkInformation;
+using System.Threading;
+using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using RabbitMQ.Client;
 using SAL.API;
@@ -32,20 +34,22 @@ namespace SAL.Core.Rabbit
 
         public bool IsConnected { get; private set; }
         public bool TopologyInited { get; private set; }
-        public ILoggerProvider LoggerProvider { get; private set; } 
+        public ILoggerProvider LoggerProvider { get; private set; }
 
         //topology
 
         private ConcurrentBag<Exchange> exchanges = new ConcurrentBag<Exchange>();
         private ConcurrentBag<Queue> queues = new ConcurrentBag<Queue>();
 
-        private IConfigWatcher configWatcher;
         private readonly ILogger logger;
         private readonly string prefix;
 
-        public RabbitMQTransport(IConfigWatcher configWatcher, ILoggerProvider loggerProvider ,  string prefix)
+        private CancellationTokenSource tokenSource;
+        private Task restoreTask = Task.CompletedTask;
+
+        public RabbitMQTransport(IConfigWatcher configWatcher, ILoggerProvider loggerProvider, string prefix)
         {
-            this.configWatcher = configWatcher;
+
             this.prefix = prefix;
             LoggerProvider = loggerProvider;
 
@@ -107,45 +111,63 @@ namespace SAL.Core.Rabbit
 
         }
 
-        internal void UpdateTopology()
-        {
-            if (IsConnected)
-                RestoreTopology();
-        }
+
 
         private void OnConnectionRestore(ConnectionRestoreEventArgs e)
         {
-
-            try
+            if (restoreTask.Status != TaskStatus.RanToCompletion) return;
+            tokenSource = new CancellationTokenSource();
+            restoreTask = Task.Run(async () =>
             {
 
-                RestoreTopology();
-                IsConnected = true;
-                TopologyInited = true;
+                while (true)
+                {
+                    if(tokenSource.IsCancellationRequested)
+                        return;
+
+                    try
+                    {
+                        RestoreTopology();
+                        IsConnected = true;
+                        break;
+                    }
+                    catch (Exception ex)
+                    {
+                        logger.Error("RestoreTopology : ", ex);
+                    }
+
+                    try
+                    {
+                        await Task.Delay(TimeSpan.FromSeconds(5), tokenSource.Token);
+                    }
+                    catch (Exception)
+                    {
+                        return;
+                    }
+
+                }
+
 
                 var handler = ConnectionRestore;
                 handler?.Invoke(this, e);
-            }
-            catch (Exception ex)
-            {
-                logger.Error("RestoreTopology : ", ex);
-                TopologyInited = false;
-            }
+            });
+
         }
 
         private void OnConnectionFailure(ConnectionFailureEventArgs e)
         {
             IsConnected = false;
-            TopologyInited = false;
             var handler = ConnectionFailure;
             handler?.Invoke(this, e);
         }
 
         private void RestoreTopology()
         {
-
+            if (TopologyInited)
+                return;
             exchanges.ForEach(CreateExchange);
             queues.ForEach(CreateQueue);
+            TopologyInited = true;
 
         }
 
@@ -154,9 +176,9 @@ namespace SAL.Core.Rabbit
             using (var channel = rabbitMQConnectionManager.CreateModel())
             {
                 var exchangeParams = new Dictionary<string, object>();
-                if(!string.IsNullOrWhiteSpace(exch.AlternateExchange))
+                if (!string.IsNullOrWhiteSpace(exch.AlternateExchange))
                     exchangeParams.Add("alternate-exchange", exch.AlternateExchange);
-                channel.ExchangeDeclare(exch.Name, exch.Type.ToRMQ(), exch.Durable,false, exchangeParams);
+                channel.ExchangeDeclare(exch.Name, exch.Type.ToRMQ(), exch.Durable, false, exchangeParams);
             }
         }
 
@@ -199,6 +221,7 @@ namespace SAL.Core.Rabbit
         public void Stop()
         {
             rabbitMQConnectionManager.Stop();
+            tokenSource?.Cancel();
         }
 
         public ISubscriptionFactory CreateMessageSubscription()
@@ -215,6 +238,7 @@ namespace SAL.Core.Rabbit
         {
             return queues.Any(q => string.Equals(q.Name, queueName, StringComparison.InvariantCultureIgnoreCase));
         }
+
 
 
         public void Dispose()

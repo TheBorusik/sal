@@ -3,6 +3,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using RabbitMQ.Client;
+using RabbitMQ.Client.Exceptions;
 using SAL.Core.Config.Rabbit;
 using SAL.Core.Exceptions.Rabbit;
 using SAL.Core.Rabbit.EventArgs;
@@ -13,7 +14,7 @@ namespace SAL.Core.Rabbit
     {
         private IConnection connection;
         private CancellationTokenSource tokenSource;
-        private Task connectionTask;
+        private Task connectionTask = Task.CompletedTask;
 
         public event EventHandler<ConnectionFailureEventArgs> ConnectionFailure;
         public event EventHandler<ConnectionRestoreEventArgs> ConnectionRestore;
@@ -22,7 +23,7 @@ namespace SAL.Core.Rabbit
         private readonly ILogger logger;
         private readonly ConnectionFactory factory;
 
-        public RabbitMQConnectionManager(RabbitConfig rabbitConfig, ILogger logger )
+        public RabbitMQConnectionManager(RabbitConfig rabbitConfig, ILogger logger)
         {
             if (rabbitConfig == null)
                 throw new ArgumentNullException(nameof(rabbitConfig));
@@ -33,17 +34,26 @@ namespace SAL.Core.Rabbit
             if (rabbitConfig.RetryTimeout < 100)
                 throw new ArgumentException("rabbitConfig.RetryTimeout");
 
-            factory = new ConnectionFactory();
-
             config = rabbitConfig;
             this.logger = logger;
 
-            // 
+            factory = new ConnectionFactory
+            {
+                UserName = config.Username,
+                Password = config.Password,
+                VirtualHost = config.VirtualHost,
+                Protocol = Protocols.DefaultProtocol,
+                HostName = config.Host,
+                Port = config.Port,
+                AutomaticRecoveryEnabled = true,
+                TopologyRecoveryEnabled = true,
+                NetworkRecoveryInterval = TimeSpan.FromSeconds(10)
+            };
         }
 
         public void Start()
         {
-            StartConnection((c) => Task.CompletedTask);
+            StartConnection();
         }
 
         public void Stop()
@@ -62,80 +72,72 @@ namespace SAL.Core.Rabbit
             return connection?.CreateModel();
         }
 
-        private void StartConnection(Func<CancellationToken, Task> pre)
+        private void StartConnection()
         {
-            if (connectionTask == null)
+            if (connection != null)
+                return;
+
+            tokenSource = new CancellationTokenSource();
+
+
+            try
             {
-                tokenSource = new CancellationTokenSource();
-
-                connectionTask = Task.Factory.StartNew(async () =>
+                connection = factory.CreateConnection();
+                connection.ConnectionShutdown += OnConnectionShutdown;
+                connection.RecoverySucceeded += ConnectionOnRecoverySucceeded;
+                OnConnectionRestore(new ConnectionRestoreEventArgs());
+            }
+            catch (BrokerUnreachableException ex)
+            {
+                if (connectionTask.Status == TaskStatus.RanToCompletion)
                 {
-                    try
+                    connectionTask = Task.Run(async () =>
                     {
-                        await pre(tokenSource.Token);
-                        await RestoreConnectionAsync(tokenSource.Token);
+                        while (true)
+                        {
+                            if (tokenSource.IsCancellationRequested)
+                                break;
 
-                        OnConnectionRestore(new ConnectionRestoreEventArgs());
-                    }
+                            try
+                            {
 
-                    finally
-                    {
-                        connectionTask = null;
-                    }
-                }, tokenSource.Token);
+                                connection = factory.CreateConnection();
+                                connection.ConnectionShutdown += OnConnectionShutdown;
+                                connection.RecoverySucceeded += ConnectionOnRecoverySucceeded;
+                                OnConnectionRestore(new ConnectionRestoreEventArgs());
+                                break;
+                            }
+                            catch (Exception ex)
+                            {
+                                //
+                            }
 
+                            try
+                            {
+                                await Task.Delay(config.RetryTimeout, tokenSource.Token);
+                            }
+                            catch (OperationCanceledException e)
+                            {
+                                break;
+                            }
+
+                        }
+                    }, tokenSource.Token);
+                }
             }
         }
 
-        private async Task RestoreConnectionAsync(CancellationToken token)
+
+        private void ConnectionOnRecoverySucceeded(object sender, System.EventArgs e)
         {
-
-            while (true)
-            {
-                token.ThrowIfCancellationRequested();
-
-                try
-                {
-                    factory.UserName = config.Username;
-                    factory.Password = config.Password;
-                    factory.VirtualHost = config.VirtualHost;
-                    factory.Protocol = Protocols.DefaultProtocol;
-                    factory.HostName = config.Host;
-                    factory.Port = config.Port;
-                    factory.AutomaticRecoveryEnabled = false;
-
-                    if (connection != null)
-                    {
-                        if (connection.IsOpen)
-                            connection.Close();
-                        connection.Dispose();
-                        connection = null;
-                    }
-
-                    connection = factory.CreateConnection();
-                    connection.ConnectionShutdown += OnConnectionShutdown;
-
-                    break;
-                }
-                catch (Exception ex)
-                {
-  //
-                }
-
-                await Task.Delay(config.RetryTimeout, token);
-            }
-
+            OnConnectionRestore(new ConnectionRestoreEventArgs());
         }
 
         private void OnConnectionShutdown(object sender, ShutdownEventArgs e)
         {
             if (e.Initiator == ShutdownInitiator.Application) return;
 
-            connection.ConnectionShutdown -= OnConnectionShutdown;
-
             OnConnectionFailure(new ConnectionFailureEventArgs(e.ToString()));
-
-            StartConnection((t) => Task.Delay(config.RetryTimeout, t));
         }
 
         private void OnConnectionRestore(ConnectionRestoreEventArgs e)
@@ -149,7 +151,6 @@ namespace SAL.Core.Rabbit
             {
                 //
             }
-
         }
 
         private void OnConnectionFailure(ConnectionFailureEventArgs e)
@@ -163,7 +164,6 @@ namespace SAL.Core.Rabbit
             {
                 //
             }
-
         }
 
         public void Dispose()

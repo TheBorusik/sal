@@ -61,7 +61,7 @@ namespace SAL.Core.Rabbit.Subscription
             logger.Info("Запуск обработки");
             lock (ModelLocker)
             {
-                if (Started)
+                if (Started) 
                     return;
                 if (Model?.IsClosed ?? true)
                 {
@@ -72,18 +72,23 @@ namespace SAL.Core.Rabbit.Subscription
                     }
                     Model = Transport.CreateModel();
 
-
-                    foreach (var queueData in queueDatas)
-                    {
-                        queueData.Consumer = new EventingBasicConsumer(Model);
-                        queueData.Consumer.Received += ConsumerOnReceived;
-                    }
                 }
 
                 foreach (var queueData in queueDatas)
                 {
+
                     Model.BasicQos(0, queueData.PrefetchCount, false);
-                    queueData.ConsumerTag = Model.BasicConsume(queueData.QueueName, false, queueData.Consumer);
+
+                    if (queueData.Consumer == null)
+                    {
+                        queueData.Consumer = new EventingBasicConsumer(Model);
+                        queueData.Consumer.Received += ConsumerOnReceived;
+                    }
+
+                    if (!queueData.Consumer.IsRunning)
+                    {
+                        queueData.ConsumerTag = Model.BasicConsume(queueData.QueueName, false, queueData.Consumer);
+                    }
                 }
 
                 Model.BasicQos(0, globalPrefetchCount, true);
@@ -108,14 +113,16 @@ namespace SAL.Core.Rabbit.Subscription
                         if (Model.IsOpen)
                         {
                             if (!string.IsNullOrWhiteSpace(queueData.ConsumerTag))
+                            {
                                 Model.BasicCancel(queueData.ConsumerTag);
+                                queueData.ConsumerTag = string.Empty;
+                            }
                         }
                     }
                     catch (Exception)
                     {
                         //    throw;
                     }
-                    queueData.ConsumerTag = string.Empty;
                 }
 
                 Started = false;

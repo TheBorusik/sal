@@ -7,6 +7,6 @@
         public string VirtualHost { get; set; }
         public string Username { get; set; }
         public string Password { get; set; }
-        public int RetryTimeout { get; set; } = 1000;
+        public int RetryTimeout { get; set; } = 5000;
     }
 }
