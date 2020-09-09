@@ -28,6 +28,7 @@ namespace SAL.Test
         public void Configure(ContainerBuilder builder)
         {
             builder.RegisterSalHandler<TestFrontHandler>();
+            builder.RegisterSalHandler<TestFrontHandler2>();
 
 //            builder.RegisterSalHandler<TestCommandHandler>();
             // builder.RegisterSalHandler<CommonCommandHandler>();
@@ -269,6 +270,8 @@ namespace SAL.Test
         public void Online()
         {
             var client = scope.ResolveNamed<ILoSalClient>("front");
+            var backClient = scope.Resolve<ISalClient>();
+            var frontClient = scope.ResolveNamed<ISalClient>("front");
             var res = client.ExecuteCommandAsync("Test.J1", new { }, CommandPriority.Normal, TimeSpan.FromMinutes(1), null, null).Result;
 
             /*
@@ -336,6 +339,7 @@ namespace SAL.Test
 
     [SalExternalMethod("Test.J1")]
     [SalExternalUri("/api/v1/test/j1")]
+    [SalExternalUri("/api/v1/test/j")]
     public class TestFrontHandler : IFrontCommandHandlerAsync<Test2Command, TestCommandResult>
     {
         private CommandContext commandContext;
@@ -366,6 +370,7 @@ namespace SAL.Test
 
     [SalExternalMethod("Test.J2")]
     [SalExternalUri("/api/v1/test/j2")]
+    [SalExternalUri("/api/v1/test/j")]
     public class TestFrontHandler2 : IFrontCommandHandlerAsync<Test2Command, TestCommandResult>
     {
         private CommandContext commandContext;

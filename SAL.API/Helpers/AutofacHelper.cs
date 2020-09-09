@@ -85,7 +85,7 @@ namespace SAL.API
         public static IRegistrationBuilder<T, ConcreteReflectionActivatorData, SingleRegistrationStyle> AsProcessor<T>(this IRegistrationBuilder<T, ConcreteReflectionActivatorData, SingleRegistrationStyle> builder)
         {
             return builder
-                .AsImplementedInterfaces()
+                .As<IProcessor>()
                 .SingleInstance();
         }
 

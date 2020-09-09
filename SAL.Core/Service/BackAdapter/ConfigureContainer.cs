@@ -46,7 +46,8 @@ namespace SAL.Core.Service
 
 
             builder.RegisterType<CommandProcessor>().AsProcessor();
-            builder.RegisterType<CommandResultProcessor>().AsProcessor();
+            builder.RegisterType<CommandResultProcessor>().AsProcessor()
+                .As<ICommandResultProcessor>();
             builder.RegisterType<EventProcessor>().AsProcessor();
 
       //      builder.RegisterType<HeartbeatBackProcessor>().AsProcessor();
