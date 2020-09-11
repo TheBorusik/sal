@@ -59,6 +59,8 @@ namespace SAL.Core.Client
             if (string.IsNullOrWhiteSpace(resultServiceName) && !commandType.IsResultTypeHandler())
                 resultServiceName = AdapterConfiguration.AdapterName;
 
+            SessionManager.IncOperationId();
+
             await PublishCommandAsync(
                 commandType.GetRouteKey(),
                 command,
@@ -85,6 +87,7 @@ namespace SAL.Core.Client
             ttl ??= TimeSpan.FromSeconds(60);
 
             var commandType = command.GetType();
+            SessionManager.IncOperationId();
             var result = await ExecuteCommandAsync(
                 commandType.GetRouteKey(),
                 command,
@@ -100,6 +103,7 @@ namespace SAL.Core.Client
 
         public Task PublishResultAsync(ICommandResult result, CommandDescriptor commandDescriptor)
         {
+            SessionManager.IncOperationId();
             return PublishResultAsync(new CommonCommandResult
             {
                 Error = null,
@@ -110,6 +114,7 @@ namespace SAL.Core.Client
 
         public Task PublishResultAsync(object result, string code, CommandDescriptor commandDescriptor)
         {
+            SessionManager.IncOperationId();
             return PublishResultAsync(new CommonCommandResult
             {
                 Error = null,
@@ -120,16 +125,18 @@ namespace SAL.Core.Client
 
         public Task PublishResultAsync(InternalExceptionDTO exceptionDTO, CommandDescriptor commandDescriptor)
         {
+            SessionManager.IncOperationId();
             return PublishResultAsync(new CommonCommandResult
             {
                 Error = exceptionDTO,
                 Result = null,
-                ResultCode = exceptionDTO.Code
+                ResultCode = ResultCodes.Error
             }, commandDescriptor);
         }
 
         public Task PublishResultAsync(IList<FieldError> validationErrors, CommandDescriptor commandDescriptor)
         {
+            SessionManager.IncOperationId();
             return PublishResultAsync(new CommonCommandResult
             {
                 Error = SalError.CreateValidationDto(validationErrors),
@@ -140,6 +147,7 @@ namespace SAL.Core.Client
 
         public Task PublishResultAsync<TCommandResult>(CommandResult<TCommandResult> result, CommandDescriptor commandDescriptor) where TCommandResult : class, ICommandResult, new()
         {
+            SessionManager.IncOperationId();
             return PublishResultAsync(new CommonCommandResult
             {
                 Error = null,
@@ -153,6 +161,7 @@ namespace SAL.Core.Client
         {
             if (evnt == null)
                 return Task.CompletedTask;
+            SessionManager.IncOperationId();
             return PublishEventAsync(
                 evnt.GetType().GetRouteKey(),
                 evnt,
@@ -164,6 +173,7 @@ namespace SAL.Core.Client
 
         public Task RaiseExceptionDetectEvent(string cid, InternalExceptionDTO exceptionDTO)
         {
+            SessionManager.IncOperationId();
             return PublishEventAsync(new ExceptionDetectedEvent
             {
                 CorrelationId = cid,
@@ -175,6 +185,7 @@ namespace SAL.Core.Client
 
         public Task RaiseExceptionDetectEvent(string cid, Exception ex)
         {
+            SessionManager.IncOperationId();
             return PublishEventAsync(new ExceptionDetectedEvent
             {
                 CorrelationId = cid,
@@ -250,8 +261,6 @@ namespace SAL.Core.Client
                 Payload = JObject.FromObject(commandBody, SalSerializer.Create())
             };
 
-
-            UpdateOprationId();
             salLogger.LogOutgoing(commandPayload);
 
             var transportMessage = new Message
@@ -316,7 +325,6 @@ namespace SAL.Core.Client
                 Descriptor = commandDescriptor,
                 Payload = JObject.FromObject(commandBody, SalSerializer.Create())
             };
-            UpdateOprationId();
             salLogger.LogOutgoing(commandPayload);
 
             var transportMessage = new Message
@@ -376,7 +384,6 @@ namespace SAL.Core.Client
                     Payload = result
                 };
 
-                UpdateOprationId();
                 salLogger.LogOutgoing(commandResultPayload);
 
                 var transportMessage = new Message
@@ -424,7 +431,6 @@ namespace SAL.Core.Client
                 Payload = JObject.FromObject(eventBody, SalSerializer.Create())
             };
 
-            UpdateOprationId();
             salLogger.LogOutgoing(eventPayload);
 
             var routingKey = string.Empty;
@@ -454,10 +460,6 @@ namespace SAL.Core.Client
             return Task.CompletedTask;
         }
 
-        private void UpdateOprationId()
-        {
-            var operationId = SessionManager.Current.GetSafeValue(SessionNames.OperationId, 0L);
-            SessionManager.Current.AddOrUpdate(SessionNames.OperationId, ++operationId);
-        }
+
     }
 }

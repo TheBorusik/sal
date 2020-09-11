@@ -220,6 +220,7 @@ namespace SAL.Core.Processors
             {
                 var transportMessage = await ExtractMessage(rabbitMessage);
                 var eventPayload = await ExtractEventPayload(transportMessage);
+                SessionManager.StartAdapterSession(transportMessage.Session);
                 salLogger.LogIncoming(eventPayload);
                 await Processing(transportMessage, eventPayload);
                 ack();
@@ -282,12 +283,6 @@ namespace SAL.Core.Processors
             if (transportMessage.Payload.Type == JTokenType.Null)
                 throw new Exception($"Отсутствует message.Payload | CorrelationId:{rabbitMessage.CorrelationId}");
 
-
-            if (transportMessage.Session != null && transportMessage.Session.Count > 0)
-            {
-                SessionManager.SetSession(SessionManager.StartSession(transportMessage.Session));
-            }
-
             return Task.FromResult(transportMessage);
         }
 
@@ -309,6 +304,7 @@ namespace SAL.Core.Processors
 
         private async Task Processing(Message message, EventPayload eventPayload)
         {
+
             var eventLogger = salLogger.GetLogger(eventPayload);
 
             if (eventPayload.Descriptor.TTL.HasValue &&

@@ -10,14 +10,15 @@ namespace SAL.Core.NLogEx.LayoutRenderer
     {
         protected override void Append(StringBuilder builder, LogEventInfo logEvent)
         {
-            if (SessionManager.Current != null)
+            var session = SessionManager.Current;
+
+            if (session != null)
             {
-                var sessionId = SessionManager.Current.GetSafeValue(SessionNames.SessionId, "");
-                var operationId = SessionManager.Current.GetSafeValue(SessionNames.OperationId, "");
+                var sessionId = session.GetSafeValue(SessionNames.SessionId, "");
+                var operationId = session.GetSafeValue(SessionNames.OperationId, "");
+                var oList = session.GetSafeValue(SessionNames.OperationList, new long[0]);
 
-
-                if (!string.IsNullOrEmpty(sessionId))
-                    builder.Append($"[SID:{sessionId}:{operationId}]");
+                builder.Append($"[SID:{sessionId}:{string.Join(":", oList)}:{operationId}]");
             }
         }
     }

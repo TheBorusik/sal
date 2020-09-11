@@ -75,7 +75,7 @@ namespace SAL.Test
 
     [SalServiceType("Test1")]
     [SalCommandName("Jopa")]
-    public class Test2Command : TestCommand
+    public class Test2Command : IHaveResult<TestCommandResult>
     {
 
     }
@@ -269,10 +269,10 @@ namespace SAL.Test
 
         public void Online()
         {
-            var client = scope.ResolveNamed<ILoSalClient>("front");
-            var backClient = scope.Resolve<ISalClient>();
-            var frontClient = scope.ResolveNamed<ISalClient>("front");
-            var res = client.ExecuteCommandAsync("Test.J1", new { }, CommandPriority.Normal, TimeSpan.FromMinutes(1), null, null).Result;
+    //        var client = scope.ResolveNamed<ILoSalClient>("front");
+    //        var backClient = scope.Resolve<ISalClient>();
+     //       var frontClient = scope.ResolveNamed<ISalClient>("front");
+      //      var res = client.ExecuteCommandAsync("Test.J1", new { }, CommandPriority.Normal, TimeSpan.FromMinutes(1), null, null).Result;
 
             /*
             SessionManager.SetNewSession();
@@ -353,8 +353,12 @@ namespace SAL.Test
 
         public async Task Handle(Test2Command command)
         {
+            var str = SessionManager.Current.ToIndentedJson();
+            SessionManager.Current.AddOrUpdate("Test", "TestValue");
+            str = SessionManager.Current.ToIndentedJson();
 
-    //        await executingContext.SalClient.PublishEventAsync(new TestEvent());
+
+            //        await executingContext.SalClient.PublishEventAsync(new TestEvent());
             await executingContext.SalClient.PublishResultAsync(new TestCommandResult
             {
                 TestTimeSpan = TimeSpan.FromHours(1.5),
@@ -384,6 +388,7 @@ namespace SAL.Test
 
         public async Task Handle(Test2Command command)
         {
+
 
             //        await executingContext.SalClient.PublishEventAsync(new TestEvent());
             await executingContext.SalClient.PublishResultAsync(new TestCommandResult

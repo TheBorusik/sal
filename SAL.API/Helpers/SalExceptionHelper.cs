@@ -127,6 +127,7 @@ namespace SAL.API
             var dto = new InternalExceptionDTO
             {
                 Code = SalErrorCodes.ValidationFailed,
+                Message = validationErrors.ToIndentedJson(),
                 TimeStamp = DateTime.UtcNow,
                 Properties = JObject.FromObject(new { ValidationErrors  = validationErrors }) ,
                 AdapterName = $"{AdapterConfiguration.AdapterType}.{AdapterConfiguration.AdapterName}",

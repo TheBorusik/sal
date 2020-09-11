@@ -2,8 +2,9 @@
 {
     public static class SessionNames
     {
-        public const string SessionId = "sessionid";
-        public const string OperationId = "operationid";
-        public const string Version = "version";
+        public const string SessionId = "__sessionid";
+        public const string OperationId = "__operationid";
+        public const string OperationList = "__operationlist";
+        public const string Version = "__version";
     }
 }

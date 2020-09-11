@@ -1,5 +1,9 @@
-﻿using System.Threading;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
 using Newtonsoft.Json.Linq;
+using SAL.API.Helpers;
 
 namespace SAL.API
 {
@@ -19,11 +23,11 @@ namespace SAL.API
 
                 return session;
             }
-        } 
+        }
 
         public static void SetSession(JObject session)
         {
-            CallContext.SetData(sessionName, session);
+            CallContext.SetData(sessionName, (JObject) session.DeepClone());
         }
 
         public static JObject CreateNewSession(string sessionId = null)
@@ -36,8 +40,8 @@ namespace SAL.API
             else
             {
                 session.AddOrUpdate(SessionNames.SessionId, $"{AdapterConfiguration.AdapterType}#{AdapterConfiguration.AdapterName}");
-
             }
+
             session.AddOrUpdate(SessionNames.OperationId, 1L);
             session.AddOrUpdate(SessionNames.Version, 1);
             return session;
@@ -50,15 +54,61 @@ namespace SAL.API
             return session;
         }
 
-        public static JObject StartSession(JObject session)
+        public static void StartAdapterSession(JObject session)
         {
-            var sessionId =
-                $"{session.GetSafeValue(SessionNames.SessionId, "")}:{session.GetSafeValue(SessionNames.OperationId, 0L)}";
-
-            session.AddOrUpdate(SessionNames.SessionId, sessionId);
+            var operationList = session.GetSafeValue<List<long>>(SessionNames.OperationList, new List<long>());
+            operationList.Add(session.GetSafeValue(SessionNames.OperationId, 0L));
+            session.AddOrUpdate(SessionNames.OperationList, operationList);
             session.AddOrUpdate(SessionNames.OperationId, 1L);
-            return session;
+            SetSession(session);
         }
 
+        public static void IncOperationId()
+        {
+            var session = Current;
+            var operationId = session.GetSafeValue(SessionNames.OperationId, 0L);
+            session.AddOrUpdate(SessionNames.OperationId, ++operationId);
+        }
+
+        public static void Restore(JObject session)
+        {
+            if (session == null)
+                return;
+
+            var operationList = session.GetSafeValue<List<long>>(SessionNames.OperationList, new List<long>());
+
+            operationList = operationList.TakeAllButLast().ToList();
+
+            if (operationList.Any())
+            {
+                session.AddOrUpdate(SessionNames.OperationId, operationList.Last());
+            }
+            session.AddOrUpdate(SessionNames.OperationList, operationList);
+        }
+
+        public static void Merge(JObject session)
+        {
+            if (session == null)
+                return;
+
+            var curSession = Current;
+            if (curSession == null)
+                return;
+
+
+            var notMergedProp = new string[] {SessionNames.OperationList, SessionNames.OperationId, SessionNames.SessionId, SessionNames.Version};
+
+
+            session.ForEach(t =>
+            {
+                if (t is JProperty p)
+                {
+                    if (notMergedProp.Contains(p.Name, StringComparer.InvariantCultureIgnoreCase))
+                        return;
+
+                    curSession.AddOrUpdate(p.Name, p.Value);
+                }
+            });
+        }
     }
 }
