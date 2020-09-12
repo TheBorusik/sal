@@ -306,7 +306,7 @@ namespace SAL.Core.Processors
             {
                 var transportMessage = await ExtractMessage(rabbitMessage);
                 var commandResultPayload = await ExtractCommandResultPayload(transportMessage);
-                SessionManager.Merge(transportMessage.Session);
+                SessionManager.Restore(transportMessage.Session);
                 salLogger.LogIncoming(commandResultPayload);
                 await SyncProcessing(transportMessage, commandResultPayload);
                 ack();

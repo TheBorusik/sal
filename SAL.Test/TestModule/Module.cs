@@ -356,7 +356,7 @@ namespace SAL.Test
             var str = SessionManager.Current.ToIndentedJson();
             SessionManager.Current.AddOrUpdate("Test", "TestValue");
             SessionManager.Current.AddOrUpdate("_temporary", "Temporary value");
-
+            SessionManager.Current.AddOrUpdate("AuthId",234);
             str = SessionManager.Current.ToIndentedJson();
 
 
