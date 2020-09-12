@@ -76,9 +76,9 @@ namespace SAL.API
             if (session == null)
                 return;
 
-            var operationList = session.GetSafeValue<List<long>>(SessionNames.OperationList, new List<long>());
+            var operationList = session.GetSafeValue<long[]>(SessionNames.OperationList, new long[0]);
 
-            operationList = operationList.TakeAllButLast().ToList();
+            operationList = operationList.TakeAllButLast().ToArray();
 
             if (operationList.Any())
             {
