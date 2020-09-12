@@ -57,7 +57,7 @@ namespace SAL.API
 
         public static void StartAdapterSession(JObject session)
         {
-            var operationList = session.GetSafeValue<List<long>>(SessionNames.OperationList, new List<long>());
+            var operationList = session.GetSafeValue<long[]>(SessionNames.OperationList, new long[0]).ToList();
             operationList.Add(session.GetSafeValue(SessionNames.OperationId, 0L));
             session.AddOrUpdate(SessionNames.OperationList, operationList);
             session.AddOrUpdate(SessionNames.OperationId, 1L);
