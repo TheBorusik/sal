@@ -86,7 +86,7 @@ namespace SAL.API
             }
 
 
-            UpdateCurrent(session);
+            SetSession(session);
 
 
         }
