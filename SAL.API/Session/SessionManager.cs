@@ -78,13 +78,13 @@ namespace SAL.API
 
             var operationList = session.GetSafeValue<long[]>(SessionNames.OperationList, new long[0]);
 
-            operationList = operationList.TakeAllButLast().ToArray();
-
             if (operationList.Any())
             {
                 session.AddOrUpdate(SessionNames.OperationId, operationList.Last());
+                operationList = operationList.TakeAllButLast().ToArray();
+                session.AddOrUpdate(SessionNames.OperationList, operationList);
             }
-            session.AddOrUpdate(SessionNames.OperationList, operationList);
+
 
             UpdateCurrent(session);
 
@@ -108,6 +108,25 @@ namespace SAL.API
 
         }
 
+        public static void UpdateCurrent(JObject session, Func<string, bool> checkKey)
+        {
+            if (session == null)
+                return;
+
+            var curSession = Current;
+            curSession.RemoveAll();
+            session.ForEach(t =>
+            {
+                if (!(t is JProperty p)) return;
+
+                if (!checkKey(p.Name))
+                    return;
+
+                curSession.Add(p.Name, p.Value.DeepClone());
+            });
+
+        }
+
         public static void Merge(JObject session)
         {
             if (session == null)
@@ -123,14 +142,35 @@ namespace SAL.API
 
             session.ForEach(t =>
             {
-                if (t is JProperty p)
-                {
-                    if (notMergedProp.Contains(p.Name, StringComparer.InvariantCultureIgnoreCase))
-                        return;
+                if (!(t is JProperty p)) return;
 
-                    curSession.AddOrUpdate(p.Name, p.Value);
-                }
+                if (notMergedProp.Contains(p.Name, StringComparer.InvariantCultureIgnoreCase))
+                    return;
+
+                curSession.AddOrUpdate(p.Name, p.Value);
             });
         }
+
+
+        public static void Merge(JObject session, Func<string, bool> checkKey)
+        {
+            if (session == null)
+                return;
+
+            var curSession = Current;
+            if (curSession == null)
+                return;
+
+            session.ForEach(t =>
+            {
+                if (!(t is JProperty p)) return;
+
+                if (!checkKey(p.Name))
+                    return;
+
+                curSession.AddOrUpdate(p.Name, p.Value);
+            });
+        }
+
     }
 }
