@@ -65,7 +65,7 @@ namespace SAL.Core.Rabbit
             }
 
 
-            rabbitMQConnectionManager = new RabbitMQConnectionManager(rabbitConfig, logger);
+            rabbitMQConnectionManager = new RabbitMQConnectionManager(rabbitConfig, loggerProvider);
             rabbitMQConnectionManager.ConnectionFailure += (sender, args) => OnConnectionFailure(args);
             rabbitMQConnectionManager.ConnectionRestore += (sender, args) => OnConnectionRestore(args);
 

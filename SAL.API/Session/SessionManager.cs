@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading;
 using Newtonsoft.Json.Linq;
 using SAL.API.Helpers;
@@ -25,12 +26,12 @@ namespace SAL.API
             }
         }
 
-        public static void SetSession(JObject session)
+        private static void SetSession(JObject session)
         {
-            CallContext.SetData(sessionName, (JObject) session.DeepClone());
+            CallContext.SetData(sessionName, session);
         }
 
-        public static JObject CreateNewSession(string sessionId = null)
+        private static JObject CreateNewSession(string sessionId = null)
         {
             var session = new JObject();
             if (!string.IsNullOrWhiteSpace(sessionId))
@@ -84,6 +85,27 @@ namespace SAL.API
                 session.AddOrUpdate(SessionNames.OperationId, operationList.Last());
             }
             session.AddOrUpdate(SessionNames.OperationList, operationList);
+
+            UpdateCurrent(session);
+
+
+        }
+
+        public static void UpdateCurrent(JObject session)
+        {
+            if(session ==null)
+                return;
+
+            var curSession = Current;
+            curSession.RemoveAll();
+            session.ForEach(t =>
+            {
+                if (t is JProperty p)
+                {
+                    curSession.Add(p.Name, p.Value.DeepClone());
+                }
+            });
+
         }
 
         public static void Merge(JObject session)

@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Exceptions;
+using SAL.API.LoggerHelper;
 using SAL.Core.Config.Rabbit;
 using SAL.Core.Exceptions.Rabbit;
 using SAL.Core.Rabbit.EventArgs;
@@ -23,7 +24,7 @@ namespace SAL.Core.Rabbit
         private readonly ILogger logger;
         private readonly ConnectionFactory factory;
 
-        public RabbitMQConnectionManager(RabbitConfig rabbitConfig, ILogger logger)
+        public RabbitMQConnectionManager(RabbitConfig rabbitConfig, ILoggerProvider loggerProvider)
         {
             if (rabbitConfig == null)
                 throw new ArgumentNullException(nameof(rabbitConfig));
@@ -35,7 +36,7 @@ namespace SAL.Core.Rabbit
                 throw new ArgumentException("rabbitConfig.RetryTimeout");
 
             config = rabbitConfig;
-            this.logger = logger;
+            this.logger = loggerProvider.CreateLogger("RMQ.CM");
 
             factory = new ConnectionFactory
             {
@@ -79,64 +80,56 @@ namespace SAL.Core.Rabbit
 
             tokenSource = new CancellationTokenSource();
 
-
-            try
+            if (connectionTask.Status == TaskStatus.RanToCompletion)
             {
-                connection = factory.CreateConnection();
-                connection.ConnectionShutdown += OnConnectionShutdown;
-                connection.RecoverySucceeded += ConnectionOnRecoverySucceeded;
-                OnConnectionRestore(new ConnectionRestoreEventArgs());
-            }
-            catch (BrokerUnreachableException ex)
-            {
-                if (connectionTask.Status == TaskStatus.RanToCompletion)
+                connectionTask = Task.Run(async () =>
                 {
-                    connectionTask = Task.Run(async () =>
+                    while (true)
                     {
-                        while (true)
+                        if (tokenSource.IsCancellationRequested)
+                            break;
+
+                        try
                         {
-                            if (tokenSource.IsCancellationRequested)
-                                break;
 
-                            try
-                            {
-
-                                connection = factory.CreateConnection();
-                                connection.ConnectionShutdown += OnConnectionShutdown;
-                                connection.RecoverySucceeded += ConnectionOnRecoverySucceeded;
-                                OnConnectionRestore(new ConnectionRestoreEventArgs());
-                                break;
-                            }
-                            catch (Exception ex)
-                            {
-                                //
-                            }
-
-                            try
-                            {
-                                await Task.Delay(config.RetryTimeout, tokenSource.Token);
-                            }
-                            catch (OperationCanceledException e)
-                            {
-                                break;
-                            }
-
+                            connection = factory.CreateConnection();
+                            connection.ConnectionShutdown += OnConnectionShutdown;
+                            connection.RecoverySucceeded += ConnectionOnRecoverySucceeded;
+                            OnConnectionRestore(new ConnectionRestoreEventArgs());
+                            break;
                         }
-                    }, tokenSource.Token);
-                }
+                        catch (Exception ex)
+                        {
+                            logger.Warning($"Ошибка соединения с шиной {config.Host}/{config.VirtualHost}", ex);
+                        }
+
+                        try
+                        {
+                            await Task.Delay(config.RetryTimeout, tokenSource.Token);
+                        }
+                        catch (OperationCanceledException e)
+                        {
+                            break;
+                        }
+
+                    }
+                });
             }
         }
 
 
         private void ConnectionOnRecoverySucceeded(object sender, System.EventArgs e)
         {
+            logger.Info($"Установлено соединение с шиной {config.Host}/{config.VirtualHost}");
             OnConnectionRestore(new ConnectionRestoreEventArgs());
+
         }
 
         private void OnConnectionShutdown(object sender, ShutdownEventArgs e)
         {
             if (e.Initiator == ShutdownInitiator.Application) return;
 
+            logger.Info($"Cоединение с шиной {config.Host}/{config.VirtualHost} прерванно");
             OnConnectionFailure(new ConnectionFailureEventArgs(e.ToString()));
         }
 

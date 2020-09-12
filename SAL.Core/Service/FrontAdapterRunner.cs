@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
 using Autofac;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -34,7 +35,15 @@ namespace SAL.Core.Service
 
             adapter.Initialization();
 
-            await host.RunAsync();
+            try
+            {
+                await host.RunAsync();
+            }
+            catch (OperationCanceledException e)
+            {
+                //
+            }
+
         }
     }
 }

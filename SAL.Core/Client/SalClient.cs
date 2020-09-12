@@ -281,7 +281,7 @@ namespace SAL.Core.Client
             return Task.CompletedTask;
         }
 
-        public Task<CommonCommandResult> ExecuteCommandAsync(
+        public async Task<CommonCommandResult> ExecuteCommandAsync(
             string commandName,
             object commandBody,
             CommandPriority priority,
@@ -295,7 +295,7 @@ namespace SAL.Core.Client
 
             var correlationId = Guid.NewGuid().ToString("N");
 
-            var completionSource = new TaskCompletionSource<CommonCommandResult>();
+            var completionSource = new TaskCompletionSource<SimpleCommandResult>();
 
             var routingKey = "";
             if (string.IsNullOrWhiteSpace(handlerAdapterType) && string.IsNullOrWhiteSpace(handlerAdapterName))
@@ -344,7 +344,12 @@ namespace SAL.Core.Client
 
             publisher.PublishCommand(Pack(transportMessage));
 
-            return completionSource.Task;
+            var result = await completionSource.Task;
+
+            SessionManager.Merge(result.CommandResultContext.Session);
+
+
+            return result.CommandResult;
         }
 
         public Task PublishResultAsync(CommonCommandResult result, CommandDescriptor commandDescriptor)

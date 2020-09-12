@@ -26,7 +26,7 @@ namespace SAL.Core.Service
 
         public virtual void Initialization()
         {
-            SessionManager.SetNewSession("Init");
+            SessionManager.SetNewSession($"{AdapterConfiguration.AdapterType}.{AdapterConfiguration.AdapterName}#Init#");
             logger.Trace("Инициализация...");
             ConfigureLimits();
             InitUnhandledExceptionHandler();
@@ -42,25 +42,25 @@ namespace SAL.Core.Service
 
         public void Start()
         {
-            SessionManager.SetNewSession("Start");
-            Log.Trace("Запуск...");
+            SessionManager.SetNewSession($"{AdapterConfiguration.AdapterType}.{AdapterConfiguration.AdapterName}#Start#");
+            logger.Trace("Запуск...");
             StartWatchDog();
             StartProcessors();
             StartTransport();
-            Log.Trace("Основные системы запущены.");
+            logger.Trace("Основные системы запущены.");
         }
 
 
         private bool stoping = false;
         public void Stop()
         {
-            SessionManager.SetNewSession("Stop");
-            Log.Trace("Остановка...");
+            SessionManager.SetNewSession($"{AdapterConfiguration.AdapterType}.{AdapterConfiguration.AdapterName}#Stop#");
+            logger.Trace("Остановка...");
             stoping = true;
             StopWatchDog();
             StopProcessors();
             StopTransport();
-            Log.Trace("Сервис остановлен.");
+            logger.Trace("Сервис остановлен.");
         }
 
 

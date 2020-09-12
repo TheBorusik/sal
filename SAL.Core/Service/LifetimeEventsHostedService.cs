@@ -40,7 +40,7 @@ namespace SAL.Core.Service
         {
             logger.LogInformation("OnStarted has been called.");
             salService.Start();
-
+            logger.LogInformation("Service started");
             // Perform post-startup activities here
         }
 
@@ -48,6 +48,7 @@ namespace SAL.Core.Service
         {
             logger.LogInformation("OnStopping has been called.");
             salService.Stop();
+            logger.LogInformation("Service stoped");
             // Perform on-stopping activities here
         }
 

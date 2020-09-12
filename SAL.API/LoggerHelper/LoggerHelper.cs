@@ -78,5 +78,10 @@ namespace SAL.API.LoggerHelper
             logger.Log(LogLevel.Warning, msg);
         }
 
+        public static void Warning(this ILogger logger,  string msg, Exception ex)
+        {
+            logger.Log(LogLevel.Warning, ex, msg);
+        }
+
     }
 }

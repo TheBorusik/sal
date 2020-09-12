@@ -9,4 +9,8 @@ namespace SAL.API
         public InternalExceptionDTO Error { get; set; }
         public string ResultCode { get; set; }
     }
+
+
+
+
 }

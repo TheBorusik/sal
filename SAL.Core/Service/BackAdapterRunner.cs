@@ -3,6 +3,7 @@ using Autofac;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using SAL.API;
 using SAL.Core.NLogEx;
 
 namespace SAL.Core.Service
@@ -11,6 +12,8 @@ namespace SAL.Core.Service
     {
         public async Task RunAsync()
         {
+            
+
             var adapter = new BackAdapter();
             adapter.LoadConfiguration();
 

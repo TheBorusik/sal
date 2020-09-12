@@ -206,7 +206,7 @@ namespace SAL.Core.Processors
 
         }
 
-        public void RegisterSimpleCommandResultHandler(string correlationId, TaskCompletionSource<CommonCommandResult> completionSource, TimeSpan timeOut)
+        public void RegisterSimpleCommandResultHandler(string correlationId, TaskCompletionSource<SimpleCommandResult> completionSource, TimeSpan timeOut)
         {
             var simpleCommandResultHandler = new SimpleCommandResultHandlerInfo
             {
@@ -471,7 +471,20 @@ namespace SAL.Core.Processors
         {
             if (simpleCommandResultHandlers.TryRemove(commandResultPayload.Descriptor.CorrelationId, out var simpleCommandResultHandler))
             {
-                salLogger.LogHandler(commandResultPayload, "Sync", simpleCommandResultHandler.CompletionSource.TrySetResult(commandResultPayload.Payload));
+                var context = new CommandResultContext
+                {
+                    Descriptor = commandResultPayload.Descriptor,
+                    Session = message.Session.DeepClone() as JObject
+                };
+
+
+                var setValue = simpleCommandResultHandler.CompletionSource.TrySetResult(new SimpleCommandResult
+                {
+                    CommandResult = commandResultPayload.Payload,
+                    CommandResultContext = context
+
+                });
+                salLogger.LogHandler(commandResultPayload, "Sync", setValue);
             }
             else
             {

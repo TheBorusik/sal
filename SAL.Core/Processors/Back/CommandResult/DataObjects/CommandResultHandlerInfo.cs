@@ -36,7 +36,7 @@ namespace SAL.Core.Processors
     {
         public string CommandCorrelationId;
         public DateTime ExpireDate;
-        public TaskCompletionSource<CommonCommandResult> CompletionSource;
+        public TaskCompletionSource<SimpleCommandResult> CompletionSource;
         public CancellationTokenSource CancellationTokenSource;
 
         //   public Canselation
