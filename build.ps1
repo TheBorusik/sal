@@ -23,13 +23,6 @@ Get-ChildItem -Filter *.csproj -Recurse | %{
 		}
 	}
 }
-<# 
-
--p:IncludeSymbols=true -p:SymbolPackageFormat=snupkg
-
---include-symbols
-#>
-
 
 dotnet build --configuration $configurationName;
 if($LastExitCode -ne 0) { Write-Error 'Ошибка сборки' -ErrorAction Stop }
