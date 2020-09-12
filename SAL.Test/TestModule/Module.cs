@@ -355,6 +355,8 @@ namespace SAL.Test
         {
             var str = SessionManager.Current.ToIndentedJson();
             SessionManager.Current.AddOrUpdate("Test", "TestValue");
+            SessionManager.Current.AddOrUpdate("_temporary", "Temporary value");
+
             str = SessionManager.Current.ToIndentedJson();
 
 
