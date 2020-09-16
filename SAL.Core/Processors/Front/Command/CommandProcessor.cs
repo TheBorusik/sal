@@ -48,7 +48,7 @@ namespace SAL.Core.Processors
             this.container = container;
             this.loggerProvider = loggerProvider;
             this.salLogger = salLogger;
-            logger = loggerProvider.CreateLogger(nameof(CommandProcessor));
+            logger = loggerProvider.CreateLogger(nameof(FrontCommandProcessor));
             salClient = container.ResolveNamed<ISalClient>("front");
             salService = container.Resolve<ISalService>();
         }

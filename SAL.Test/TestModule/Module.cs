@@ -27,15 +27,17 @@ namespace SAL.Test
     {
         public void Configure(ContainerBuilder builder)
         {
-            builder.RegisterSalHandler<TestFrontHandler>();
-            builder.RegisterSalHandler<TestFrontHandler2>();
+ //           builder.RegisterSalHandler<TestFrontHandler>();
+  //          builder.RegisterSalHandler<TestFrontHandler2>();
 
-//            builder.RegisterSalHandler<TestCommandHandler>();
-            // builder.RegisterSalHandler<CommonCommandHandler>();
-            // builder.RegisterSalHandler<Test2CommonCommandHandler>();
+          //  builder.RegisterSalHandler<TestCommandHandler>();
+             builder.RegisterSalHandler<CommonCommandHandler>();
+      //      / builder.RegisterSalHandler<Test2CommonCommandHandler>();
 
 
             //  builder.RegisterSalHandler<CommonCommandResultHandler>();
+
+            builder.RegisterSalHandler<TestCommandResultHandler>();
 
             //  builder.RegisterSalHandler<EventHandler>();
 
@@ -96,7 +98,7 @@ namespace SAL.Test
 
     [SalCommandHandler("SalTest", "Test2")]
     [SalCommandHandler("SalTest", "Test")]
-    [SalCommandHandler("SalTest", "Jopa")]
+    [SalCommandHandler("Test1", "Jopa")]
     public class CommonCommandHandler : ICommonCommandHandler
     {
         private CommandContext commandContext;
@@ -111,7 +113,7 @@ namespace SAL.Test
         public async Task Handle(JObject command)
         {
 
-            await executingContext.SalClient.PublishEventAsync(new TestEvent());
+      //      await executingContext.SalClient.PublishEventAsync(new TestEvent());
             await executingContext.SalClient.PublishResultAsync(new TestCommandResult
             {
                 TestTimeSpan = TimeSpan.FromHours(1.5),
@@ -181,7 +183,7 @@ namespace SAL.Test
 
         public Task<bool> ResultHandle(CommandResult<TestCommandResult> result)
         {
-            executingContext.SalClient.PublishEventAsync(new TestEvent());
+     //       executingContext.SalClient.PublishEventAsync(new TestEvent());
 
             return Task.FromResult(true);
         }
@@ -270,9 +272,9 @@ namespace SAL.Test
         public void Online()
         {
     //        var client = scope.ResolveNamed<ILoSalClient>("front");
-    //        var backClient = scope.Resolve<ISalClient>();
-     //       var frontClient = scope.ResolveNamed<ISalClient>("front");
-      //      var res = client.ExecuteCommandAsync("Test.J1", new { }, CommandPriority.Normal, TimeSpan.FromMinutes(1), null, null).Result;
+            var backClient = scope.Resolve<ISalClient>();
+            //       var frontClient = scope.ResolveNamed<ISalClient>("front");
+            //      var res = client.ExecuteCommandAsync("Test.J1", new { }, CommandPriority.Normal, TimeSpan.FromMinutes(1), null, null).Result;
 
             /*
             SessionManager.SetNewSession();
@@ -311,12 +313,12 @@ namespace SAL.Test
 
             client.PublishEventAsync(new Test2Event());
             */
-            /*
-            client.PublishCommandAsync(new TestCommand
+
+            backClient.PublishCommandAsync(new Test2Command
             {
 
             });
-            */
+            
 
         }
 

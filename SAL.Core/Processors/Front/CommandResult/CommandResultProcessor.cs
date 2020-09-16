@@ -48,7 +48,7 @@ namespace SAL.Core.Processors
             this.container = container;
             this.loggerProvider = loggerProvider;
             this.salLogger = salLogger;
-            logger = loggerProvider.CreateLogger(nameof(CommandResultProcessor));
+            logger = loggerProvider.CreateLogger(nameof(FrontCommandResultProcessor));
             salService = container.Resolve<ISalService>();
         }
 
@@ -96,7 +96,7 @@ namespace SAL.Core.Processors
         private void RegisterCommandResultHandler(Type handlerType)
         {
             var handlerInterfaces = handlerType.GetInterfaces()
-                .Where(i => i.IsAssignableTo<ICommandHandler>() && i.IsGenericType).ToArray();
+                .Where(i => i.IsAssignableTo<ICommandResultHandler>() && i.IsGenericType).ToArray();
 
             foreach (var handlerInterface in handlerInterfaces)
             {
@@ -457,12 +457,12 @@ namespace SAL.Core.Processors
                         node = node.Next;
                     }
                 }
+            }
 
-                if (!isHandled)
-                {
-                    HandlerContext.Name = commandResultPayload.Descriptor.CommandName;
-                    throw SalError.CreateException(SalErrorCodes.NotHandledCommandResult);
-                }
+            if (!isHandled)
+            {
+                HandlerContext.Name = commandResultPayload.Descriptor.CommandName;
+                throw SalError.CreateException(SalErrorCodes.NotHandledCommandResult);
             }
         }
 
