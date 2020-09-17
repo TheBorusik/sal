@@ -4,6 +4,28 @@ namespace SAL.API
 {
     public class CommandDescriptor
     {
+        public CommandDescriptor()
+        {
+        }
+
+        public CommandDescriptor(CommandDescriptor src)
+        {
+            CorrelationId = src.CorrelationId;
+            CommandName = src.CommandName;
+            DestinationAdapterType = src.DestinationAdapterType;
+            DestinationAdapterName = src.DestinationAdapterName;
+            Priority = src.Priority;
+            SourceAdapterType = src.SourceAdapterType;
+            SourceAdapterName = src.SourceAdapterName;
+            ResultAdapterType = src.ResultAdapterType;
+            ResultAdapterName = src.ResultAdapterName;
+            PublishTimeStamp = src.PublishTimeStamp;
+            HandlerTimeStamp = src.HandlerTimeStamp;
+            TTL = src.TTL;
+            IsSync = src.IsSync;
+        }
+
+
         public string CorrelationId { get; set; }
         public string CommandName { get; set; }
         public string DestinationAdapterType{ get; set; }

@@ -344,5 +344,11 @@ namespace SAL.API
             return obj == null ? new JObject() : JObject.FromObject(obj);
         }
 
+        //clone
+        public static JObject Clone(this JObject obj)
+        {
+            return (JObject) obj?.DeepClone();
+        }
+
     }
 }

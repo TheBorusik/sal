@@ -4,6 +4,22 @@ namespace SAL.API
 {
     public class EventDescriptor
     {
+        public EventDescriptor()
+        {
+        }
+
+        public EventDescriptor(EventDescriptor src)
+        {
+            CorrelationId = src.CorrelationId;
+            EventName = src.EventName;
+            DestinationAdapterType = src.DestinationAdapterType;
+            DestinationAdapterName = src.DestinationAdapterName;
+            SourceAdapterType = src.SourceAdapterType;
+            SourceAdapterName = src.SourceAdapterName;
+            PublishTimeStamp = src.PublishTimeStamp;
+            TTL = src.TTL;
+        }
+
         public string CorrelationId { get; set; }
         public string EventName { get; set; }
         public string DestinationAdapterType { get; set; }

@@ -11,11 +11,19 @@ namespace SAL.API
         public TimeSpan? ProcessingDuration { get; set; }
 
 
-        public CommandResultDescriptor()
+        public CommandResultDescriptor(CommandResultDescriptor src) :base(src)
+        {
+            HandlerServiceType = src.HandlerServiceType;
+            HandlerServiceName = src.HandlerServiceName;
+            HandlerDuration = src.HandlerDuration;
+            ProcessingDuration = src.ProcessingDuration;
+        }
+
+        public CommandResultDescriptor() : base()
         {
 
         }
-        public CommandResultDescriptor(CommandDescriptor commandDescriptor)
+        public CommandResultDescriptor(CommandDescriptor commandDescriptor) : base()
         {
             CorrelationId = commandDescriptor.CorrelationId;
             CommandName = commandDescriptor.CommandName;
