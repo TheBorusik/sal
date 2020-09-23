@@ -1,9 +1,9 @@
 ﻿{
-  
+
   "MessageBus": {
     "Host": "10.10.33.15",
-    "VirtualHost": "back.v3",
-   // "VirtualHost": "test.v3",
+    "VirtualHost": "test.v3",
+    // "VirtualHost": "test.v3",
     "Username": "v3",
     "Password": "v3"
   },

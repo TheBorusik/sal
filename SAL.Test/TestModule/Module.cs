@@ -27,17 +27,18 @@ namespace SAL.Test
     {
         public void Configure(ContainerBuilder builder)
         {
- //           builder.RegisterSalHandler<TestFrontHandler>();
-  //          builder.RegisterSalHandler<TestFrontHandler2>();
+            //           builder.RegisterSalHandler<TestFrontHandler>();
+            //          builder.RegisterSalHandler<TestFrontHandler2>();
 
-          //  builder.RegisterSalHandler<TestCommandHandler>();
-             builder.RegisterSalHandler<CommonCommandHandler>();
+            //  builder.RegisterSalHandler<TestCommandHandler>();
+            //   builder.RegisterSalHandler<CommonCommandHandler>();
+            builder.RegisterSalHandler<ProcessResultCommandResultHandler>();
       //      / builder.RegisterSalHandler<Test2CommonCommandHandler>();
 
 
-            //  builder.RegisterSalHandler<CommonCommandResultHandler>();
+            builder.RegisterSalHandler<CommonCommandResultHandler>();
 
-            builder.RegisterSalHandler<TestCommandResultHandler>();
+       //     builder.RegisterSalHandler<TestCommandResultHandler>();
 
             //  builder.RegisterSalHandler<EventHandler>();
 
@@ -193,6 +194,25 @@ namespace SAL.Test
     }
 
 
+    public class ProcessResultCommandResultHandler : ICommandResultHandlerAsync<ProcessResultCommandResult, Nothing>
+    {
+        ExecutingContext executingContext;
+
+
+
+        public void SetContexts(CommandResultContext commandContext, ExecutingContext executingContext)
+        {
+            this.executingContext = executingContext;
+        }
+
+        public Task<bool> ResultHandle(CommandResult<Nothing> result)
+        {
+            return Task.FromResult(true);
+        }
+
+
+    }
+
 
     public class CommonCommandResultHandler : ICommonCommandResultHandler
     {
@@ -271,52 +291,44 @@ namespace SAL.Test
 
         public void Online()
         {
-    //        var client = scope.ResolveNamed<ILoSalClient>("front");
+
             var backClient = scope.Resolve<ISalClient>();
-            //       var frontClient = scope.ResolveNamed<ISalClient>("front");
-            //      var res = client.ExecuteCommandAsync("Test.J1", new { }, CommandPriority.Normal, TimeSpan.FromMinutes(1), null, null).Result;
-
-            /*
-            SessionManager.SetNewSession();
-
-            var testCommand = new TestCommand
+            
+            backClient.PublishCommandAsync(new StartProcessCommand
             {
-                Categories = new DistributorCategory[]
+                ProcessName = "Дебит WoF Finish",
+                ResultHandlerType = AdapterConfiguration.AdapterType,
+                ProcessCorrelationId = Guid.NewGuid().ToString("N"),
+                InitialData = new
                 {
-                    new DistributorCategory
+                    Order = new 
                     {
-                        AllData = new {test = "test"},
-                        CategoryId = "1",
-
-                        DistributorId = 1,
+                        OrderId = 100010,
 
                     },
-
-                    new DistributorCategory
-                    {
-                        CategoryId = "1",
-                        DistributorId = 1,
+                    Terminal = new
+                    { 
+                        MercId = 1,
+                        Mps = "VISA",
+                        Channel = "1",
+                        Is3Ds = true,
+                        TerminalId = "12",
+                        MerchantId = "123123",
+                        Mcc = "123",
+                        Name = "test1",
+                        MerchantUrl = "https://yandex.ru",
+                        Currency = "RUB",
+                        Gate = "TCB",
+                        OperType = "Test"
 
                     },
-
+                    AcsInfo = new 
+                    {
+                        PaRes = "dsaasdasd",
+                        Md = "1234"
+                    }
                 }
-            };
-
-            var res = client.ExecuteCommandAsync<TestCommand, TestCommandResult>(
-                testCommand,
-                CommandPriority.High,
-                100).Result;
-
-            var sss = res.Result;
-
-            client.PublishEventAsync(new TestEvent());
-
-            client.PublishEventAsync(new Test2Event());
-            */
-
-            backClient.PublishCommandAsync(new Test2Command
-            {
-
+                
             });
             
 
@@ -406,6 +418,51 @@ namespace SAL.Test
 
         }
 
+    }
+
+
+    [SalServiceType("WFM")]
+    [SalCommandName("Start")]
+    public class StartProcessCommand : IHaveResult<StartProcessCommandResult>
+    {
+        [Required]
+        public string ProcessName { get; set; }
+        public string Version { get; set; }
+        [Required]
+        public object InitialData { get; set; }
+
+        [Required]
+        public string ResultHandlerType { get; set; }
+        public string ResultHandlerName { get; set; }
+        public string ProcessCorrelationId { get; set; }
+
+
+        public int? Priority { get; set; }
+    }
+
+
+    public class StartProcessCommandResult : ICommandResult
+    {
+        public long ProcessId { get; set; }
+        public string ProcessName { get; set; }
+        public string Version { get; set; }
+        public int Priority { get; set; }
+
+    }
+
+
+    [SalServiceType("WFM")]
+    [SalCommandName("Result")]
+    public class ProcessResultCommandResult : IHaveResult<Nothing>
+    {
+        public string ProcessCorrelationId { get; set; }
+        public long ProcessId { get; set; }
+        public string ProcessName { get; set; }
+        public string Version { get; set; }
+        public string OrderId { get; set; }
+        public string ExternalId { get; set; }
+
+        public CommonCommandResult ProcessResult { get; set; }
     }
 
 }

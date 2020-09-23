@@ -44,15 +44,20 @@ namespace SAL.Core.Helpers
                         }
                         else
                         {
-                            var objDtoInfos = pi.PropertyType.GetDtoInfos();
-                            AddDtoInfo(list, objDtoInfos);
-                            fieldList.Add(new FieldInfo
+
+                            if (list.All(di => di.Name != pi.PropertyType.Name))
                             {
-                                Type = pft,
-                                IsRequired = fieldRequired,
-                                Name = pi.Name,
-                                ObjectName = objDtoInfos.First().Name
-                            });
+
+                                var objDtoInfos = pi.PropertyType.GetDtoInfos();
+                                AddDtoInfo(list, objDtoInfos);
+                                fieldList.Add(new FieldInfo
+                                {
+                                    Type = pft,
+                                    IsRequired = fieldRequired,
+                                    Name = pi.Name,
+                                    ObjectName = objDtoInfos.First().Name
+                                });
+                            }
                         }
 
                         break;

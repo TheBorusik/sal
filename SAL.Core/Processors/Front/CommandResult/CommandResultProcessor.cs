@@ -84,7 +84,6 @@ namespace SAL.Core.Processors
 
                 subscription = subscriptionFactory.CreateCommandResult(config.GlobalPrefetchCount, config.InstancePrefetchCount, config.TypePrefetchCount, Handler, "FrontCommandResult");
                 syncSubscription = subscriptionFactory.CreateSyncCommandResult(config.SyncPrefetchCount, SyncHandler, "FrontSyncCommandResults");
-
             }
             catch (Exception ex)
             {
@@ -129,7 +128,6 @@ namespace SAL.Core.Processors
                     dtos.AddRange(commandResultHandlerInfo.ResultType.GetDtoInfos());
 
 
-
                     salService.AddFrontCommandResultHandler(new API.CommandResultHandlerInfo()
                     {
                         IsCommon = commandResultHandlerInfo.IsCommon,
@@ -138,14 +136,10 @@ namespace SAL.Core.Processors
                         ResultDto = commandResultHandlerInfo.ResultType.Name,
                         Dtos = dtos.ToArray()
                     });
-
                 }
 
                 logger.Info($"Для команды {commandName} добавлен обработчик результата {handlerType.Name}");
             }
-
-
-
         }
 
         private void RegisterCommonCommandResultHandler(Type handlerType)
@@ -185,12 +179,10 @@ namespace SAL.Core.Processors
                         {
                             IsCommon = commandResultHandlerInfo.IsCommon,
                             CommandName = commandName
-
                         });
                     }
 
                     logger.Info($"Для команды {commandName} добавлен уневерсальный обработчик результата {handlerType.Name}");
-
                 });
             }
             else
@@ -198,10 +190,6 @@ namespace SAL.Core.Processors
                 anyResultHandlers.AddLast(commandResultHandlerInfo);
                 logger.Info($"Добавлен уневерсальный обработчик результата {handlerType.Name}");
             }
-
-
-
-
         }
 
         public void RegisterSimpleCommandResultHandler(string correlationId, TaskCompletionSource<SimpleCommandResult> completionSource, TimeSpan timeOut)
@@ -373,7 +361,6 @@ namespace SAL.Core.Processors
 
         protected Task<CommandResultPayload> ExtractCommandResultPayload(Message transportMessage)
         {
-            
             var commandResultPayload = transportMessage.Payload.ConvertValue<CommandResultPayload>();
 
             if (commandResultPayload.Descriptor == null)
@@ -429,14 +416,12 @@ namespace SAL.Core.Processors
             };
 
 
-
             var isHandled = false;
 
             if (resultHandlers.TryGetValue(commandResultPayload.Descriptor.CommandName, out var resultCommandHandlersInfo))
             {
                 foreach (var rchi in resultCommandHandlersInfo)
                 {
-
                     HandlerContext.Name = rchi.HandlerType.Name;
                     isHandled = await ExecuteResultHandlerAsync(scope, rchi, commandResultPayload.Payload, context,
                         executingContext);
@@ -444,20 +429,21 @@ namespace SAL.Core.Processors
                     if (isHandled)
                         break;
                 }
+            }
 
-                if (!isHandled)
+            if (!isHandled)
+            {
+                var node = anyResultHandlers.First;
+                while (node != null && isHandled == false)
                 {
-                    var node = anyResultHandlers.First;
-                    while (node != null && isHandled == false)
-                    {
-                        HandlerContext.Name = node.Value.HandlerType.Name;
-                        isHandled = await ExecuteResultHandlerAsync(scope, node.Value, commandResultPayload.Payload,
-                            context, executingContext);
-                        salLogger.LogHandler(commandResultPayload, node.Value.HandlerType.Name, isHandled);
-                        node = node.Next;
-                    }
+                    HandlerContext.Name = node.Value.HandlerType.Name;
+                    isHandled = await ExecuteResultHandlerAsync(scope, node.Value, commandResultPayload.Payload,
+                        context, executingContext);
+                    salLogger.LogHandler(commandResultPayload, node.Value.HandlerType.Name, isHandled);
+                    node = node.Next;
                 }
             }
+
 
             if (!isHandled)
             {
@@ -481,7 +467,6 @@ namespace SAL.Core.Processors
                 {
                     CommandResult = commandResultPayload.Payload,
                     CommandResultContext = context
-
                 });
                 salLogger.LogHandler(commandResultPayload, "Sync", setValue);
             }
@@ -491,12 +476,11 @@ namespace SAL.Core.Processors
             }
 
             return Task.CompletedTask;
-
         }
 
         public Task<bool> ExecuteResultHandlerAsync(ILifetimeScope scope, CommandResultHandlerInfo rchi, CommonCommandResult result, CommandResultContext context, ExecutingContext executingContext)
         {
-            var handler = (ICommandResultHandler)scope.Resolve(rchi.HandlerType);
+            var handler = (ICommandResultHandler) scope.Resolve(rchi.HandlerType);
 
             handler.SetContexts(context, executingContext);
 
@@ -506,7 +490,7 @@ namespace SAL.Core.Processors
             {
                 var commandResultType = typeof(CommandResult<>).MakeGenericType(rchi.ResultType);
                 var commandResult = result.ConvertValue(commandResultType);
-                return (Task<bool>)rchi.HandlerMethod.Invoke(handler, new[] { commandResult });
+                return (Task<bool>) rchi.HandlerMethod.Invoke(handler, new[] {commandResult});
             }
         }
 
@@ -518,14 +502,8 @@ namespace SAL.Core.Processors
             }
             else
             {
-                throw SalError.CreateException(SalErrorCodes.Fatal, "Обработчик не являеться общим", properties: new { handlerType = handler.GetType().Name });
+                throw SalError.CreateException(SalErrorCodes.Fatal, "Обработчик не являеться общим", properties: new {handlerType = handler.GetType().Name});
             }
         }
-
     }
-
-
-
-
-
 }
