@@ -249,7 +249,7 @@ namespace SAL.Core.Rabbit
                 Durable = true,
                 Bindings = new[]{ new QueueBinding
                 {
-                    ExchangeName = ExchangeNames.CommandResultExchange,
+                    ExchangeName = ExchangeNames.CommandExchange,
                     RoutingKey = $"{AdapterConfiguration.AdapterType}",
                 }}
             });

@@ -194,23 +194,25 @@ namespace SAL.Test
     }
 
 
-    public class ProcessResultCommandResultHandler : ICommandResultHandlerAsync<ProcessResultCommandResult, Nothing>
+    public class ProcessResultCommandResultHandler : ICommandHandlerAsync<ProcessResultCommandResult, Nothing>
     {
-        ExecutingContext executingContext;
+        private CommandContext commandContext;
 
 
 
-        public void SetContexts(CommandResultContext commandContext, ExecutingContext executingContext)
+
+
+
+
+        public Task Handle(ProcessResultCommandResult command)
         {
-            this.executingContext = executingContext;
+            return Task.CompletedTask;
         }
 
-        public Task<bool> ResultHandle(CommandResult<Nothing> result)
+        public void SetContexts(CommandContext commandContext, ExecutingContext executingContext)
         {
-            return Task.FromResult(true);
+            this.commandContext = commandContext;
         }
-
-
     }
 
 
@@ -460,8 +462,6 @@ namespace SAL.Test
         public long ProcessId { get; set; }
         public string ProcessName { get; set; }
         public string Version { get; set; }
-        public string OrderId { get; set; }
-        public string ExternalId { get; set; }
 
         public CommonCommandResult ProcessResult { get; set; }
     }
