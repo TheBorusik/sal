@@ -235,6 +235,32 @@ namespace SAL.Core.Rabbit
                 PrefetchCount = mainPrefetchCount
             });
 
+
+
+            queueName = $"#{AdapterConfiguration.AdapterType}" + "#Commands";
+            transport.AddQueue(new Queue
+            {
+                Name = queueName,
+                AutoDelete = false,
+                MaxPriority = 9,
+                Exclusive = false,
+                HasDeadLetter = true,
+                Expire = null,
+                Durable = true,
+                Bindings = new[]{ new QueueBinding
+                {
+                    ExchangeName = ExchangeNames.CommandResultExchange,
+                    RoutingKey = $"{AdapterConfiguration.AdapterType}",
+                }}
+            });
+            queueList.Add(new QueueInfo
+            {
+                QueueName = queueName,
+                PrefetchCount = mainPrefetchCount
+            });
+
+
+
             return new MultiConsumerSubscription(transport, subscriptionName, globalPrefetchCount, queueList.ToArray(), handler);
         }
 

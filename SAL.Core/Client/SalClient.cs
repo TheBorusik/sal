@@ -237,7 +237,9 @@ namespace SAL.Core.Client
             if (string.IsNullOrWhiteSpace(handlerAdapterType) && string.IsNullOrWhiteSpace(handlerAdapterName))
                 routingKey = commandName;
             else
-                routingKey = $"{handlerAdapterType}#{handlerAdapterName}";
+                routingKey = string.IsNullOrWhiteSpace(handlerAdapterName) ? handlerAdapterType : $"{handlerAdapterType}#{handlerAdapterName}";
+
+
 
             var commandDescriptor = new CommandDescriptor
             {

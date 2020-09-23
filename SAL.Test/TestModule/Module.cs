@@ -293,7 +293,7 @@ namespace SAL.Test
         {
 
             var backClient = scope.Resolve<ISalClient>();
-            
+            /*
             backClient.PublishCommandAsync(new StartProcessCommand
             {
                 ProcessName = "Дебит WoF Finish",
@@ -330,6 +330,7 @@ namespace SAL.Test
                 }
                 
             });
+            */
             
 
         }
