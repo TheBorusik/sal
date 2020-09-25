@@ -32,8 +32,7 @@ namespace SAL.Test
 
             //  builder.RegisterSalHandler<TestCommandHandler>();
             //   builder.RegisterSalHandler<CommonCommandHandler>();
-            builder.RegisterSalHandler<ProcessResultCommandResultHandler>();
-      //      / builder.RegisterSalHandler<Test2CommonCommandHandler>();
+            //      / builder.RegisterSalHandler<Test2CommonCommandHandler>();
 
 
             builder.RegisterSalHandler<CommonCommandResultHandler>();
@@ -53,6 +52,8 @@ namespace SAL.Test
         [Required] public string DistributorName { get; set; }
         [NotEmptyArray] public DistributorCategory[] Categories { get; set; }
     }
+
+
 
 
     public class DistributorCategory
@@ -173,6 +174,7 @@ namespace SAL.Test
 
 
 
+
     public class TestCommandResultHandler : ICommandResultHandlerAsync<Test2Command, TestCommandResult>
     {
         ExecutingContext executingContext;
@@ -191,28 +193,6 @@ namespace SAL.Test
 
 
 
-    }
-
-
-    public class ProcessResultCommandResultHandler : ICommandHandlerAsync<ProcessResultCommandResult, Nothing>
-    {
-        private CommandContext commandContext;
-
-
-
-
-
-
-
-        public Task Handle(ProcessResultCommandResult command)
-        {
-            return Task.CompletedTask;
-        }
-
-        public void SetContexts(CommandContext commandContext, ExecutingContext executingContext)
-        {
-            this.commandContext = commandContext;
-        }
     }
 
 
@@ -424,46 +404,11 @@ namespace SAL.Test
     }
 
 
-    [SalServiceType("WFM")]
-    [SalCommandName("Start")]
-    public class StartProcessCommand : IHaveResult<StartProcessCommandResult>
-    {
-        [Required]
-        public string ProcessName { get; set; }
-        public string Version { get; set; }
-        [Required]
-        public object InitialData { get; set; }
-
-        [Required]
-        public string ResultHandlerType { get; set; }
-        public string ResultHandlerName { get; set; }
-        public string ProcessCorrelationId { get; set; }
 
 
-        public int? Priority { get; set; }
-    }
 
 
-    public class StartProcessCommandResult : ICommandResult
-    {
-        public long ProcessId { get; set; }
-        public string ProcessName { get; set; }
-        public string Version { get; set; }
-        public int Priority { get; set; }
-
-    }
 
 
-    [SalServiceType("WFM")]
-    [SalCommandName("Result")]
-    public class ProcessResultCommandResult : IHaveResult<Nothing>
-    {
-        public string ProcessCorrelationId { get; set; }
-        public long ProcessId { get; set; }
-        public string ProcessName { get; set; }
-        public string Version { get; set; }
-
-        public CommonCommandResult ProcessResult { get; set; }
-    }
 
 }

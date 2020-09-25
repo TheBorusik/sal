@@ -85,7 +85,7 @@ namespace SAL.API
 
         public static InternalExceptionDTO ToDto(this SalException ex)
         {
-            return ex.Dto.DeepClone();
+            return ex.Dto.Clone();
         }
 
         public static SalException ToException(this InternalExceptionDTO dto)

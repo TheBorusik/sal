@@ -19,13 +19,13 @@ namespace SAL.API
 
         internal SalException(InternalExceptionDTO data) : base(data.Message)
         {
-            this.Dto = data.DeepClone();
+            this.Dto = data.Clone();
         }
 
         internal SalException(InternalExceptionDTO data, System.Exception innerException)
             : base(data.Message, innerException)
         {
-            this.Dto = data.DeepClone();
+            this.Dto = data.Clone();
         }
     }
 }

@@ -25,21 +25,27 @@ namespace SAL.API
 
         public InternalExceptionDTO InnerException { get; set; }
 
-        public InternalExceptionDTO DeepClone()
+        public InternalExceptionDTO Clone()
         {
             return new InternalExceptionDTO
             {
                 Code = Code,
                 TimeStamp = TimeStamp,
                 Message = Message,
-                Properties = (JObject)Properties.DeepClone(),
+                Properties = Properties.Clone(),
                 Sid = Sid,
                 StackTrace = StackTrace,
                 CallTrace = CallTrace,
                 AdapterName = AdapterName,
                 HandlerName = HandlerName,
-                InnerException = InnerException?.DeepClone()
+                InnerException = InnerException?.Clone()
             };
+        }
+
+        public void ClearTrace()
+        {
+            StackTrace = null;
+            CallTrace = null;
         }
     }
 }
