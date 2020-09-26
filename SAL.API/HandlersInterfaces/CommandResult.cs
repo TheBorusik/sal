@@ -16,7 +16,7 @@ namespace SAL.API
             return new CommandResult<TCommandResult>
             {
                 ResultCode = ResultCode,
-                Error = Error.Clone(),
+                Error = Error?.Clone(),
                 Result = SalSerializer.Deserialize<TCommandResult>(strResult)
             };
         }

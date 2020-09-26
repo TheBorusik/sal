@@ -15,7 +15,7 @@ namespace SAL.API
             {
                 Result = Result.Clone(),
                 ResultCode = ResultCode,
-                Error = Error.Clone()
+                Error = Error?.Clone()
             };
         }
     }
