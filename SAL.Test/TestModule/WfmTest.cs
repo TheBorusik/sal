@@ -123,7 +123,7 @@ namespace SAL.Test
 
         public Task Handle(ProcessResultCommandResult command)
         {
-            return Task.CompletedTask;
+             return Task.CompletedTask;
         }
 
         public void SetContexts(CommandContext commandContext, ExecutingContext executingContext)

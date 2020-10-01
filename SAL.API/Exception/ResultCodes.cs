@@ -11,6 +11,7 @@
         public const string Fatal = "Fatal";
         public const string ValidationFailed = "ValidationFailed";
         public const string NotHandledCommandResult = " NotHandledCommandResult";
+        public const string NotImplemented = " NotImplemented";
         public const string NotHandledCommand = "NotHandledCommand";
         public const string NotHandledEvent = "NotHandledEvent";
     }

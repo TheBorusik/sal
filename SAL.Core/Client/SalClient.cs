@@ -147,6 +147,9 @@ namespace SAL.Core.Client
 
         public Task PublishResultAsync<TCommandResult>(CommandResult<TCommandResult> result, CommandDescriptor commandDescriptor) where TCommandResult : class, ICommandResult, new()
         {
+            if (typeof(TCommandResult) == typeof(None))
+                return Task.CompletedTask;
+
             SessionManager.IncOperationId();
             return PublishResultAsync(new CommonCommandResult
             {

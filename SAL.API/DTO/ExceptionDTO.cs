@@ -42,10 +42,11 @@ namespace SAL.API
             };
         }
 
-        public void ClearTrace()
+        public InternalExceptionDTO ClearTrace()
         {
             StackTrace = null;
             CallTrace = null;
+            return this;
         }
     }
 }
