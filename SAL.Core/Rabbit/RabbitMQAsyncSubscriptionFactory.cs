@@ -264,6 +264,13 @@ namespace SAL.Core.Rabbit
             return new MultiConsumerSubscription(transport, subscriptionName, globalPrefetchCount, queueList.ToArray(), handler);
         }
 
+        public ISubscription CreateCustom(ushort globalPrefetchCount, QueueInfo[] queues, Func<RabbitMessage, Action, Action, Task> handler, string subscriptionName = "Custom")
+        {
+            return new MultiConsumerSubscription(transport, subscriptionName, globalPrefetchCount, queues, handler);
+
+        }
+
+
         public bool AddSystemEvent(string eventName)
         {
             var queueName = $"#{AdapterConfiguration.AdapterType}#{AdapterConfiguration.AdapterName}" + "#SystemEvent";
