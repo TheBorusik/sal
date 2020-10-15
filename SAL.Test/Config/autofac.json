@@ -1,6 +1,6 @@
 ﻿{
   "Modules": [
-    //   "SAL.Test.Module, SAL.Test"
-    "SAL.Test.WfmTest, SAL.Test"
+    "SAL.Test.Module, SAL.Test"
+    //"SAL.Test.WfmTest, SAL.Test"
   ]
 }

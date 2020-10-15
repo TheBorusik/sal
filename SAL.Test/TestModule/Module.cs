@@ -13,6 +13,8 @@ using SAL.API.Command;
 using SAL.API.CommandResult;
 using SAL.API.Events;
 using SAL.API.FrontCommand;
+using SAL.Core.Rabbit.Interfaces;
+using SAL.Core.Rabbit.Subscription;
 using SAL.Infrastructure;
 using SAL.Infrastructure.FrontAttributes;
 using SAL.Infrastructure.ValidationAttribute;
@@ -29,13 +31,12 @@ namespace SAL.Test
         {
             //           builder.RegisterSalHandler<TestFrontHandler>();
             //          builder.RegisterSalHandler<TestFrontHandler2>();
-
-            //  builder.RegisterSalHandler<TestCommandHandler>();
+            builder.RegisterSalHandler<TestCommandHandler>();
             //   builder.RegisterSalHandler<CommonCommandHandler>();
             //      / builder.RegisterSalHandler<Test2CommonCommandHandler>();
 
 
-            builder.RegisterSalHandler<CommonCommandResultHandler>();
+       //     builder.RegisterSalHandler<CommonCommandResultHandler>();
 
        //     builder.RegisterSalHandler<TestCommandResultHandler>();
 
@@ -49,8 +50,7 @@ namespace SAL.Test
     //  [SalCommandTypeResultHandler]
     public class TestCommand : IHaveResult<TestCommandResult>
     {
-        [Required] public string DistributorName { get; set; }
-        [NotEmptyArray] public DistributorCategory[] Categories { get; set; }
+
     }
 
 
@@ -158,6 +158,7 @@ namespace SAL.Test
 
         public Task Handle(TestCommand command)
         {
+            throw new Exception("test ex");
             return Task.CompletedTask;
         }
 
@@ -253,12 +254,15 @@ namespace SAL.Test
     {
         private readonly ILogger<TestProcessor> logger;
         private readonly ILifetimeScope scope;
+        private ITransport transport;
+        private ISubscription subscription;
 
 
-        public TestProcessor(ILogger<TestProcessor> logger, ILifetimeScope scope)
+        public TestProcessor(ILogger<TestProcessor> logger, ILifetimeScope scope, ITransport transport)
         {
             this.logger = logger;
             this.scope = scope;
+            this.transport = transport;
             // this.client = scope.ResolveNamed<ISalClient>("front");
            // this.client = scope.Resolve<ISalClient>();
         }
@@ -267,64 +271,55 @@ namespace SAL.Test
         {
 
             logger.LogInformation("Тестовое сообщение", new { MercId = 10 });
+            var subscriptionFactory = transport.CreateMessageSubscription();
+            
+            //todo сделать конфиг
+            subscription = subscriptionFactory.CreateCustom(1, new QueueInfo[]
+            {
+                new QueueInfo
+                {
+                    PrefetchCount = 1,
+                    QueueName = ".NotHandledMessages"
+                }
+            }, Handler, "NHMProcessor");
 
 
+        }
+
+        private Task Handler(RabbitMessageEx arg1, Action ack, Action arg3)
+        {
+            try
+            {
+                // подтверждаем получение сообщения
+                ack();
+            }
+            catch (Exception e)
+            {
+
+            }
+
+
+            return Task.CompletedTask;
         }
 
         public void Online()
         {
 
             var backClient = scope.Resolve<ISalClient>();
-            /*
-            backClient.PublishCommandAsync(new StartProcessCommand
-            {
-                ProcessName = "Дебит WoF Finish",
-                ResultHandlerType = AdapterConfiguration.AdapterType,
-                ProcessCorrelationId = Guid.NewGuid().ToString("N"),
-                InitialData = new
-                {
-                    Order = new 
-                    {
-                        OrderId = 100010,
-
-                    },
-                    Terminal = new
-                    { 
-                        MercId = 1,
-                        Mps = "VISA",
-                        Channel = "1",
-                        Is3Ds = true,
-                        TerminalId = "12",
-                        MerchantId = "123123",
-                        Mcc = "123",
-                        Name = "test1",
-                        MerchantUrl = "https://yandex.ru",
-                        Currency = "RUB",
-                        Gate = "TCB",
-                        OperType = "Test"
-
-                    },
-                    AcsInfo = new 
-                    {
-                        PaRes = "dsaasdasd",
-                        Md = "1234"
-                    }
-                }
-                
-            });
-            */
+            subscription?.Start();
             
 
         }
 
         public void Offline()
         {
-
+            subscription?.Stop();
         }
 
         public void Stop()
         {
-
+            subscription?.Stop();
+            subscription?.Dispose();
         }
 
 

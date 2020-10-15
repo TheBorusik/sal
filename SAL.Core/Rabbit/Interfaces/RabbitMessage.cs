@@ -28,7 +28,7 @@ namespace SAL.Core.Rabbit.Interfaces
 
     public class RabbitMessageEx : RabbitMessage
     {
-        public Dictionary<string, string> Headers { get; set; }
+        public JObject Headers { get; set; }
         public bool Redelivered { get; set; }
 
     }

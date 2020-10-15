@@ -21,12 +21,9 @@ namespace SAL.Core.Rabbit.Subscription
         private readonly ushort globalPrefetchCount;
 
 
-
-
         public MultiConsumerSubscriptionEx(RabbitMQTransport transport, string subscriptionName, ushort globalPrefetchCount, QueueInfo[] queueInfos, Func<RabbitMessageEx, Action, Action, Task> handler)
             : base(transport, subscriptionName, handler)
         {
-
             logger = transport.LoggerProvider.CreateLogger($"RMQ.{SubscriptionName}");
             this.globalPrefetchCount = globalPrefetchCount;
 
@@ -36,7 +33,6 @@ namespace SAL.Core.Rabbit.Subscription
                 ConsumerTag = string.Empty,
                 PrefetchCount = s.PrefetchCount
             }).ToList();
-
         }
 
         protected override string GetConsumerTag(object consumer)
@@ -48,7 +44,7 @@ namespace SAL.Core.Rabbit.Subscription
 
         protected override RabbitMessageEx Transform(BasicDeliverEventArgs args, string consumerTag)
         {
-            var headers = new Dictionary<string, string>();
+            var headers = new JObject();
 
             if (args.BasicProperties.IsHeadersPresent())
             {
@@ -56,16 +52,15 @@ namespace SAL.Core.Rabbit.Subscription
                 {
                     try
                     {
-                        headers.Add(kv.Key, Encoding.UTF8.GetString((byte[])kv.Value));
+                        headers.Add(kv.Key, Transform(kv.Value));
                     }
-                    catch 
+                    catch(Exception ex)
                     {
                         //
                     }
-
                 });
             }
-                
+
             return new RabbitMessageEx
             {
                 Payload = args.Body,
@@ -77,8 +72,62 @@ namespace SAL.Core.Rabbit.Subscription
                 QueueName = queueDatas.FirstOrDefault(q => q.ConsumerTag == consumerTag)?.QueueName,
                 Redelivered = args.Redelivered,
                 Headers = headers
-
             };
+        }
+
+
+        private JToken Transform(object data)
+        {
+            switch (data)
+            {
+                case byte[] b:
+                    return Transform(b);
+                case List<object> li:
+                    return Transform(li);
+                case long l:
+                    return Transform(l);
+                case AmqpTimestamp at:
+                    return Transform(at);
+                case Dictionary<string, object> d:
+                    return Transform(d);
+                default:
+                    throw new Exception($"не обрабатываемай тип {data.GetType().Name}");
+            }
+        }
+
+        private JValue Transform(byte[] data)
+        {
+            return new JValue(Encoding.UTF8.GetString(data));
+        }
+
+        private JValue Transform(long data)
+        {
+            return new JValue(data);
+        }
+
+        private JValue Transform(AmqpTimestamp amqpTimestamp)
+        {
+            return new JValue(amqpTimestamp.ToDateTime());
+        }
+
+        private JArray Transform(List<object> list)
+        {
+            var jA = new JArray();
+            foreach(var val in list)
+            {
+                jA.Add(Transform(val));
+            }
+            return jA;
+        }
+
+        private JObject Transform(Dictionary<string, object> dic)
+        {
+            var obj = new JObject();
+            dic.ForEach(kv =>
+            {
+                obj.Add(kv.Key, Transform(kv.Value));
+            });
+            return obj;
         }
 
         public void Start()
@@ -95,13 +144,12 @@ namespace SAL.Core.Rabbit.Subscription
                         Model.Close();
                         Model.Dispose();
                     }
-                    Model = Transport.CreateModel();
 
+                    Model = Transport.CreateModel();
                 }
 
-                foreach (var queueData in queueDatas)
+                foreach(var queueData in queueDatas)
                 {
-
                     Model.BasicQos(0, queueData.PrefetchCount, false);
 
                     if (queueData.Consumer == null)
@@ -120,8 +168,6 @@ namespace SAL.Core.Rabbit.Subscription
 
                 Started = true;
             }
-
-
         }
 
         public void Stop()
@@ -131,7 +177,7 @@ namespace SAL.Core.Rabbit.Subscription
             {
                 if (!Started)
                     return;
-                foreach (var queueData in queueDatas)
+                foreach(var queueData in queueDatas)
                 {
                     try
                     {
@@ -160,7 +206,6 @@ namespace SAL.Core.Rabbit.Subscription
             }
 
             logger.Debug($"Все обрабатываемых задачи завершились.");
-
         }
 
         public void Dispose()
