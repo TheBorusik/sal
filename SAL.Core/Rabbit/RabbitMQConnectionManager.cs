@@ -107,7 +107,7 @@ namespace SAL.Core.Rabbit
                         {
                             await Task.Delay(config.RetryTimeout, tokenSource.Token);
                         }
-                        catch (OperationCanceledException e)
+                        catch (OperationCanceledException)
                         {
                             break;
                         }

@@ -11,38 +11,32 @@ namespace SAL.Core.Service
     {
         protected virtual void ConfigureModules(ContainerBuilder builder)
         {
-         //   Log.Trace("InitModules...");
+            //   Log.Trace("InitModules...");
             var modules = new List<IModule>();
             var modulesTypeStr = ConfigWatcher.GetSection(ConfigurationSectionNames.Modules).ConvertValue<string[]>();
             modulesTypeStr?.ForEach(mn =>
             {
-                try
-                {
-                    var moduleType = Type.GetType(mn, false);
-                    if (moduleType == null)
-                    {
 
-                        throw new Exception($"Не найден тип модуля {mn}");
-                    }
-                    var imodule = (IModule) Activator.CreateInstance(moduleType);
-              //      Log.Trace($"Модуль {moduleType.FullName} - активирован");
-                    modules.Add(imodule);
-                }
-                catch (Exception ex)
+                var moduleType = Type.GetType(mn, false);
+                if (moduleType == null)
                 {
-               //     Log.Error($"При активации модуля {mn} произошла ошибка: ", ex);
-                    throw;
+
+                    throw new Exception($"Не найден тип модуля {mn}");
                 }
+                var imodule = (IModule)Activator.CreateInstance(moduleType);
+                //      Log.Trace($"Модуль {moduleType.FullName} - активирован");
+                modules.Add(imodule);
+
             });
 
-        //    Log.Trace("ConfigureModules...");
+            //    Log.Trace("ConfigureModules...");
             modules?.ForEach(m =>
             {
                 m.Configure(builder);
-             //   Log.Trace($"{m.GetType().FullName}.Configure();");
+                //   Log.Trace($"{m.GetType().FullName}.Configure();");
             });
 
-        //    Log.Trace("ConfigureModules Done.");
+            //    Log.Trace("ConfigureModules Done.");
         }
     }
 }

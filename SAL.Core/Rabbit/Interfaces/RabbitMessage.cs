@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using Newtonsoft.Json.Linq;
 
 namespace SAL.Core.Rabbit.Interfaces
 {
@@ -21,6 +23,13 @@ namespace SAL.Core.Rabbit.Interfaces
 
         // заполняеться при использовании того или иного метода
         public string Exchange { get; set; }
+
+    }
+
+    public class RabbitMessageEx : RabbitMessage
+    {
+        public Dictionary<string, string> Headers { get; set; }
+        public bool Redelivered { get; set; }
 
     }
 }

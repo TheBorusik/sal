@@ -264,9 +264,9 @@ namespace SAL.Core.Rabbit
             return new MultiConsumerSubscription(transport, subscriptionName, globalPrefetchCount, queueList.ToArray(), handler);
         }
 
-        public ISubscription CreateCustom(ushort globalPrefetchCount, QueueInfo[] queues, Func<RabbitMessage, Action, Action, Task> handler, string subscriptionName = "Custom")
+        public ISubscription CreateCustom(ushort globalPrefetchCount, QueueInfo[] queues, Func<RabbitMessageEx, Action, Action, Task> handler, string subscriptionName = "Custom")
         {
-            return new MultiConsumerSubscription(transport, subscriptionName, globalPrefetchCount, queues, handler);
+            return new MultiConsumerSubscriptionEx(transport, subscriptionName, globalPrefetchCount, queues, handler);
 
         }
 
@@ -280,7 +280,7 @@ namespace SAL.Core.Rabbit
                 channel.QueueBind(queueName, ExchangeNames.EventExchange, eventName, null);
                 return true;
             }
-            catch (Exception e)
+            catch
             {
                 return false;
             }
@@ -295,7 +295,7 @@ namespace SAL.Core.Rabbit
                 channel.QueueBind(queueName, ExchangeNames.EventExchange, eventName, null);
                 return true;
             }
-            catch (Exception e)
+            catch// (Exception e)
             {
                 return false;
             }

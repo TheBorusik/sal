@@ -39,7 +39,7 @@ namespace SAL.Core.Service
             {
                 await host.RunAsync();
             }
-            catch (OperationCanceledException e)
+            catch (OperationCanceledException)
             {
                 //
             }

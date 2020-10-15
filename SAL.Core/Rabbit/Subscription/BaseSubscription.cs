@@ -9,7 +9,7 @@ using SAL.Core.Rabbit.Interfaces;
 
 namespace SAL.Core.Rabbit.Subscription
 {
-    public abstract class BaseSubscription
+    public abstract class BaseSubscription<T> where T : RabbitMessage 
     {
         protected ILogger logger;
 
@@ -18,14 +18,14 @@ namespace SAL.Core.Rabbit.Subscription
         protected int CurrentThread;
         protected IModel Model;
         protected object ModelLocker = new object();
-        protected readonly Func<RabbitMessage, Action, Action, Task> Handler;
+        protected readonly Func<T, Action, Action, Task> Handler;
         protected bool Started;
 
 
         protected BaseSubscription(
             RabbitMQTransport transport,
             string subscriptionName,
-            Func<RabbitMessage, Action, Action, Task> handler
+            Func<T, Action, Action, Task> handler
         )
         {
             Transport = transport;
@@ -89,6 +89,6 @@ namespace SAL.Core.Rabbit.Subscription
 
 
         protected abstract string GetConsumerTag(object consumer);
-        protected abstract RabbitMessage Transform(BasicDeliverEventArgs args, string consumerTag);
+        protected abstract T Transform(BasicDeliverEventArgs args, string consumerTag);
     }
 }

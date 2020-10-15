@@ -1,17 +1,21 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Newtonsoft.Json.Linq;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
+using SAL.API;
 using SAL.API.LoggerHelper;
+using SAL.API.Monad;
 using SAL.Core.Rabbit.Helpers;
 using SAL.Core.Rabbit.Interfaces;
 
 namespace SAL.Core.Rabbit.Subscription
 {
-    public class MultiConsumerSubscription : BaseSubscription<RabbitMessage>, ISubscription
+    public class MultiConsumerSubscriptionEx : BaseSubscription<RabbitMessageEx>, ISubscription
     {
         private readonly List<QueueData> queueDatas;
         private readonly ushort globalPrefetchCount;
@@ -19,7 +23,7 @@ namespace SAL.Core.Rabbit.Subscription
 
 
 
-        public MultiConsumerSubscription(RabbitMQTransport transport, string subscriptionName, ushort globalPrefetchCount, QueueInfo[] queueInfos, Func<RabbitMessage, Action, Action, Task> handler)
+        public MultiConsumerSubscriptionEx(RabbitMQTransport transport, string subscriptionName, ushort globalPrefetchCount, QueueInfo[] queueInfos, Func<RabbitMessageEx, Action, Action, Task> handler)
             : base(transport, subscriptionName, handler)
         {
 
@@ -42,9 +46,27 @@ namespace SAL.Core.Rabbit.Subscription
             return string.Empty;
         }
 
-        protected override RabbitMessage Transform(BasicDeliverEventArgs args, string consumerTag)
+        protected override RabbitMessageEx Transform(BasicDeliverEventArgs args, string consumerTag)
         {
-            return new RabbitMessage
+            var headers = new Dictionary<string, string>();
+
+            if (args.BasicProperties.IsHeadersPresent())
+            {
+                args.BasicProperties.Headers.ForEach(kv =>
+                {
+                    try
+                    {
+                        headers.Add(kv.Key, Encoding.UTF8.GetString((byte[])kv.Value));
+                    }
+                    catch 
+                    {
+                        //
+                    }
+
+                });
+            }
+                
+            return new RabbitMessageEx
             {
                 Payload = args.Body,
                 TimeStamp = args.BasicProperties.Timestamp.ToDateTime(),
@@ -52,7 +74,10 @@ namespace SAL.Core.Rabbit.Subscription
                 Priority = args.BasicProperties.Priority,
                 RoutingKey = args.RoutingKey,
                 Exchange = args.Exchange,
-                QueueName = queueDatas.FirstOrDefault(q => q.ConsumerTag == consumerTag)?.QueueName
+                QueueName = queueDatas.FirstOrDefault(q => q.ConsumerTag == consumerTag)?.QueueName,
+                Redelivered = args.Redelivered,
+                Headers = headers
+
             };
         }
 
@@ -61,7 +86,7 @@ namespace SAL.Core.Rabbit.Subscription
             logger.Info("Запуск обработки");
             lock (ModelLocker)
             {
-                if (Started) 
+                if (Started)
                     return;
                 if (Model?.IsClosed ?? true)
                 {
