@@ -40,7 +40,7 @@ namespace SAL.Test
 
        //     builder.RegisterSalHandler<TestCommandResultHandler>();
 
-            //  builder.RegisterSalHandler<EventHandler>();
+             // builder.RegisterSalHandler<EventHandler>();
 
 
             builder.RegisterProcessor<TestProcessor>();
@@ -138,11 +138,14 @@ namespace SAL.Test
         , IValidator<Test2Command>
         , ICommandHandlerAsync<Test3Command, TestCommandResult>
     {
-
+        private ExecutingContext executingContext;
+        private CommandContext context;
+        
 
         public void SetContexts(CommandContext context, ExecutingContext executingContext)
         {
-
+            this.context = context;
+            this.executingContext = executingContext;
         }
 
         public Task<IEnumerable<FieldError>> Validate(TestCommand verifiable)
@@ -158,8 +161,10 @@ namespace SAL.Test
 
         public Task Handle(TestCommand command)
         {
-            throw new Exception("test ex");
-            return Task.CompletedTask;
+          //  throw new Exception("test ex");
+          executingContext.SalClient.PublishResultAsync(new Nothing(), context.Descriptor);  
+          
+          return Task.CompletedTask;
         }
 
         public Task Handle(Test2Command command)
@@ -237,6 +242,7 @@ namespace SAL.Test
 
         public Task Handle(TestEvent Event)
         {
+            throw new Exception("event Exception");
             return Task.CompletedTask;
         }
 
@@ -254,6 +260,7 @@ namespace SAL.Test
     {
         private readonly ILogger<TestProcessor> logger;
         private readonly ILifetimeScope scope;
+        private readonly ISalClient client;
 
 
 
@@ -262,14 +269,14 @@ namespace SAL.Test
             this.logger = logger;
             this.scope = scope;
             // this.client = scope.ResolveNamed<ISalClient>("front");
-           // this.client = scope.Resolve<ISalClient>();
+            this.client = scope.Resolve<ISalClient>();
         }
 
         public void Start()
         {
 
             logger.LogInformation("Тестовое сообщение", new { MercId = 10 });
-            
+
 
 
 
@@ -280,9 +287,9 @@ namespace SAL.Test
         public void Online()
         {
 
-            var backClient = scope.Resolve<ISalClient>();
 
-            
+            client.PublishEventAsync(new TestEvent());
+
 
         }
 
