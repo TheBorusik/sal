@@ -254,15 +254,13 @@ namespace SAL.Test
     {
         private readonly ILogger<TestProcessor> logger;
         private readonly ILifetimeScope scope;
-        private ITransport transport;
-        private ISubscription subscription;
 
 
-        public TestProcessor(ILogger<TestProcessor> logger, ILifetimeScope scope, ITransport transport)
+
+        public TestProcessor(ILogger<TestProcessor> logger, ILifetimeScope scope)
         {
             this.logger = logger;
             this.scope = scope;
-            this.transport = transport;
             // this.client = scope.ResolveNamed<ISalClient>("front");
            // this.client = scope.Resolve<ISalClient>();
         }
@@ -271,55 +269,31 @@ namespace SAL.Test
         {
 
             logger.LogInformation("Тестовое сообщение", new { MercId = 10 });
-            var subscriptionFactory = transport.CreateMessageSubscription();
             
-            //todo сделать конфиг
-            subscription = subscriptionFactory.CreateCustom(1, new QueueInfo[]
-            {
-                new QueueInfo
-                {
-                    PrefetchCount = 1,
-                    QueueName = ".NotHandledMessages"
-                }
-            }, Handler, "NHMProcessor");
+
 
 
         }
 
-        private Task Handler(RabbitMessageEx arg1, Action ack, Action arg3)
-        {
-            try
-            {
-                // подтверждаем получение сообщения
-                ack();
-            }
-            catch (Exception e)
-            {
 
-            }
-
-
-            return Task.CompletedTask;
-        }
 
         public void Online()
         {
 
             var backClient = scope.Resolve<ISalClient>();
-            subscription?.Start();
+
             
 
         }
 
         public void Offline()
         {
-            subscription?.Stop();
+
         }
 
         public void Stop()
         {
-            subscription?.Stop();
-            subscription?.Dispose();
+
         }
 
 
