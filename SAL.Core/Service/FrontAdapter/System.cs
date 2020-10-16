@@ -26,7 +26,7 @@ namespace SAL.Core.Service
 
         protected override void SendOnline()
         {
-            SendIm().Wait();
+            SendIm(frontClient.Contour).Wait();
         }
 
         protected override void SendOffline()
@@ -63,19 +63,20 @@ namespace SAL.Core.Service
         }
 
 
-        public override Task SendIm()
+        public override Task SendIm(string contour)
         {
-            base.SendIm();
+            base.SendIm(contour);
             try
             {
-                return frontClient.PublishEventAsync(new IAmFrontEvent
-                {
-                    Type = AdapterConfiguration.AdapterType,
-                    Name = AdapterConfiguration.AdapterName,
-                    CommandHandlers = frontCommands.ToArray(),
-                    CommandResultHandlers = frontCommandResults.ToArray(),
-                    EventHandlers = frontEvents.ToArray()
-                }, SystemEventTimes.BaseTTL);
+                if(frontClient.Contour == contour)
+                    return frontClient.PublishEventAsync(new IAmFrontEvent
+                    {
+                        Type = AdapterConfiguration.AdapterType,
+                        Name = AdapterConfiguration.AdapterName,
+                        CommandHandlers = frontCommands.ToArray(),
+                        CommandResultHandlers = frontCommandResults.ToArray(),
+                        EventHandlers = frontEvents.ToArray()
+                    }, SystemEventTimes.BaseTTL);
             }
             catch (Exception ex)
             {

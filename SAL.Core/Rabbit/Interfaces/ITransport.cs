@@ -15,6 +15,8 @@ namespace SAL.Core.Rabbit.Interfaces
         IPublisher CreatePublisher();
 
         bool IsConnected { get; }
+        
+        string CounterName { get; }
 
 
     }

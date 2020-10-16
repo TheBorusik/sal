@@ -81,7 +81,7 @@ namespace SAL.Core.Service
                 throw new ConfigurationErrorException("Не найдена секция MessageBus");
             }
 
-            AdapterConfiguration.Contour = messageBus.VirtualHost.ToUpperInvariant();
+            AdapterConfiguration.BackContour = messageBus.VirtualHost.ToUpperInvariant();
 
             var frontMessageBus = ConfigWatcher.GetSection(ConfigurationSectionNames.FrontMessageBus)?.ConvertValue<RabbitConfig>();
             if (frontMessageBus == null)
@@ -89,7 +89,7 @@ namespace SAL.Core.Service
                 throw new ConfigurationErrorException("Не найдена секция FrontMessageBus");
             }
             
-            AdapterConfiguration.FrontContour = frontMessageBus.VirtualHost.ToUpperInvariant();
+            AdapterConfiguration.Contour = frontMessageBus.VirtualHost.ToUpperInvariant();
 
         }
 

@@ -23,11 +23,25 @@ namespace SAL.Core.Client
         private readonly IPublisher publisher;
         private readonly ICommandResultProcessor commandResultProcessor;
         private readonly ISalLogger salLogger;
+        public string Contour { get;  }
+        public string ContourName { get; }
 
         public SalClient(ILifetimeScope scope, ISalLogger salLogger, string prefix)
         {
-            var transport = !string.IsNullOrWhiteSpace(prefix) ? scope.ResolveNamed<ITransport>(prefix) : scope.Resolve<ITransport>();
-
+            ITransport transport;
+            if (!string.IsNullOrWhiteSpace(prefix))
+            {
+                transport = scope.ResolveNamed<ITransport>(prefix);
+                Contour = prefix.ToUpper();
+                ContourName = transport.CounterName;
+            }
+            else
+            {
+                transport = scope.Resolve<ITransport>();
+                Contour = "BACK";
+                ContourName = transport.CounterName;
+            }
+            
             this.publisher = transport.CreatePublisher();
 
             this.commandResultProcessor = !string.IsNullOrWhiteSpace(prefix) ? scope.ResolveNamed<ICommandResultProcessor>(prefix) : scope.Resolve<ICommandResultProcessor>();

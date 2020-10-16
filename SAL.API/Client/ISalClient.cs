@@ -7,6 +7,9 @@ namespace SAL.API.Client
 {
     public interface ISalClient
     {
+        string Contour { get; }
+        string ContourName { get; }
+        
         // hi level
         Task<string> PublishCommandAsync<TCommand>(
             TCommand command,

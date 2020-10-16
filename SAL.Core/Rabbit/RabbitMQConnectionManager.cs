@@ -24,6 +24,7 @@ namespace SAL.Core.Rabbit
         private readonly ILogger logger;
         private readonly ConnectionFactory factory;
 
+
         public RabbitMQConnectionManager(RabbitConfig rabbitConfig, ILoggerProvider loggerProvider)
         {
             if (rabbitConfig == null)
@@ -50,6 +51,7 @@ namespace SAL.Core.Rabbit
                 TopologyRecoveryEnabled = true,
                 NetworkRecoveryInterval = TimeSpan.FromSeconds(10)
             };
+            ContourName = config.VirtualHost.ToUpper();
         }
 
         public void Start()
@@ -163,5 +165,7 @@ namespace SAL.Core.Rabbit
         {
             Stop();
         }
+
+        public string ContourName { get; }
     }
 }

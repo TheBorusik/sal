@@ -1,0 +1,30 @@
+{
+  "CommandProcessor": {
+    "GlobalPrefetchCount": 25,
+    "CommandPrefetchCount": 25
+  },
+  "FrontCommandProcessor": {
+    "GlobalPrefetchCount": 25,
+    "CommandPrefetchCount": 25
+  },
+  
+  "CommandResultProcessor": {
+    "GlobalPrefetchCount": 25,
+    "InstancePrefetchCount": 15,
+    "TypePrefetchCount": 5,
+    "SyncPrefetchCount": 5
+  },
+  "FrontCommandResultProcessor": {
+    "GlobalPrefetchCount": 25,
+    "InstancePrefetchCount": 15,
+    "TypePrefetchCount": 5,
+    "SyncPrefetchCount": 5
+  },
+
+  "EventProcessor": {
+    "GlobalPrefetchCount": 25
+  },
+  "FrontEventProcessor": {
+    "GlobalPrefetchCount": 25
+  }
+}

@@ -1,34 +1,3 @@
 ﻿{
-  "CommandProcessor": {
-    "GlobalPrefetchCount": 100,
-    "CommandPrefetchCount": 0
-  },
-  "CommandResultProcessor": {
-    "GlobalPrefetchCount": 25,
-    "InstancePrefetchCount": 15,
-    "TypePrefetchCount": 5,
-    "SyncPrefetchCount": 5
-  },
-  "EventProcessor": {
-    "GlobalPrefetchCount": 25
-  },
-
-  "SystemLogging": {
-    "Events": {
-      "System\\..*": {
-        "Ignore": true
-      },
-      ".*": {
-        "Ignore": false,
-        "СropSize": -1
-      }
-    },
-    "Commands": {
-      ".*": {
-        "Ignore": false,
-        "СropSize": -1
-      }
-    }
-  }
-
+  
 }

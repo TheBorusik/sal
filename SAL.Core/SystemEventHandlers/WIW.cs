@@ -12,6 +12,7 @@ namespace SAL.Core.SystemEventHandlers
     {
         private ISalService salService;
         private EventContext context;
+        private ExecutingContext executingContext;
 
         public SystemWIWHandler(ISalService salService)
         {
@@ -22,6 +23,7 @@ namespace SAL.Core.SystemEventHandlers
         public void SetContexts(EventContext eventContext, ExecutingContext executingContext)
         {
             this.context = eventContext;
+            this.executingContext = executingContext;
         }
 
         public Task Handle(WhoIsWhoEvent evnt)
@@ -33,7 +35,7 @@ namespace SAL.Core.SystemEventHandlers
                 return Task.CompletedTask;
             
 
-            salService.SendIm();
+            salService.SendIm(executingContext.SalClient.Contour);
             return Task.CompletedTask;
         }
 

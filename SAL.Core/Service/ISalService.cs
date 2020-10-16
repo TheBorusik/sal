@@ -1,5 +1,6 @@
 ﻿using System.Threading.Tasks;
 using SAL.API;
+using SAL.API.Client;
 
 namespace SAL.Core.Service
 {
@@ -16,7 +17,7 @@ namespace SAL.Core.Service
         public void AddBackEventHandler(EventHandlerInfo eventHandlerInfo);
         
         //service
-        Task SendIm();
+        Task SendIm(string contour);
     }
 
 }

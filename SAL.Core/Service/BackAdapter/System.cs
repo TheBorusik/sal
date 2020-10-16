@@ -27,7 +27,7 @@ namespace SAL.Core.Service
 
         protected virtual void SendOnline()
         {
-            SendIm().Wait();
+            SendIm(backClient.Contour).Wait();
         }
 
         protected virtual void SendOffline()
@@ -77,18 +77,19 @@ namespace SAL.Core.Service
             backEvents.Add(eventHandlerInfo);
         }
 
-        public virtual  Task SendIm()
+        public virtual  Task SendIm(string contour)
         {
             try
             {
-                return backClient.PublishEventAsync(new IAmBackEvent
-                {
-                    Type = AdapterConfiguration.AdapterType,
-                    Name = AdapterConfiguration.AdapterName,
-                    CommandHandlers = backCommands.ToArray(),
-                    CommandResultHandlers = backCommandResults.ToArray(),
-                    EventHandlers = backEvents.ToArray()
-                }, SystemEventTimes.BaseTTL);
+                if(backClient.Contour == contour)
+                    return backClient.PublishEventAsync(new IAmBackEvent
+                    {
+                        Type = AdapterConfiguration.AdapterType,
+                        Name = AdapterConfiguration.AdapterName,
+                        CommandHandlers = backCommands.ToArray(),
+                        CommandResultHandlers = backCommandResults.ToArray(),
+                        EventHandlers = backEvents.ToArray()
+                    }, SystemEventTimes.BaseTTL);
             }
             catch (Exception ex)
             {

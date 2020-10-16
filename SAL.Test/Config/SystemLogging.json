@@ -1,0 +1,19 @@
+﻿{
+  "SystemLogging": {
+    "Events": {
+      "System.*": {
+        "Ignore": true
+      },
+      ".*": {
+        "Ignore": false,
+        "CropSize": -1
+      }
+    },
+    "Commands": {
+      ".*": {
+        "Ignore": false,
+        "CropSize": -1
+      }
+    }
+  }
+}

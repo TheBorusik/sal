@@ -33,6 +33,7 @@ namespace SAL.Core.Rabbit
         public event EventHandler<ConnectionFailureEventArgs> ConnectionFailure;
 
         public bool IsConnected { get; private set; }
+        public string CounterName => rabbitMQConnectionManager.ContourName;
         public bool TopologyInited { get; private set; }
         public ILoggerProvider LoggerProvider { get; private set; }
 
