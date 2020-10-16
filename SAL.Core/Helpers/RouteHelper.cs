@@ -119,7 +119,7 @@ namespace SAL.Core.Helpers
 
             if (string.IsNullOrWhiteSpace(name))
             {
-                name = Regex.Replace(name, "(.+)event", "$1", RegexOptions.IgnoreCase);
+                name = Regex.Replace(type.Name, "(.+)event", "$1", RegexOptions.IgnoreCase);
             }
 
             var isSystem = type.GetCustomAttributes(typeof(SalSystemEventAttribute)).Any();
