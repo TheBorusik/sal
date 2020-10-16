@@ -2,11 +2,6 @@
 
 namespace SAL.Core.Config.Logging
 {
-    class LoggingConfig
-    {
-        public Dictionary<string, LoggingItem> Items { get; set; } = new Dictionary<string, LoggingItem>();
-    }
-
     public class LoggingItem
     {
         public bool Ignore { get; set; } = false;

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Text;
 using System.Text.RegularExpressions;
 using Microsoft.Extensions.Logging;
@@ -15,7 +16,10 @@ namespace SAL.Core.Processors
         private ILoggerProvider loggerProvider;
         private IConfigWatcher configWatcher;
 
-        private const string LoggingSettingsSectionName = "Logging";
+        private const string LoggingSettingsSectionName = "SystemLogging";
+        private const string EventsSectionName = "Events";
+        private const string CommandsSectionName = "Commands";
+        
 
         private ConcurrentDictionary<string, HandlerLogger> loggers = new ConcurrentDictionary<string, HandlerLogger>();
 
@@ -328,21 +332,21 @@ namespace SAL.Core.Processors
 
             return loggers.GetOrAdd(loggerName, s =>
             {
-                var section = configWatcher.GetSection(ConfigurationSectionNames.CommandProcessor);
+                var section = configWatcher.GetSection(LoggingSettingsSectionName);
                 if (section == null)
                 {
                     return GetDefaultHandlerLogger(s);
                 }
                 else
                 {
-                    var loggingConfig = section.GetSafeValue<LoggingConfig>(LoggingSettingsSectionName, null);
-                    if (loggingConfig == null)
+                    var loggingItems = section.GetSafeValue<Dictionary<string, LoggingItem>>(CommandsSectionName, null);
+                    if (loggingItems == null)
                     {
                         return GetDefaultHandlerLogger(s);
                     }
 
 
-                    foreach (var loggingConfigItem in loggingConfig.Items)
+                    foreach (var loggingConfigItem in loggingItems)
                     {
                         if (Regex.IsMatch(commandPayload.Descriptor.CommandName, loggingConfigItem.Key, RegexOptions.IgnoreCase))
                         {
@@ -369,21 +373,21 @@ namespace SAL.Core.Processors
 
             return loggers.GetOrAdd(loggerName, s =>
             {
-                var section = configWatcher.GetSection(ConfigurationSectionNames.CommandResultProcessor);
+                var section = configWatcher.GetSection(LoggingSettingsSectionName);
                 if (section == null)
                 {
                     return GetDefaultHandlerLogger(s);
                 }
                 else
                 {
-                    var loggingConfig = section.GetSafeValue<LoggingConfig>(LoggingSettingsSectionName, null);
-                    if (loggingConfig == null)
+                    var loggingItems = section.GetSafeValue<Dictionary<string, LoggingItem>>(CommandsSectionName, null);
+                    if (loggingItems == null)
                     {
                         return GetDefaultHandlerLogger(s);
                     }
 
 
-                    foreach (var loggingConfigItem in loggingConfig.Items)
+                    foreach (var loggingConfigItem in loggingItems)
                     {
                         if (Regex.IsMatch(commandDescriptor.CommandName, loggingConfigItem.Key, RegexOptions.IgnoreCase))
                         {
@@ -410,21 +414,21 @@ namespace SAL.Core.Processors
 
             return loggers.GetOrAdd(loggerName, s =>
             {
-                var section = configWatcher.GetSection(ConfigurationSectionNames.CommandResultProcessor);
+                var section = configWatcher.GetSection(LoggingSettingsSectionName);
                 if (section == null)
                 {
                     return GetDefaultHandlerLogger(s);
                 }
                 else
                 {
-                    var loggingConfig = section.GetSafeValue<LoggingConfig>(LoggingSettingsSectionName, null);
-                    if (loggingConfig == null)
+                    var loggingItems = section.GetSafeValue<Dictionary<string, LoggingItem>>(CommandsSectionName, null);
+                    if (loggingItems == null)
                     {
                         return GetDefaultHandlerLogger(s);
                     }
 
 
-                    foreach (var loggingConfigItem in loggingConfig.Items)
+                    foreach (var loggingConfigItem in loggingItems)
                     {
                         if (Regex.IsMatch(commandResultPayload.Descriptor.CommandName, loggingConfigItem.Key, RegexOptions.IgnoreCase))
                         {
@@ -451,20 +455,20 @@ namespace SAL.Core.Processors
 
             return loggers.GetOrAdd(loggerName, s =>
             {
-                var section = configWatcher.GetSection(ConfigurationSectionNames.EventProcessor);
+                var section = configWatcher.GetSection(LoggingSettingsSectionName);
                 if (section == null)
                 {
                     return GetDefaultHandlerLogger(s);
                 }
                 else
                 {
-                    var loggingConfig = section.GetSafeValue<LoggingConfig>(LoggingSettingsSectionName, null);
-                    if (loggingConfig == null)
+                    var loggingItems = section.GetSafeValue<Dictionary<string, LoggingItem>>(EventsSectionName, null);
+                    if (loggingItems == null)
                     {
                         return GetDefaultHandlerLogger(s);
                     }
 
-                    foreach (var loggingConfigItem in loggingConfig.Items)
+                    foreach (var loggingConfigItem in loggingItems)
                     {
                         if (Regex.IsMatch(eventName, loggingConfigItem.Key, RegexOptions.IgnoreCase))
                         {

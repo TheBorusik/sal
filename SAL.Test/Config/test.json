@@ -1,41 +1,32 @@
 ﻿{
   "CommandProcessor": {
     "GlobalPrefetchCount": 100,
-    "CommandPrefetchCount": 0,
-    "Logging": {
-      "Items": {
-        ".*": {
-          "Ignore": false,
-          "СropSize": -1
-        }
-      }
-    }
+    "CommandPrefetchCount": 0
   },
   "CommandResultProcessor": {
     "GlobalPrefetchCount": 25,
     "InstancePrefetchCount": 15,
     "TypePrefetchCount": 5,
-    "SyncPrefetchCount": 5,
-    "Logging": {
-      "Items": {
-        ".*": {
-          "Ignore": false,
-          "СropSize": -1
-        }
-      }
-    }
+    "SyncPrefetchCount": 5
   },
   "EventProcessor": {
-    "GlobalPrefetchCount": 25,
-    "Logging": {
-      "Items": {
-        "System.*": {
-          "Ignore": false
-        },
-        ".*": {
-          "Ignore": false,
-          "СropSize": -1
-        }
+    "GlobalPrefetchCount": 25
+  },
+
+  "SystemLogging": {
+    "Events": {
+      "System.*": {
+        "Ignore": false
+      },
+      ".*": {
+        "Ignore": false,
+        "СropSize": -1
+      }
+    },
+    "Commands": {
+      ".*": {
+        "Ignore": false,
+        "СropSize": -1
       }
     }
   }
