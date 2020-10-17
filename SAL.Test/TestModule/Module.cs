@@ -130,8 +130,9 @@ namespace SAL.Test
 
         public async Task Handle(TestCommand command)
         {
+            if(aa.Get() >= 10)
+                throw new Exception("test TestCommandHandler");
             await executingContext.SalClient.PublishResultAsync(new Nothing(), context.Descriptor);
-            throw new Exception("test ex");
         }
 
         public Task Handle(Test2Command command)
