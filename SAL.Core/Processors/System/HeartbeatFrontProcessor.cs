@@ -1,11 +1,8 @@
 ﻿using System;
-using System.Threading;
 using System.Threading.Tasks;
 using Autofac;
 using Microsoft.Extensions.Logging;
 using SAL.API;
-using SAL.API.Client;
-using SAL.API.LoggerHelper;
 using SAL.Core.SystemEventHandlers;
 
 namespace SAL.Core.Processors.System

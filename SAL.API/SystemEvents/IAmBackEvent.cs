@@ -1,6 +1,4 @@
-﻿using Microsoft.Extensions.DependencyInjection;
-using Newtonsoft.Json.Linq;
-using SAL.Infrastructure;
+﻿using SAL.Infrastructure;
 using SAL.Infrastructure.EventAttributes;
 
 namespace SAL.API

@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
-using SAL.API.LoggerHelper;
+using SAL.API;
 using SAL.Core.Rabbit.Interfaces;
 
 namespace SAL.Core.Rabbit.Subscription

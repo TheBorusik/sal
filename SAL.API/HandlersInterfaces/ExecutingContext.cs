@@ -1,6 +1,6 @@
 ﻿using Autofac;
 using Microsoft.Extensions.Logging;
-using SAL.API.Client;
+
 
 namespace SAL.API
 {

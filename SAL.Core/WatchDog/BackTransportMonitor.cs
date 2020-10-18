@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using Autofac;
 using SAL.API;
 using SAL.Core.Rabbit.EventArgs;

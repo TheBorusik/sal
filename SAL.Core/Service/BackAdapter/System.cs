@@ -2,10 +2,7 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Autofac;
-using NLog;
 using SAL.API;
-using SAL.API.Client;
-using SAL.API.Events;
 using SAL.Core.SystemEventHandlers;
 
 namespace SAL.Core.Service

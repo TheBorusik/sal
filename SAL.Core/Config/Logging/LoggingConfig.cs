@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-
-namespace SAL.Core.Config.Logging
+﻿namespace SAL.Core.Config.Logging
 {
     public class LoggingItem
     {

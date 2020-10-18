@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Data;
 using System.Data.Common;
-using System.Runtime.CompilerServices;
 using Autofac;
 
 namespace SAL.API

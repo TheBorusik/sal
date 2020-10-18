@@ -1,23 +1,17 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.Serialization;
 using System.Threading.Tasks;
 using Autofac;
-using Autofac.Features.AttributeFilters;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
 using SAL.API;
-using SAL.API.Client;
 using SAL.API.Command;
 using SAL.API.CommandResult;
 using SAL.API.Events;
 using SAL.API.FrontCommand;
-using SAL.Core.Rabbit.Interfaces;
-using SAL.Core.Rabbit.Subscription;
 using SAL.Infrastructure;
 using SAL.Infrastructure.FrontAttributes;
-using SAL.Infrastructure.ValidationAttribute;
 
 [assembly: SalAdapterType("SalTest")]
 [assembly: SalServiceType("SalTest")]

@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-using Autofac;
-using SAL.API.Monad;
+﻿using Autofac;
 using SAL.Core.Rabbit.Interfaces;
 
 namespace SAL.Core.Service

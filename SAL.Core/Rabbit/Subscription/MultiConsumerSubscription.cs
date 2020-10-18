@@ -5,9 +5,10 @@ using System.Threading;
 using System.Threading.Tasks;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
-using SAL.API.LoggerHelper;
 using SAL.Core.Rabbit.Helpers;
 using SAL.Core.Rabbit.Interfaces;
+using SAL.API;
+
 
 namespace SAL.Core.Rabbit.Subscription
 {

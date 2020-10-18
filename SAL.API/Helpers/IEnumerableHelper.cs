@@ -1,8 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using System.Collections.Generic;
 
-namespace SAL.API.Helpers
+namespace SAL.API
 {
     public static class EnumerableHelper
     {

@@ -1,21 +1,15 @@
 ﻿using System;
 using System.IO;
-using System.Linq;
-using System.Net.Sockets;
-using System.Reflection;
 using System.Text.RegularExpressions;
-using NLog;
 using NLog.LayoutRenderers;
 using NLog.Layouts;
 using SAL.API;
 using SAL.Core.Config;
 using SAL.Core.Config.Rabbit;
 using SAL.Core.Exceptions;
-using SAL.Core.Helpers;
 using SAL.Core.NLogEx.Adapter;
 using SAL.Core.NLogEx.Layout;
 using SAL.Core.NLogEx.LayoutRenderer;
-using SAL.Infrastructure;
 
 namespace SAL.Core.Service
 {

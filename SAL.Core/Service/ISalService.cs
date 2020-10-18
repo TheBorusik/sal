@@ -1,6 +1,5 @@
 ﻿using System.Threading.Tasks;
 using SAL.API;
-using SAL.API.Client;
 
 namespace SAL.Core.Service
 {

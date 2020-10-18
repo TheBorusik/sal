@@ -3,7 +3,6 @@ using Autofac;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using SAL.API;
 using SAL.Core.NLogEx;
 
 namespace SAL.Core.Service

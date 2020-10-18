@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Threading.Tasks;
 
-namespace SAL.API.Client
+namespace SAL.API
 {
     public interface ILoSalClient
     {

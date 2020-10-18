@@ -6,7 +6,6 @@ using System.Threading.Tasks;
 using Autofac;
 using Microsoft.Extensions.DependencyInjection;
 using NLog;
-using NLog.Fluent;
 using SAL.API;
 
 namespace SAL.Core.Service

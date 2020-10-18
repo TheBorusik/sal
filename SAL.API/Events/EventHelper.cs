@@ -1,8 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 
-namespace SAL.API.Events
+namespace SAL.API
 {
     public static class EventHelper
     {

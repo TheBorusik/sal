@@ -1,6 +1,5 @@
 ﻿using Autofac;
 using SAL.API;
-using SAL.API.Client;
 using SAL.Core.Client;
 using SAL.Core.DB;
 using SAL.Core.Processors;

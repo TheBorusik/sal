@@ -1,9 +1,5 @@
-﻿using System.Net.NetworkInformation;
-using System.Runtime.InteropServices.ComTypes;
-using Autofac;
-using Autofac.Core;
+﻿using Autofac;
 using SAL.API;
-using SAL.API.Client;
 using SAL.Core.Client;
 using SAL.Core.Processors;
 using SAL.Core.Processors.System;

@@ -2,13 +2,11 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net.NetworkInformation;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using RabbitMQ.Client;
 using SAL.API;
-using SAL.API.LoggerHelper;
 using SAL.API.Monad;
 using SAL.Core.Config.Rabbit;
 using SAL.Core.Exceptions.Rabbit;

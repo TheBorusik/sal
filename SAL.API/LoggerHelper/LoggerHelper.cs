@@ -1,7 +1,7 @@
 ﻿using System;
 using Microsoft.Extensions.Logging;
 
-namespace SAL.API.LoggerHelper
+namespace SAL.API
 {
     public static class LoggerHelper
     {

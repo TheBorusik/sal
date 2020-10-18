@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Threading.Tasks;
-using SAL.API.Command;
+﻿using System.Threading.Tasks;
 using SAL.Infrastructure;
 
 namespace SAL.API.FrontCommand

@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using SAL.Infrastructure;
+﻿using SAL.Infrastructure;
 using SAL.Infrastructure.EventAttributes;
 
 namespace SAL.API
