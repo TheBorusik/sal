@@ -243,15 +243,7 @@ namespace SAL.Core.Client
 
             if (commandBody == null)
                 throw new ArgumentNullException(nameof(commandBody));
-
-            var routingKey = "";
-            if (string.IsNullOrWhiteSpace(handlerAdapterType) && string.IsNullOrWhiteSpace(handlerAdapterName))
-                routingKey = commandName;
-            else
-                routingKey = string.IsNullOrWhiteSpace(handlerAdapterName) ? handlerAdapterType : $"{handlerAdapterType}#{handlerAdapterName}";
-
-
-
+            
             var commandDescriptor = new CommandDescriptor
             {
                 CorrelationId = correlationId,
@@ -267,31 +259,8 @@ namespace SAL.Core.Client
                 TTL = ttl,
                 IsSync = false
             };
-
-            var commandPayload = new CommandPayload
-            {
-                Descriptor = commandDescriptor,
-                Payload = JObject.FromObject(commandBody, SalSerializer.Create())
-            };
-
-            salLogger.LogOutgoing(commandPayload);
-
-            var transportMessage = new Message
-            {
-                Type = MessageTypes.Command,
-                Payload = JObject.FromObject(commandPayload, SalSerializer.Create()),
-                Source = $"{commandDescriptor.SourceAdapterType}.{commandDescriptor.SourceAdapterName}",
-                Priority = (byte) commandDescriptor.Priority,
-                TimeStamp = commandDescriptor.PublishTimeStamp,
-                Destination = routingKey,
-                TTL = commandDescriptor.TTL,
-                CorrelationId = correlationId,
-                Session = SessionManager.Current
-            };
-
-            publisher.PublishCommand(Pack(transportMessage));
-
-            return Task.CompletedTask;
+            
+            return PublishCommandAsync(commandDescriptor, JObject.FromObject(commandBody, SalSerializer.Create()));
         }
 
         public async Task<CommonCommandResult> ExecuteCommandAsync(
@@ -349,7 +318,7 @@ namespace SAL.Core.Client
                 TimeStamp = commandDescriptor.PublishTimeStamp,
                 Destination = routingKey,
                 TTL = commandDescriptor.TTL,
-                CorrelationId = correlationId,
+                CorrelationId = commandDescriptor.CorrelationId,
                 Session = SessionManager.Current
             };
 
@@ -363,6 +332,37 @@ namespace SAL.Core.Client
 
 
             return result.CommandResult;
+        }
+
+        public Task PublishCommandAsync(CommandDescriptor commandDescriptor, JObject commandBody)
+        {
+            var routingKey = "";
+            if (string.IsNullOrWhiteSpace(commandDescriptor.DestinationAdapterType) && string.IsNullOrWhiteSpace(commandDescriptor.DestinationAdapterName))
+                routingKey = commandDescriptor.CommandName;
+            else
+                routingKey = $"{commandDescriptor.DestinationAdapterType}#{commandDescriptor.DestinationAdapterName}";
+            
+            var commandPayload = new CommandPayload
+            {
+                Descriptor = commandDescriptor,
+                Payload = commandBody.Clone()
+            };
+            salLogger.LogOutgoing(commandPayload);
+
+            var transportMessage = new Message
+            {
+                Type = MessageTypes.Command,
+                Payload = JObject.FromObject(commandPayload, SalSerializer.Create()),
+                Source = $"{commandDescriptor.SourceAdapterType}.{commandDescriptor.SourceAdapterName}",
+                Priority = (byte) commandDescriptor.Priority,
+                TimeStamp = commandDescriptor.PublishTimeStamp,
+                Destination = routingKey,
+                TTL = commandDescriptor.TTL,
+                CorrelationId = commandDescriptor.CorrelationId,
+                Session = SessionManager.Current
+            };
+            publisher.PublishCommand(Pack(transportMessage)); 
+            return Task.CompletedTask;
         }
 
         public Task PublishResultAsync(CommonCommandResult result, CommandDescriptor commandDescriptor)
@@ -442,11 +442,16 @@ namespace SAL.Core.Client
                 PublishTimeStamp = DateTime.UtcNow,
                 TTL = ttl
             };
+            
+            return PublishEventAsync(eventDescriptor, JObject.FromObject(eventBody, SalSerializer.Create()));
+        }
 
+        public Task PublishEventAsync(EventDescriptor eventDescriptor, JObject eventBody)
+        {
             var eventPayload = new EventPayload()
             {
                 Descriptor = eventDescriptor,
-                Payload = JObject.FromObject(eventBody, SalSerializer.Create())
+                Payload = eventBody
             };
 
             salLogger.LogOutgoing(eventPayload);
@@ -454,12 +459,11 @@ namespace SAL.Core.Client
             var routingKey = string.Empty;
 
 
-            if (!string.IsNullOrWhiteSpace(handlerServiceType) && !string.IsNullOrWhiteSpace(handlerServiceName))
-                routingKey = $"{handlerServiceType}#{handlerServiceName}";
+            if (!string.IsNullOrWhiteSpace(eventDescriptor.DestinationAdapterType) && !string.IsNullOrWhiteSpace(eventDescriptor.DestinationAdapterName))
+                routingKey = $"{eventDescriptor.DestinationAdapterType}#{eventDescriptor.DestinationAdapterType}";
             else
-                routingKey = eventName;
-
-
+                routingKey = eventDescriptor.EventName;
+            
             var transportMessage = new Message
             {
                 Type = MessageTypes.Event,
@@ -469,7 +473,7 @@ namespace SAL.Core.Client
                 TimeStamp = eventDescriptor.PublishTimeStamp,
                 Destination = routingKey,
                 TTL = eventDescriptor.TTL,
-                CorrelationId = correlationId,
+                CorrelationId = eventDescriptor.CorrelationId,
                 Session = SessionManager.Current
             };
 
@@ -477,7 +481,6 @@ namespace SAL.Core.Client
 
             return Task.CompletedTask;
         }
-
 
     }
 }

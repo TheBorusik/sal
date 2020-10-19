@@ -124,8 +124,14 @@ namespace SAL.Test
 
         public async Task Handle(TestCommand command)
         {
-            if(aa.Get() >= 10)
+            var a = aa.Get();
+            SessionManager.Current.AddOrUpdate(SessionNames.OrderId ,a + 100000);
+            SessionManager.Current.AddOrUpdate(SessionNames.WfmProcessId ,a + 500);
+
+            
+            if(a >= 10)
                 throw new Exception("test TestCommandHandler");
+            
             await executingContext.SalClient.PublishResultAsync(new Nothing(), context.Descriptor);
         }
 
@@ -152,7 +158,7 @@ namespace SAL.Test
 
         public Task<bool> ResultHandle(CommonCommandResult result)
         {
-            executingContext.SalClient.PublishEventAsync(new TestEvent());
+             executingContext.SalClient.PublishEventAsync(new TestEvent());
             throw new Exception("Test result");
         }
     }
@@ -181,7 +187,6 @@ namespace SAL.Test
 
         public Task Handle(Test2Event Event)
         {
-            // throw new Exception("Test");
             return Task.CompletedTask;
         }
     }
@@ -210,12 +215,16 @@ namespace SAL.Test
 
         public void Online()
         {
-            // client.PublishEventAsync(new TestEvent());
-
             for (var i = 0; i < 10; i++)
             {
-                client.PublishCommandAsync(new TestCommand());
+                client.RaiseExceptionDetectEvent(Guid.NewGuid().ToString("N"), SalError.CreateDto("TestCode", 
+                    $"Test Message {i}",new { WfmProcessId = i + 300}));
             }
+            
+         /*   for (var i = 0; i < 20; i++)
+            {
+                client.PublishCommandAsync(new TestCommand());
+            }*/
         }
 
         public void Offline()

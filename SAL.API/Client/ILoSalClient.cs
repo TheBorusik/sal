@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Threading.Tasks;
+using Newtonsoft.Json.Linq;
 
 namespace SAL.API
 {
@@ -36,5 +37,9 @@ namespace SAL.API
             TimeSpan? ttl,
             string handlerServiceType,
             string handlerServiceName);
+        
+        Task PublishCommandAsync(CommandDescriptor commandDescriptor, JObject commandBody);
+
+        Task PublishEventAsync(EventDescriptor eventDescriptor, JObject eventBody);
     }
 }
