@@ -465,7 +465,7 @@ namespace SAL.Core.Client
 
 
             if (!string.IsNullOrWhiteSpace(eventDescriptor.DestinationAdapterType) && !string.IsNullOrWhiteSpace(eventDescriptor.DestinationAdapterName))
-                routingKey = $"{eventDescriptor.DestinationAdapterType}#{eventDescriptor.DestinationAdapterType}";
+                routingKey = $"{eventDescriptor.DestinationAdapterType}#{eventDescriptor.DestinationAdapterName}";
             else
                 routingKey = eventDescriptor.EventName;
             
