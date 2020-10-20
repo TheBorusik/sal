@@ -367,24 +367,29 @@ namespace SAL.Core.Client
 
         public Task PublishResultAsync(CommonCommandResult result, CommandDescriptor commandDescriptor)
         {
+            var commandResultDescriptor = new CommandResultDescriptor(commandDescriptor);
+            
+            commandResultDescriptor.HandlerAdapterType = AdapterConfiguration.AdapterType;
+            commandResultDescriptor.HandlerAdatpterName = AdapterConfiguration.AdapterName;
+
+            return PublishResultAsync(commandResultDescriptor, result);
+        }
+
+        public Task PublishResultAsync(CommandResultDescriptor commandResultDescriptor, CommonCommandResult result)
+        {
             TimeSpan? ttl = null;
 
-            if (commandDescriptor.TTL.HasValue && commandDescriptor.IsSync)
+            if (commandResultDescriptor.TTL.HasValue && commandResultDescriptor.IsSync)
             {
-                ttl = commandDescriptor.PublishTimeStamp + commandDescriptor.TTL.Value - DateTime.UtcNow;
+                ttl = commandResultDescriptor.PublishTimeStamp + commandResultDescriptor.TTL.Value - DateTime.UtcNow;
             }
 
             if (ttl == null || ttl > TimeSpan.Zero)
             {
-                var commandResultDescriptor = new CommandResultDescriptor(commandDescriptor);
-
                 if (commandResultDescriptor.HandlerTimeStamp.HasValue)
                     commandResultDescriptor.HandlerDuration = DateTime.UtcNow - commandResultDescriptor.HandlerTimeStamp.Value;
 
-                commandResultDescriptor.HandlerServiceType = AdapterConfiguration.AdapterType;
-                commandResultDescriptor.HandlerServiceName = AdapterConfiguration.AdapterName;
-
-
+                
                 var routingKey = "";
 
                 if (commandResultDescriptor.IsSync)
@@ -421,12 +426,12 @@ namespace SAL.Core.Client
             }
             else
             {
-                salLogger.LogNullOutgoing(commandDescriptor);
+                salLogger.LogNullOutgoing(commandResultDescriptor);
             }
 
             return Task.CompletedTask;
         }
-
+        
         public Task PublishEventAsync(string eventName, object eventBody, TimeSpan? ttl, string handlerServiceType, string handlerServiceName)
         {
             var correlationId = Guid.NewGuid().ToString("N");

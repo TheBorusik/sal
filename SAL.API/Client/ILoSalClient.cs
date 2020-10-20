@@ -40,6 +40,8 @@ namespace SAL.API
         
         Task PublishCommandAsync(CommandDescriptor commandDescriptor, JObject commandBody);
 
+        Task PublishResultAsync(CommandResultDescriptor commandResultDescriptor, CommonCommandResult result);
+
         Task PublishEventAsync(EventDescriptor eventDescriptor, JObject eventBody);
     }
 }

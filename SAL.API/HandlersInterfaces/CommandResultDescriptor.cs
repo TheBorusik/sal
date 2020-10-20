@@ -5,16 +5,16 @@ namespace SAL.API
     public class CommandResultDescriptor : CommandDescriptor
     {
 
-        public string HandlerServiceType { get; set; }
-        public string HandlerServiceName { get; set; }
+        public string HandlerAdapterType { get; set; }
+        public string HandlerAdatpterName { get; set; }
         public TimeSpan HandlerDuration { get; set; }
         public TimeSpan? ProcessingDuration { get; set; }
 
 
         public CommandResultDescriptor(CommandResultDescriptor src) :base(src)
         {
-            HandlerServiceType = src.HandlerServiceType;
-            HandlerServiceName = src.HandlerServiceName;
+            HandlerAdapterType = src.HandlerAdapterType;
+            HandlerAdatpterName = src.HandlerAdatpterName;
             HandlerDuration = src.HandlerDuration;
             ProcessingDuration = src.ProcessingDuration;
         }
