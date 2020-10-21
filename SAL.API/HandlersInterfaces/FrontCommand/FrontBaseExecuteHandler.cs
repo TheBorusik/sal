@@ -22,7 +22,11 @@ namespace SAL.API.FrontCommand
         }
 
         protected abstract Task<TInternalCommand> Transform(TExternalCommand comand);
-        protected abstract Task<CommandResult<TExternalCommandResult>> Transform(CommandResult<TInternalCommandResult> result);
+
+        protected virtual Task<CommandResult<TExternalCommandResult>> Transform(CommandResult<TInternalCommandResult> result)
+        {
+            return Task.FromResult(new CommandResult<TExternalCommandResult>(result.ToCommon()));
+        }
 
         protected virtual async Task<bool> ProcessingError(Exception ex)
         {

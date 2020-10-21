@@ -31,6 +31,16 @@ namespace SAL.API
             ResultCode = ccr.ResultCode;
         }
 
+        public CommonCommandResult ToCommon()
+        {
+            return new CommonCommandResult
+            {
+                ResultCode = ResultCode,
+                Error = Error?.Clone(),
+                Result = Result.Clone()
+            };
+        }
+        
 
         public CommandResult<TCommandResult> Clone()
         {
