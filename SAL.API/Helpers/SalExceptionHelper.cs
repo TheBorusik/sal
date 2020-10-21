@@ -39,9 +39,10 @@ namespace SAL.API
             return dto;
         }
 
-
+        //
+        //
         public static InternalExceptionDTO ToDto(this System.Exception ex, 
-            string code = null,
+            string code = SalErrorCodes.Fatal,
             object properties = null)
         {
             if (ex == null)
@@ -51,8 +52,6 @@ namespace SAL.API
             if (ex is SalException sex)
             {
                 dto = sex.ToDto();
-                if (!string.IsNullOrWhiteSpace(code))
-                    dto.Code = code;
                 if (properties != null)
                 {
                     dto.Properties.Merge(JObject.FromObject(properties), new JsonMergeSettings{MergeArrayHandling = MergeArrayHandling.Merge});
