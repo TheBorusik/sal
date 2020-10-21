@@ -20,9 +20,16 @@ namespace SAL.API.FrontCommand
         {
             this.backClient = backClient;
         }
-        
-        public abstract Task<TInternalCommand> Transform(TExternalCommand comand);
-        public abstract Task<CommandResult<TExternalCommandResult>> Transform(CommandResult<TInternalCommandResult> result);
+
+        protected abstract Task<TInternalCommand> Transform(TExternalCommand comand);
+        protected abstract Task<CommandResult<TExternalCommandResult>> Transform(CommandResult<TInternalCommandResult> result);
+
+        protected virtual async Task<bool> ProcessingError(Exception ex)
+        {
+            executingContext.Logger.LogError(ex, $"Внутренняя ошибка");
+            await executingContext.SalClient.PublishResultAsync(ex.ToDto(SalErrorCodes.InternalError), commandContext.Descriptor);
+            return true;
+        }
         
         
         public async Task Handle(TExternalCommand command)
@@ -39,8 +46,8 @@ namespace SAL.API.FrontCommand
             }
             catch (Exception ex)
             {
-                executingContext.Logger.LogError(ex, $"Внутренняя ошибка");
-                await executingContext.SalClient.PublishResultAsync(ex.ToDto(SalErrorCodes.InternalError), commandContext.Descriptor);
+                if (!await ProcessingError(ex))
+                    throw;
             }
         }
         
