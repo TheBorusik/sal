@@ -105,7 +105,7 @@ namespace SAL.Core.Client
                 handlerServiceName
             );
 
-            return result.ConvertValue<CommandResult<TCommandResult>>();
+            return new CommandResult<TCommandResult>(result);
         }
 
 
@@ -162,7 +162,7 @@ namespace SAL.Core.Client
             return PublishResultAsync(new CommonCommandResult
             {
                 Error = result.Error,
-                Result = JObject.FromObject(result.Result, SalSerializer.Create()),
+                Result = result.Result.Clone(),
                 ResultCode = result.ResultCode
             }, commandDescriptor);
         }
