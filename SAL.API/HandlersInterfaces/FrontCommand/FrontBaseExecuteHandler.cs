@@ -21,7 +21,7 @@ namespace SAL.API.FrontCommand
             this.backClient = backClient;
         }
 
-        protected abstract Task<TInternalCommand> Transform(TExternalCommand comand);
+        protected abstract Task<TInternalCommand> Transform(TExternalCommand command);
 
         protected virtual Task<CommandResult<TExternalCommandResult>> Transform(CommandResult<TInternalCommandResult> result)
         {
