@@ -1,43 +1,58 @@
 ﻿using System;
+using System.ComponentModel.Design;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 using SAL.Infrastructure;
 
 namespace SAL.API.FrontCommand
 {
-    public abstract class FrontBaseExecuteHandler<TCommand, TCommandResult> : IFrontCommandHandlerAsync<TCommand, TCommandResult>
-        where TCommand : class, IHaveResult<TCommandResult>, new()
-        where TCommandResult : class, ICommandResult, new()
+    public abstract class FrontBaseExecuteHandler<TExternalCommand, TExternalCommandResult, TInternalCommand, TInternalCommandResult> : IFrontCommandHandlerAsync<TExternalCommand, TExternalCommandResult>
+        where TExternalCommand : class, IHaveResult<TExternalCommandResult>, new()
+        where TExternalCommandResult : class, ICommandResult, new()
+        where TInternalCommand : class, IHaveResult<TInternalCommandResult>, new()
+        where TInternalCommandResult : class, ICommandResult, new()
     {
-        public abstract Task Handle(TCommand command);
-        
+        protected readonly ISalClient backClient;
         protected CommandContext commandContext;
         protected ExecutingContext executingContext;
         
+        protected FrontBaseExecuteHandler(ISalClient backClient)
+        {
+            this.backClient = backClient;
+        }
+        
+        public abstract Task<TInternalCommand> Transform(TExternalCommand comand);
+        public abstract Task<CommandResult<TExternalCommandResult>> Transform(CommandResult<TInternalCommandResult> result);
+        
+        
+        public async Task Handle(TExternalCommand command)
+        {
+            try
+            {
+                var internalCommand = await Transform(command);
+
+                var internalResult = await backClient.ExecuteCommandAsync<TInternalCommand, TInternalCommandResult>(internalCommand, commandContext.Descriptor.Priority, commandContext.Descriptor.TTL);
+
+                var externalResult = await Transform(internalResult);
+
+                await executingContext.SalClient.PublishResultAsync(externalResult, commandContext.Descriptor);
+            }
+            catch (Exception ex)
+            {
+                executingContext.Logger.LogError(ex, $"Внутренняя ошибка");
+                await executingContext.SalClient.PublishResultAsync(ex.ToDto(SalErrorCodes.InternalError), commandContext.Descriptor);
+            }
+        }
+        
+
+
+
+
 
         public void SetContexts(CommandContext commandContext, ExecutingContext executingContext)
         {
             this.commandContext = commandContext;
             this.executingContext = executingContext;
-
-        }
-        
-        protected Task PublishResult(TCommandResult result)
-        {
-            return executingContext.SalClient.PublishResultAsync(result, commandContext.Descriptor);
-        }
-
-        protected Task PublishResult(InternalExceptionDTO error)
-        {
-            return executingContext.SalClient.PublishResultAsync(error, commandContext.Descriptor);
-        }
-
-        protected Task PublishError(
-            string code,
-            string message = null,
-            object properties = null,
-            Exception innerException = null)
-        {
-            return PublishResult(SalError.CreateDto(code, message, properties, innerException));
         }
     }
 }

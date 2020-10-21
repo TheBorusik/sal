@@ -161,9 +161,9 @@ namespace SAL.Core.Client
             SessionManager.IncOperationId();
             return PublishResultAsync(new CommonCommandResult
             {
-                Error = null,
-                Result = JObject.FromObject(result, SalSerializer.Create()),
-                ResultCode = ResultCodes.Success
+                Error = result.Error,
+                Result = JObject.FromObject(result.Result, SalSerializer.Create()),
+                ResultCode = result.ResultCode
             }, commandDescriptor);
         }
 
