@@ -14,5 +14,6 @@
         public const string NotImplemented = " NotImplemented";
         public const string NotHandledCommand = "NotHandledCommand";
         public const string NotHandledEvent = "NotHandledEvent";
+        public const string InternalError = "InternalError";
     }
 }
