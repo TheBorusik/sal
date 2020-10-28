@@ -283,6 +283,14 @@ namespace SAL.API
             }
         }
 
+        public static T Clone<T>(T obj) where T : class, new()
+        {
+            if (obj == null)
+                return null;
+
+            return JObject.FromObject(obj).ConvertValue<T>();
+        }
+
         public static T GetSafeValue<T>(this object obj, string propertyName, T safeValue)
         {
             try
