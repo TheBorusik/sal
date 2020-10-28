@@ -290,6 +290,14 @@ namespace SAL.API
 
             return JObject.FromObject(obj).ConvertValue<T>();
         }
+        
+        public static T Convert<T>(object obj) where T : class, new()
+        {
+            if (obj == null)
+                return null;
+
+            return JObject.FromObject(obj).ConvertValue<T>();
+        }
 
         public static T GetSafeValue<T>(this object obj, string propertyName, T safeValue)
         {
