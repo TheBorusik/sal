@@ -283,7 +283,7 @@ namespace SAL.API
             }
         }
 
-        public static T Clone<T>(T obj) where T : class, new()
+        public static T Clone<T>(this T obj) where T : class, new()
         {
             if (obj == null)
                 return null;
@@ -291,7 +291,7 @@ namespace SAL.API
             return JObject.FromObject(obj).ConvertValue<T>();
         }
         
-        public static T Convert<T>(object obj) where T : class, new()
+        public static T Convert<T>(this object obj) where T : class, new()
         {
             if (obj == null)
                 return null;
