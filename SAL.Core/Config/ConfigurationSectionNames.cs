@@ -19,5 +19,8 @@
         public const string FrontCommandResultProcessor = "FrontCommandResultProcessor";
         public const string FrontEventProcessor = "FrontEventProcessor";
 
+        public const string CommandTestData = "CommandTestData";
+        public const string EventTestData = "EventTestData";
+
     }
 }

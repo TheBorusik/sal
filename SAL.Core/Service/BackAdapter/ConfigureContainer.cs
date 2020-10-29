@@ -6,7 +6,7 @@ using SAL.Core.Processors;
 using SAL.Core.Processors.System;
 using SAL.Core.Rabbit;
 using SAL.Core.Rabbit.Interfaces;
-using SAL.Core.SystemEventHandlers;
+using SAL.Core.SystemHandlers;
 using SAL.Core.Validators;
 using SAL.Core.WatchDog;
 
@@ -61,6 +61,9 @@ namespace SAL.Core.Service
             builder.RegisterType<BackTransportMonitor>()
                 .As<IWatchDogMonitor>()
                 .SingleInstance();
+
+            builder.RegisterSalHandler<GetCommandTestCasesHandler>();
+            builder.RegisterSalHandler<AddCommandTestCaseHandler>();
 
 
             AdapterConfigureContainer(builder);

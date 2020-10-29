@@ -3,7 +3,7 @@ using SAL.API;
 using SAL.API.Events;
 using SAL.Core.Service;
 
-namespace SAL.Core.SystemEventHandlers
+namespace SAL.Core.SystemHandlers
 {
     class SystemWIWHandler : IEventHandler<WhoIsWhoEvent>
     {

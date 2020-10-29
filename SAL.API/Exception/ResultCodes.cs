@@ -16,6 +16,7 @@
         public const string NotHandledEvent = "NotHandledEvent";
         public const string InternalError = "InternalError";
         public const string UnknownResultCode = "UnknownResultCode";
-        
+        public const string NotFound = "NotFound";
+
     }
 }

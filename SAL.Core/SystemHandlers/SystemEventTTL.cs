@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace SAL.Core.SystemEventHandlers
+namespace SAL.Core.SystemHandlers
 {
     public static class SystemEventTimes
     {

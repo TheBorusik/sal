@@ -10,6 +10,7 @@ using SAL.API.Command;
 using SAL.API.CommandResult;
 using SAL.API.Events;
 using SAL.API.FrontCommand;
+using SAL.API.SystemCommand;
 using SAL.Infrastructure;
 using SAL.Infrastructure.FrontAttributes;
 
@@ -211,11 +212,37 @@ namespace SAL.Test
         public void Start()
         {
             logger.LogInformation("Тестовое сообщение", new {MercId = 10});
+
         }
 
 
         public void Online()
         {
+
+            /*
+            var a = client.ExecuteCommandAsync<GetCommandTestCasesCommand, GetCommandTestCasesResult>
+                (new GetCommandTestCasesCommand
+                {
+                    CommandName = "SalTest.Test"
+                }, CommandPriority.Normal, TimeSpan.FromMinutes(2), 
+                  AdapterConfiguration.AdapterType, AdapterConfiguration.AdapterName).Result;
+*/
+
+            var b = client.ExecuteCommandAsync<AddCommandTestCaseCommand, Nothing>(
+                new AddCommandTestCaseCommand
+                {
+                    CommandName = "SalTest.Test",
+                    TestCase = new TestCase
+                    {
+                        Name = "test 2",
+                        Description = "aaaaa",
+                        Case = JObject.FromObject(new {F1 = 1000, F2= "string"})
+                    }
+                },
+                CommandPriority.Normal, TimeSpan.FromMinutes(2),
+                AdapterConfiguration.AdapterType, AdapterConfiguration.AdapterName
+            ).Result;
+
             /*
             for (var i = 0; i < 10; i++)
             {
@@ -223,11 +250,11 @@ namespace SAL.Test
                     $"Test Message {i}",new { WfmProcessId = i + 300}));
             }
             */
-            
-         /*   for (var i = 0; i < 20; i++)
-            {
-                client.PublishCommandAsync(new TestCommand());
-            }*/
+
+            /*   for (var i = 0; i < 20; i++)
+               {
+                   client.PublishCommandAsync(new TestCommand());
+               }*/
         }
 
         public void Offline()

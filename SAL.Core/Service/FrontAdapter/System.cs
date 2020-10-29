@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Autofac;
 using SAL.API;
-using SAL.Core.SystemEventHandlers;
+using SAL.Core.SystemHandlers;
 
 namespace SAL.Core.Service
 {
