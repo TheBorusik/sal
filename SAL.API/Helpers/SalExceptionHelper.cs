@@ -30,7 +30,7 @@ namespace SAL.API
                 Properties = properties != null ? JObject.FromObject(properties) : new JObject(),
                 AdapterName = $"{AdapterConfiguration.AdapterType}.{AdapterConfiguration.AdapterName}",
                 Sid = SessionManager.Current.GetSID(),
-                StackTrace = Environment.StackTrace,
+                StackTrace = innerException != null ? Environment.StackTrace : null,
                 // CallTrace = HandlerContext.CallTrace,
                 HandlerName = $"{HandlerContext.Type}.{HandlerContext.Name}",
                 InnerException = innerException.ToDto(),
@@ -38,6 +38,9 @@ namespace SAL.API
 
             return dto;
         }
+        
+
+        
 
         //
         //
