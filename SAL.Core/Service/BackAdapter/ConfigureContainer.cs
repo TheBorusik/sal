@@ -64,6 +64,8 @@ namespace SAL.Core.Service
 
             builder.RegisterSalHandler<GetCommandTestCasesHandler>();
             builder.RegisterSalHandler<AddCommandTestCaseHandler>();
+            builder.RegisterSalHandler<GetAdapterConfigurationHandler>();
+            builder.RegisterSalHandler<UpdateAdapterConfigurationHandler>();
 
 
             AdapterConfigureContainer(builder);

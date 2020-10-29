@@ -168,20 +168,24 @@ namespace SAL.Core.Processors
                 logger.Info($"Для команды {commandName} добавлен обработчик {handlerType.Name}");
 
 
-                var dtos = new List<DtoInfo>();
-                dtos.AddRange(commandHandlerInfo.CommandType.GetDtoInfos());
-                dtos.AddRange(commandHandlerInfo.ResultType.GetDtoInfos());
 
-
-                salService.AddBackCommandHandler(new API.CommandHandlerInfo
+                if (!commandHandlerInfo.CommandName.StartsWith("System."))
                 {
-                    IsCommon = commandHandlerInfo.IsCommon,
-                    CommandName = commandHandlerInfo.CommandName,
-                    IsInstanceHandler = commandHandlerInfo.IsInstanceHandler,
-                    CommandDto = commandHandlerInfo.CommandType.Name,
-                    ResultDto = commandHandlerInfo.ResultType.Name,
-                    Dtos = dtos.ToArray()
-                });
+                    var dtos = new List<DtoInfo>();
+                    dtos.AddRange(commandHandlerInfo.CommandType.GetDtoInfos());
+                    dtos.AddRange(commandHandlerInfo.ResultType.GetDtoInfos());
+
+
+                    salService.AddBackCommandHandler(new API.CommandHandlerInfo
+                    {
+                        IsCommon = commandHandlerInfo.IsCommon,
+                        CommandName = commandHandlerInfo.CommandName,
+                        IsInstanceHandler = commandHandlerInfo.IsInstanceHandler,
+                        CommandDto = commandHandlerInfo.CommandType.Name,
+                        ResultDto = commandHandlerInfo.ResultType.Name,
+                        Dtos = dtos.ToArray()
+                    });
+                }
 
             }
         }

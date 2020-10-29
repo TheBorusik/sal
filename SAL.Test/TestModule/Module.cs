@@ -231,7 +231,7 @@ namespace SAL.Test
             var b = client.ExecuteCommandAsync<AddCommandTestCaseCommand, Nothing>(
                 new AddCommandTestCaseCommand
                 {
-                    CommandName = "SalTest.Test",
+                    CommandName = "SalTest.Test2",
                     TestCase = new TestCase
                     {
                         Name = "test 2",
