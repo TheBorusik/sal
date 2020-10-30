@@ -39,5 +39,7 @@ namespace SAL.API
         public DateTime? HandlerTimeStamp { get; set; }
         public TimeSpan? TTL { get; set; }
         public bool IsSync { get; set; }
+        
+        public string Contour { get; set; }
     }
 }

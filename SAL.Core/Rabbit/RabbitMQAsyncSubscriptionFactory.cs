@@ -37,11 +37,16 @@ namespace SAL.Core.Rabbit
                 ExchangeName = ExchangeNames.EventExchange,
                 RoutingKey = $"System#{AdapterConfiguration.AdapterType}#{AdapterConfiguration.AdapterName}"
             });
+            bindings.Add(new QueueBinding
+            {
+                ExchangeName = ExchangeNames.EventExchange,
+                RoutingKey = $"System#{AdapterConfiguration.AdapterType}"
+            });
 
             transport.AddQueue(new Queue
             {
                 Name = queueName,
-                AutoDelete = false,
+                AutoDelete = true,
                 MaxPriority = 0,
                 Exclusive = true,
                 HasDeadLetter = true,
@@ -76,6 +81,11 @@ namespace SAL.Core.Rabbit
                 ExchangeName = ExchangeNames.EventExchange,
                 RoutingKey = $"{AdapterConfiguration.AdapterType}#{AdapterConfiguration.AdapterName}"
             });
+            bindings.Add(new QueueBinding
+            {
+                ExchangeName = ExchangeNames.EventExchange,
+                RoutingKey = AdapterConfiguration.AdapterType
+            });
 
             transport.AddQueue(new Queue
             {
@@ -101,7 +111,6 @@ namespace SAL.Core.Rabbit
 
         public ISubscription CreateCommandResult(ushort globalPrefetchCount, ushort instancePrefetchCount, ushort typePrefetchCount, Func<RabbitMessage, Action, Action, Task> handler, string subscriptionName = "CommandResults")
         {
-
             var queueList = new List<QueueInfo>();
 
             var queueName = $"#{AdapterConfiguration.AdapterType}#{AdapterConfiguration.AdapterName}" + "#CommandResults";
@@ -114,11 +123,14 @@ namespace SAL.Core.Rabbit
                 HasDeadLetter = true,
                 Expire = null,
                 Durable = true,
-                Bindings = new[]{ new QueueBinding
+                Bindings = new[]
                 {
-                    ExchangeName = ExchangeNames.CommandResultExchange,
-                    RoutingKey = $"{AdapterConfiguration.AdapterType}#{AdapterConfiguration.AdapterName}",
-                }}
+                    new QueueBinding
+                    {
+                        ExchangeName = ExchangeNames.CommandResultExchange,
+                        RoutingKey = $"{AdapterConfiguration.AdapterType}#{AdapterConfiguration.AdapterName}",
+                    }
+                }
             });
             queueList.Add(new QueueInfo
             {
@@ -137,11 +149,14 @@ namespace SAL.Core.Rabbit
                 HasDeadLetter = true,
                 Expire = null,
                 Durable = true,
-                Bindings = new[]{ new QueueBinding
+                Bindings = new[]
                 {
-                    ExchangeName = ExchangeNames.CommandResultExchange,
-                    RoutingKey = $"{AdapterConfiguration.AdapterType}",
-                }}
+                    new QueueBinding
+                    {
+                        ExchangeName = ExchangeNames.CommandResultExchange,
+                        RoutingKey = $"{AdapterConfiguration.AdapterType}",
+                    }
+                }
             });
             queueList.Add(new QueueInfo
             {
@@ -166,11 +181,14 @@ namespace SAL.Core.Rabbit
                 HasDeadLetter = true,
                 Expire = null,
                 Durable = true,
-                Bindings = new[]{ new QueueBinding
+                Bindings = new[]
                 {
-                    ExchangeName = ExchangeNames.CommandResultExchange,
-                    RoutingKey = $"{AdapterConfiguration.AdapterType}#{AdapterConfiguration.AdapterName}#Sync",
-                }}
+                    new QueueBinding
+                    {
+                        ExchangeName = ExchangeNames.CommandResultExchange,
+                        RoutingKey = $"{AdapterConfiguration.AdapterType}#{AdapterConfiguration.AdapterName}#Sync",
+                    }
+                }
             });
             queueList.Add(new QueueInfo
             {
@@ -203,11 +221,14 @@ namespace SAL.Core.Rabbit
                     HasDeadLetter = true,
                     Expire = null,
                     Durable = true,
-                    Bindings = new[]{ new QueueBinding
+                    Bindings = new[]
                     {
-                        ExchangeName = ExchangeNames.CommandExchange,
-                        RoutingKey = c.CommandName,
-                    }}
+                        new QueueBinding
+                        {
+                            ExchangeName = ExchangeNames.CommandExchange,
+                            RoutingKey = c.CommandName,
+                        }
+                    }
                 });
             });
 
@@ -222,11 +243,14 @@ namespace SAL.Core.Rabbit
                 HasDeadLetter = true,
                 Expire = null,
                 Durable = true,
-                Bindings = new[]{ new QueueBinding
+                Bindings = new[]
                 {
-                    ExchangeName = ExchangeNames.CommandExchange,
-                    RoutingKey = $"{AdapterConfiguration.AdapterType}#{AdapterConfiguration.AdapterName}",
-                }}
+                    new QueueBinding
+                    {
+                        ExchangeName = ExchangeNames.CommandExchange,
+                        RoutingKey = $"{AdapterConfiguration.AdapterType}#{AdapterConfiguration.AdapterName}",
+                    }
+                }
             });
 
             queueList.Add(new QueueInfo
@@ -234,7 +258,6 @@ namespace SAL.Core.Rabbit
                 QueueName = queueName,
                 PrefetchCount = mainPrefetchCount
             });
-
 
 
             queueName = $"#{AdapterConfiguration.AdapterType}" + "#Commands";
@@ -247,11 +270,14 @@ namespace SAL.Core.Rabbit
                 HasDeadLetter = true,
                 Expire = null,
                 Durable = true,
-                Bindings = new[]{ new QueueBinding
+                Bindings = new[]
                 {
-                    ExchangeName = ExchangeNames.CommandExchange,
-                    RoutingKey = $"{AdapterConfiguration.AdapterType}",
-                }}
+                    new QueueBinding
+                    {
+                        ExchangeName = ExchangeNames.CommandExchange,
+                        RoutingKey = $"{AdapterConfiguration.AdapterType}",
+                    }
+                }
             });
             queueList.Add(new QueueInfo
             {
@@ -260,14 +286,12 @@ namespace SAL.Core.Rabbit
             });
 
 
-
             return new MultiConsumerSubscription(transport, subscriptionName, globalPrefetchCount, queueList.ToArray(), handler);
         }
 
         public ISubscription CreateCustom(ushort globalPrefetchCount, QueueInfo[] queues, Func<RabbitMessageEx, Action, Action, Task> handler, string subscriptionName = "Custom")
         {
             return new MultiConsumerSubscriptionEx(transport, subscriptionName, globalPrefetchCount, queues, handler);
-
         }
 
 
@@ -295,7 +319,7 @@ namespace SAL.Core.Rabbit
                 channel.QueueBind(queueName, ExchangeNames.EventExchange, eventName, null);
                 return true;
             }
-            catch// (Exception e)
+            catch // (Exception e)
             {
                 return false;
             }
@@ -304,7 +328,6 @@ namespace SAL.Core.Rabbit
 
         public void Dispose()
         {
-
         }
     }
 

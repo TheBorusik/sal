@@ -173,14 +173,18 @@ namespace SAL.Core.Client
             if (evnt == null)
                 return Task.CompletedTask;
             SessionManager.IncOperationId();
+            
             return PublishEventAsync(
                 evnt.GetType().GetRouteKey(),
                 evnt,
                 ttl,
+                evnt.GetType().IsSystemEvent(),
                 handlerServiceType,
                 handlerServiceName
             );
         }
+
+
 
         public Task RaiseExceptionDetectEvent(string cid, InternalExceptionDTO exceptionDTO)
         {
@@ -257,7 +261,8 @@ namespace SAL.Core.Client
                 ResultAdapterName = resultAdapterName,
                 PublishTimeStamp = DateTime.UtcNow,
                 TTL = ttl,
-                IsSync = false
+                IsSync = false,
+                Contour = ContourName
             };
             
             return PublishCommandAsync(commandDescriptor, JObject.FromObject(commandBody, SalSerializer.Create()));
@@ -299,7 +304,8 @@ namespace SAL.Core.Client
                 ResultAdapterName = AdapterConfiguration.AdapterName,
                 PublishTimeStamp = DateTime.UtcNow,
                 TTL = ttl,
-                IsSync = true
+                IsSync = true,
+                Contour = ContourName
             };
 
             var commandPayload = new CommandPayload
@@ -337,8 +343,10 @@ namespace SAL.Core.Client
         public Task PublishCommandAsync(CommandDescriptor commandDescriptor, JObject commandBody)
         {
             var routingKey = "";
-            if (string.IsNullOrWhiteSpace(commandDescriptor.DestinationAdapterType) && string.IsNullOrWhiteSpace(commandDescriptor.DestinationAdapterName))
+            if (string.IsNullOrWhiteSpace(commandDescriptor.DestinationAdapterType))
                 routingKey = commandDescriptor.CommandName;
+            else if(string.IsNullOrWhiteSpace(commandDescriptor.DestinationAdapterName))
+                routingKey = commandDescriptor.DestinationAdapterType;
             else
                 routingKey = $"{commandDescriptor.DestinationAdapterType}#{commandDescriptor.DestinationAdapterName}";
             
@@ -371,6 +379,7 @@ namespace SAL.Core.Client
             
             commandResultDescriptor.HandlerAdapterType = AdapterConfiguration.AdapterType;
             commandResultDescriptor.HandlerAdatpterName = AdapterConfiguration.AdapterName;
+            commandResultDescriptor.Contour = ContourName;
 
             return PublishResultAsync(commandResultDescriptor, result);
         }
@@ -432,7 +441,7 @@ namespace SAL.Core.Client
             return Task.CompletedTask;
         }
         
-        public Task PublishEventAsync(string eventName, object eventBody, TimeSpan? ttl, string handlerServiceType, string handlerServiceName)
+        public Task PublishEventAsync(string eventName, object eventBody, TimeSpan? ttl, bool isSystem, string handlerServiceType, string handlerServiceName)
         {
             var correlationId = Guid.NewGuid().ToString("N");
 
@@ -445,7 +454,9 @@ namespace SAL.Core.Client
                 SourceAdapterType = AdapterConfiguration.AdapterType,
                 SourceAdapterName = AdapterConfiguration.AdapterName,
                 PublishTimeStamp = DateTime.UtcNow,
-                TTL = ttl
+                TTL = ttl,
+                Contour = ContourName,
+                IsSystem = isSystem
             };
             
             return PublishEventAsync(eventDescriptor, JObject.FromObject(eventBody, SalSerializer.Create()));
@@ -461,13 +472,24 @@ namespace SAL.Core.Client
 
             salLogger.LogOutgoing(eventPayload);
 
-            var routingKey = string.Empty;
+            string routingKey;
 
-
-            if (!string.IsNullOrWhiteSpace(eventDescriptor.DestinationAdapterType) && !string.IsNullOrWhiteSpace(eventDescriptor.DestinationAdapterName))
-                routingKey = $"{eventDescriptor.DestinationAdapterType}#{eventDescriptor.DestinationAdapterName}";
-            else
+            
+            if (string.IsNullOrWhiteSpace(eventDescriptor.DestinationAdapterType))
                 routingKey = eventDescriptor.EventName;
+            else
+            {
+                routingKey = string.IsNullOrWhiteSpace(eventDescriptor.DestinationAdapterName) 
+                    ? eventDescriptor.DestinationAdapterType 
+                    : $"{eventDescriptor.DestinationAdapterType}#{eventDescriptor.DestinationAdapterName}";
+
+                if (eventDescriptor.IsSystem)
+                {
+                    routingKey = $"System#{routingKey}";
+                }
+            }
+            
+
             
             var transportMessage = new Message
             {

@@ -264,7 +264,7 @@ namespace SAL.Core.Config
                     }
                     
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
                     //
                 }
@@ -287,7 +287,7 @@ namespace SAL.Core.Config
                         files++;
                     }
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
                     //
                 }
@@ -310,7 +310,7 @@ namespace SAL.Core.Config
                         filename = fn;
                     }
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
                     //
                 }
@@ -336,7 +336,7 @@ namespace SAL.Core.Config
                         section.Parent?.Remove();
                     }
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
                     fileData = new JObject();
                 }

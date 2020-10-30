@@ -24,11 +24,13 @@ namespace SAL.API
         public string EventName { get; set; }
         public string DestinationAdapterType { get; set; }
         public string DestinationAdapterName { get; set; }
+        
+        public string Contour { get; set; }
 
+        public bool IsSystem { get; set; }
         public string SourceAdapterType { get; set; }
         public string SourceAdapterName { get; set; }
         public DateTime PublishTimeStamp { get; set; }
-
         public TimeSpan? TTL { get; set; }
     }
 }

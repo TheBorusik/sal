@@ -53,7 +53,7 @@ namespace SAL.Core.Rabbit.Subscription
                     {
                         headers.Add(kv.Key, Transform(kv.Value));
                     }
-                    catch(Exception ex)
+                    catch(Exception)
                     {
                         //
                     }

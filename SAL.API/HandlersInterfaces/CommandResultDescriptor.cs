@@ -9,7 +9,7 @@ namespace SAL.API
         public string HandlerAdatpterName { get; set; }
         public TimeSpan HandlerDuration { get; set; }
         public TimeSpan? ProcessingDuration { get; set; }
-
+        
 
         public CommandResultDescriptor(CommandResultDescriptor src) :base(src)
         {
@@ -38,6 +38,7 @@ namespace SAL.API
             HandlerTimeStamp = commandDescriptor.HandlerTimeStamp;
             TTL = commandDescriptor.TTL;
             IsSync = commandDescriptor.IsSync;
+            Contour = commandDescriptor.Contour;
         }
     }
 }
