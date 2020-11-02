@@ -18,7 +18,7 @@ namespace SAL.API
                 Formatting = Formatting.None,
                 ContractResolver = new DefaultContractResolver(),
                 NullValueHandling = NullValueHandling.Ignore,
-                DefaultValueHandling = DefaultValueHandling.Ignore,
+                DefaultValueHandling = DefaultValueHandling.Include,
                 DateFormatHandling = DateFormatHandling.IsoDateFormat,
                 TypeNameHandling = TypeNameHandling.None
             };
