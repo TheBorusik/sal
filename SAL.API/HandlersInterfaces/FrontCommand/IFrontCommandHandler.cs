@@ -11,7 +11,7 @@ namespace SAL.API.FrontCommand
         void SetContexts(CommandContext commandContext, ExecutingContext executingContext);
     }
     
-    public interface IFrontCommandHandlerAsync<in TCommand> : IFrontCommandHandler
+    public interface IFrontCommandHandlerAsync<in TCommand, TResult> : IFrontCommandHandler
     {
         Task Handle(TCommand command);
     }

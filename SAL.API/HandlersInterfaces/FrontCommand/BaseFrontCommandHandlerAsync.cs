@@ -9,7 +9,7 @@ using SAL.Infrastructure;
 namespace SAL.API.FrontCommand
 {
     public abstract class BaseFrontCommandHandlerAsync<TCommand, TCommandResult> : 
-        IFrontCommandHandlerAsync<TCommand>,
+        IFrontCommandHandlerAsync<TCommand,TCommandResult>,
         IValidator<TCommand>
     {
         protected CommandContext commandContext;

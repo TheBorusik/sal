@@ -14,8 +14,7 @@ using SAL.API.SystemCommand;
 using SAL.Infrastructure;
 using SAL.Infrastructure.FrontAttributes;
 
-[assembly: SalAdapterType("SalTest")]
-[assembly: SalServiceType("SalTest")]
+
 
 // ReSharper disable once CheckNamespace
 namespace SAL.Test
@@ -239,64 +238,5 @@ namespace SAL.Test
     }
 
 
-    [SalExternalMethod("Test.J1")]
-    [SalExternalUri("/api/v1/test/j1")]
-    [SalExternalUri("/api/v1/test/j")]
-    public class TestFrontHandler : IFrontCommandHandlerAsync<Test2Command>
-    {
-        private CommandContext commandContext;
-        private ExecutingContext executingContext;
 
-        public void SetContexts(CommandContext commandContext, ExecutingContext executingContext)
-        {
-            this.commandContext = commandContext;
-            this.executingContext = executingContext;
-        }
-
-        public async Task Handle(Test2Command command)
-        {
-            var str = SessionManager.Current.ToIndentedJson();
-            SessionManager.Current.AddOrUpdate("Test", "TestValue");
-            SessionManager.Current.AddOrUpdate("_temporary", "Temporary value");
-            SessionManager.Current.AddOrUpdate("AuthId", 234);
-            str = SessionManager.Current.ToIndentedJson();
-
-
-            //        await executingContext.SalClient.PublishEventAsync(new TestEvent());
-            await executingContext.SalClient.PublishResultAsync(new TestCommandResult
-            {
-                TestTimeSpan = TimeSpan.FromHours(1.5),
-                TestDate = DateTime.Now,
-                TestInt = 1234567,
-                TestStr = "Testtt.J1"
-            }, commandContext.Descriptor);
-        }
-    }
-
-    [SalExternalMethod("Test.J2")]
-    [SalExternalUri("/api/v1/test/j2")]
-    [SalExternalUri("/api/v1/test/j")]
-    public class TestFrontHandler2 : IFrontCommandHandlerAsync<Test2Command>
-    {
-        private CommandContext commandContext;
-        private ExecutingContext executingContext;
-
-        public void SetContexts(CommandContext commandContext, ExecutingContext executingContext)
-        {
-            this.commandContext = commandContext;
-            this.executingContext = executingContext;
-        }
-
-        public async Task Handle(Test2Command command)
-        {
-            //        await executingContext.SalClient.PublishEventAsync(new TestEvent());
-            await executingContext.SalClient.PublishResultAsync(new TestCommandResult
-            {
-                TestTimeSpan = TimeSpan.FromHours(1.5),
-                TestDate = DateTime.Now,
-                TestInt = 1234567,
-                TestStr = "Testtt.J2"
-            }, commandContext.Descriptor);
-        }
-    }
 }
