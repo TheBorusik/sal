@@ -92,6 +92,7 @@ namespace SAL.Core.Service
             Layout.Register<SalJsonLayout>("SalJsonLayout");
             LayoutRenderer.Register<SidLayoutRenderer>("sid");
             LayoutRenderer.Register<SalMessageLayoutRenderer>("message");
+            SalLayoutRenderRegistrar.Register(LayoutRenderer.Register);
             nLogFactory = new NLogFactoryAdapter(ConfigWatcher.GetSection(ConfigurationSectionNames.Nlog));
             logger = nLogFactory.GetLogger(nameof(FrontAdapter));
         }
