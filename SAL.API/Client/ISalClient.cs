@@ -36,6 +36,7 @@ namespace SAL.API
 
 
         Task PublishResultAsync(ICommandResult result, CommandDescriptor commandDescriptor);
+        Task PublishResultAsync(CommonCommandResult result, CommandDescriptor commandDescriptor);
 
         Task PublishResultAsync(object result, string code, CommandDescriptor commandDescriptor);
 

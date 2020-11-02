@@ -112,6 +112,7 @@ namespace SAL.Core.Client
         public Task PublishResultAsync(ICommandResult result, CommandDescriptor commandDescriptor)
         {
             SessionManager.IncOperationId();
+
             return PublishResultAsync(new CommonCommandResult
             {
                 Error = null,

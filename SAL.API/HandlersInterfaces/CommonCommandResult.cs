@@ -3,7 +3,7 @@ using SAL.Infrastructure;
 
 namespace SAL.API
 {
-    public class CommonCommandResult : ICommandResult
+    public class CommonCommandResult 
     {
         public JObject Result { get; set; }
         public InternalExceptionDTO Error { get; set; }
