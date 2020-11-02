@@ -6,9 +6,8 @@ using SAL.Infrastructure;
 
 namespace SAL.API.FrontCommand
 {
-    public abstract class FrontBaseExecuteHandler<TExternalCommand, TExternalCommandResult, TInternalCommand, TInternalCommandResult> : IFrontCommandHandlerAsync<TExternalCommand, TExternalCommandResult>
-        where TExternalCommand : class, IHaveResult<TExternalCommandResult>, new()
-        where TExternalCommandResult : class, ICommandResult, new()
+    public abstract class FrontBaseExecuteHandler<TExternalCommand, TExternalCommandResult, TInternalCommand, TInternalCommandResult> 
+        : IFrontCommandHandlerAsync<TExternalCommand>
         where TInternalCommand : class, IHaveResult<TInternalCommandResult>, new()
         where TInternalCommandResult : class, ICommandResult, new()
     {
@@ -23,9 +22,9 @@ namespace SAL.API.FrontCommand
 
         protected abstract Task<TInternalCommand> Transform(TExternalCommand command);
 
-        protected virtual Task<CommandResult<TExternalCommandResult>> Transform(CommandResult<TInternalCommandResult> result)
+        protected virtual Task<CommonCommandResult> Transform(CommandResult<TInternalCommandResult> result)
         {
-            return Task.FromResult(new CommandResult<TExternalCommandResult>(result.ToCommon()));
+            return Task.FromResult(result.ToCommon());
         }
 
         protected virtual async Task<bool> ProcessingError(Exception ex)

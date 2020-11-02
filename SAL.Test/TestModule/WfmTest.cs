@@ -1,8 +1,10 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
 using Autofac;
 using Microsoft.Extensions.Logging;
 using SAL.API;
 using SAL.API.Command;
+using SAL.API.SystemCommand;
 using SAL.Infrastructure;
 using SAL.Infrastructure.ValidationAttribute;
 
@@ -47,6 +49,8 @@ namespace SAL.Test
         {
 
             var backClient = scope.Resolve<ISalClient>();
+
+
             /*
             backClient.PublishCommandAsync(new StartProcessCommand
             {

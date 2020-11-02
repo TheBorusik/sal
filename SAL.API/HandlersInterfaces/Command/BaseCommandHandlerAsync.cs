@@ -7,7 +7,7 @@ using SAL.Infrastructure;
 
 namespace SAL.API.Command
 {
-    public abstract class BaseCommandHandlerAsync<TCommand, TCommandResult> : 
+    public abstract class BaseCommandHandlerAsync<TCommand, TCommandResult> :
         ICommandHandlerAsync<TCommand, TCommandResult>,
         IValidator<TCommand>
         where TCommand : class, IHaveResult<TCommandResult>, new()
@@ -36,7 +36,12 @@ namespace SAL.API.Command
             return salClient?.PublishResultAsync(result, commandContext.Descriptor);
         }
 
-        
+        public Task PublishResult(object result, string code)
+        {
+            return salClient?.PublishResultAsync(result, code, commandContext.Descriptor);
+        }
+
+
         public Task PublishResult(InternalExceptionDTO error)
         {
             return salClient?.PublishResultAsync(error, commandContext.Descriptor);

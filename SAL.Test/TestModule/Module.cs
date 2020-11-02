@@ -218,43 +218,15 @@ namespace SAL.Test
 
         public void Online()
         {
-
-            /*
-            var a = client.ExecuteCommandAsync<GetCommandTestCasesCommand, GetCommandTestCasesResult>
-                (new GetCommandTestCasesCommand
-                {
-                    CommandName = "SalTest.Test"
-                }, CommandPriority.Normal, TimeSpan.FromMinutes(2), 
-                  AdapterConfiguration.AdapterType, AdapterConfiguration.AdapterName).Result;
-*/
-
-            var b = client.ExecuteCommandAsync<AddCommandTestCaseCommand, Nothing>(
-                new AddCommandTestCaseCommand
-                {
-                    CommandName = "SalTest.Test2",
-                    TestCase = new TestCase
+            var res = client.ExecuteCommandAsync
+                <GetCommandTestCasesCommand, GetCommandTestCasesResult>(
+                    new GetCommandTestCasesCommand
                     {
-                        Name = "test 2",
-                        Description = "aaaaa",
-                        Case = JObject.FromObject(new {F1 = 1000, F2= "string"})
-                    }
-                },
-                CommandPriority.Normal, TimeSpan.FromMinutes(2),
-                AdapterConfiguration.AdapterType, AdapterConfiguration.AdapterName
-            ).Result;
+                        CommandName = "WFM.GetCompletedProcessDetail",
+                    }, CommandPriority.Normal, TimeSpan.FromSeconds(15), "WFMFront", "app10").Result;
 
-            /*
-            for (var i = 0; i < 10; i++)
-            {
-                client.RaiseExceptionDetectEvent(Guid.NewGuid().ToString("N"), SalError.CreateDto("TestCode", 
-                    $"Test Message {i}",new { WfmProcessId = i + 300}));
-            }
-            */
 
-            /*   for (var i = 0; i < 20; i++)
-               {
-                   client.PublishCommandAsync(new TestCommand());
-               }*/
+            
         }
 
         public void Offline()
@@ -270,7 +242,7 @@ namespace SAL.Test
     [SalExternalMethod("Test.J1")]
     [SalExternalUri("/api/v1/test/j1")]
     [SalExternalUri("/api/v1/test/j")]
-    public class TestFrontHandler : IFrontCommandHandlerAsync<Test2Command, TestCommandResult>
+    public class TestFrontHandler : IFrontCommandHandlerAsync<Test2Command>
     {
         private CommandContext commandContext;
         private ExecutingContext executingContext;
@@ -304,7 +276,7 @@ namespace SAL.Test
     [SalExternalMethod("Test.J2")]
     [SalExternalUri("/api/v1/test/j2")]
     [SalExternalUri("/api/v1/test/j")]
-    public class TestFrontHandler2 : IFrontCommandHandlerAsync<Test2Command, TestCommandResult>
+    public class TestFrontHandler2 : IFrontCommandHandlerAsync<Test2Command>
     {
         private CommandContext commandContext;
         private ExecutingContext executingContext;
