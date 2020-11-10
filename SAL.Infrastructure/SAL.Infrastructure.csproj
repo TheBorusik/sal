@@ -5,11 +5,11 @@
     <Company>
     </Company>
     <Product>SAL 3.0 Infrastructure</Product>
-    <Version>3.0.0-Beta.15</Version>
+    <Version>3.1.0</Version>
     <PackageTags>SAL3 Infrastructure</PackageTags>
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
     <PackageId>SAL3.Infrastructure</PackageId>
-    <AssemblyVersion>3.0.0.15</AssemblyVersion>
-    <FileVersion>3.0.0.15</FileVersion>
+    <AssemblyVersion>3.1.0.0</AssemblyVersion>
+    <FileVersion>3.1.0.0</FileVersion>
   </PropertyGroup>
 </Project>

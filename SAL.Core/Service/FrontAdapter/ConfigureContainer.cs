@@ -33,7 +33,8 @@ namespace SAL.Core.Service
             builder.RegisterType<FrontCommandResultProcessor>().AsProcessor()
                 .Named<ICommandResultProcessor>("front");
             builder.RegisterType<FrontEventProcessor>().AsProcessor();
-            builder.RegisterType<FrontEventProcessor>().AsProcessor();
+            
+            builder.RegisterType<FrontExternalHttpProcessor>().AsProcessor();
 
 
             builder.RegisterType<HeartbeatFrontProcessor>().AsProcessor();

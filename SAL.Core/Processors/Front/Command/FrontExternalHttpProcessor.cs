@@ -9,17 +9,14 @@ using Autofac.Core;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
 using SAL.API;
-using SAL.API.Command;
 using SAL.API.FrontCommand;
 using SAL.API.Monad;
 using SAL.Core.Config;
 using SAL.Core.DTO.Transport;
-using SAL.Core.Helpers;
 using SAL.Core.Rabbit;
 using SAL.Core.Rabbit.Interfaces;
 using SAL.Core.Service;
-using SAL.Core.Validators;
-using SAL.Infrastructure.FrontAttributes;
+
 
 namespace SAL.Core.Processors
 {
@@ -43,7 +40,7 @@ namespace SAL.Core.Processors
             this.container = container;
             this.loggerProvider = loggerProvider;
             this.salLogger = salLogger;
-            logger = loggerProvider.CreateLogger(nameof(FrontCommandProcessor));
+            logger = loggerProvider.CreateLogger(nameof(FrontExternalHttpProcessor));
             salClient = container.ResolveNamed<ISalClient>("front");
             salService = container.Resolve<ISalService>();
         }
