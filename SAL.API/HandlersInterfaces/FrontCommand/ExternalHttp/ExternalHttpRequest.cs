@@ -5,11 +5,14 @@ namespace SAL.API.FrontCommand
     public class ExternalHttpRequest
     {
         public string Path { get; set; }
-        public string QueryString { get; set; }
-        public JObject[] QueryData { get; set; }
         public string Method { get; set; }
         public string ContentType { get; set; }
         public JObject Headers { get; set; }
+        
+        public string QueryString { get; set; }
+        public JObject QueryData { get; set; }
+
+
 
 
         public bool HasFormData { get; set; } 
