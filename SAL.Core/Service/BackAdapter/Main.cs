@@ -63,6 +63,8 @@ namespace SAL.Core.Service
         }
 
 
+
+
         protected virtual void InitUnhandledExceptionHandler()
         {
             logger.Trace("Init Unhandled Exception Handler");

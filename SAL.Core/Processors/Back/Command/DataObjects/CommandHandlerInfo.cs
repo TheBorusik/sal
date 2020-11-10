@@ -35,6 +35,12 @@ namespace SAL.Core.Processors
 
         public CommandProcessingSettings CommandProcessingSettings;
     }
+    
+    internal class FrontExternalHttpHandlerInfo
+    {
+        public Type HandlerType;
+        public string ExternalPath;
+    }
 
     public class CommandProcessingSettings
     {
@@ -47,5 +53,11 @@ namespace SAL.Core.Processors
         public ushort GlobalPrefetchCount { get; set; }
         public ushort CommandPrefetchCount { get; set; }
         public Dictionary<string, CommandProcessingSettings> CommandProcessingSettings { get; set; }
+    }
+    
+    internal class ExternalHttpProcessorConfig
+    {
+        public ushort GlobalPrefetchCount { get; set; }
+        public Dictionary<string, CommandProcessingSettings> ExternalHttpSettings { get; set; }
     }
 }

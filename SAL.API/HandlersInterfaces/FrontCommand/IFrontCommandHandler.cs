@@ -15,6 +15,4 @@ namespace SAL.API.FrontCommand
     {
         Task Handle(TCommand command);
     }
-
-    
 }

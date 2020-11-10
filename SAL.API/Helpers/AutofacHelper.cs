@@ -64,6 +64,12 @@ namespace SAL.API
                 registration = registration.As<IFrontCommandHandler>();
                 anyHandler = true;
             }
+            
+            if (interfaces.Any(i => i.IsAssignableTo<IFrontExternalHttpMethod>()))
+            {
+                registration = registration.As<IFrontExternalHttpMethod>();
+                anyHandler = true;
+            }
 
             if (anyHandler == false)
                 throw new System.Exception($"{handlerType.Name} - Не реализует ни одного извесного обработчика");

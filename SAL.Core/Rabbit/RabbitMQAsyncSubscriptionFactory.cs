@@ -289,11 +289,42 @@ namespace SAL.Core.Rabbit
             return new MultiConsumerSubscription(transport, subscriptionName, globalPrefetchCount, queueList.ToArray(), handler);
         }
 
-        public ISubscription CreateCustom(ushort globalPrefetchCount, QueueInfo[] queues, Func<RabbitMessageEx, Action, Action, Task> handler, string subscriptionName = "Custom")
+        public ISubscription CreateExternalHttp(ushort globalPrefetchCount, ExternalHttpInfo[] queues, Func<RabbitMessageEx, Action, Action, Task> handler, string subscriptionName = "Custom")
         {
-            return new MultiConsumerSubscriptionEx(transport, subscriptionName, globalPrefetchCount, queues, handler);
+              var queueList = new List<QueueInfo>();
+              string queueName;
+              queues.ForEach(q =>
+            {
+                queueName = "Ext." + q.Path;
+                queueList.Add(new QueueInfo
+                {
+                    QueueName = queueName,
+                    PrefetchCount = q.PrefetchCount
+                });
+                transport.AddQueue(new Queue
+                {
+                    Name = queueName,
+                    AutoDelete = false,
+                    MaxPriority = 0,
+                    Exclusive = false,
+                    HasDeadLetter = true,
+                    Expire = null,
+                    Durable = true,
+                    Bindings = new[]
+                    {
+                        new QueueBinding
+                        {
+                            ExchangeName = ExchangeNames.CommandExchange,
+                            RoutingKey = q.Path,
+                        }
+                    }
+                });
+            });
+              
+            return new MultiConsumerSubscriptionEx(transport, subscriptionName, globalPrefetchCount, queueList.ToArray(), handler);
         }
 
+      
 
         public bool AddSystemEvent(string eventName)
         {
@@ -334,6 +365,12 @@ namespace SAL.Core.Rabbit
     public class CommandInfo
     {
         public string CommandName { get; set; }
+        public ushort PrefetchCount { get; set; }
+    }
+    
+    public class ExternalHttpInfo
+    {
+        public string Path { get; set; }
         public ushort PrefetchCount { get; set; }
     }
 }

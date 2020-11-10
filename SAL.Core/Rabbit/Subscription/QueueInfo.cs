@@ -4,5 +4,6 @@
     {
         public string QueueName { get; set; }
         public ushort PrefetchCount { get; set; }
+        
     }
 }

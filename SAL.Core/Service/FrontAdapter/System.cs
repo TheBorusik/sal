@@ -14,6 +14,7 @@ namespace SAL.Core.Service
         public List<FrontCommandHandlerInfo> frontCommands = new List<FrontCommandHandlerInfo>();
         public List<CommandResultHandlerInfo> frontCommandResults = new List<CommandResultHandlerInfo>();
         public List<EventHandlerInfo> frontEvents = new List<EventHandlerInfo>();
+        public List<string> externalHttp = new List<string>();
 
         protected override void InitSystem()
         {
@@ -49,6 +50,11 @@ namespace SAL.Core.Service
             frontCommands.Add(handlerInfo);
         }
 
+        public override void AddExternalHttpHandler(string path)
+        {
+            externalHttp.Add(path);
+        }
+
         public override void AddFrontCommandResultHandler(CommandResultHandlerInfo resultHandlerInfo)
         {
             frontCommandResults.Add(resultHandlerInfo);
@@ -72,7 +78,8 @@ namespace SAL.Core.Service
                         Name = AdapterConfiguration.AdapterName,
                         CommandHandlers = frontCommands.ToArray(),
                         CommandResultHandlers = frontCommandResults.ToArray(),
-                        EventHandlers = frontEvents.ToArray()
+                        EventHandlers = frontEvents.ToArray(),
+                        ExternalHttp = externalHttp.ToArray()
                     }, SystemEventTimes.BaseTTL);
             }
             catch (Exception ex)

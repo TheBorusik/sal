@@ -48,7 +48,10 @@ namespace SAL.Core.Service
         {
 
         }
+        public virtual void AddExternalHttpHandler(string path)
+        {
 
+        }
         public void AddBackCommandHandler(CommandHandlerInfo handlerInfo)
         {
             backCommands.Add(handlerInfo);

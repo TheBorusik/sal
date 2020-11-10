@@ -16,6 +16,7 @@
         public const string EventProcessor = "EventProcessor";
 
         public const string FrontCommandProcessor = "FrontCommandProcessor";
+        public const string FrontExternalHttpProcessor = "FrontExternalHttpProcessor";
         public const string FrontCommandResultProcessor = "FrontCommandResultProcessor";
         public const string FrontEventProcessor = "FrontEventProcessor";
 

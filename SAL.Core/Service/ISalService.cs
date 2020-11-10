@@ -9,6 +9,7 @@ namespace SAL.Core.Service
         void Stop();
 
         public void AddFrontCommandHandler(FrontCommandHandlerInfo handlerInfo);
+        public void AddExternalHttpHandler(string path);
         public void AddBackCommandHandler(CommandHandlerInfo handlerInfo);
         public void AddFrontCommandResultHandler(CommandResultHandlerInfo resultHandlerInfo);
         public void AddBackCommandResultHandler(CommandResultHandlerInfo resultHandlerInfo);

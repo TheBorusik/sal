@@ -20,11 +20,10 @@ using SAL.Core.Rabbit.Interfaces;
 using SAL.Core.Service;
 using SAL.Core.Validators;
 using SAL.Infrastructure.FrontAttributes;
-using SessionManager = SAL.API.SessionManager;
 
 namespace SAL.Core.Processors
 {
-    internal class FrontCommandProcessor : IProcessor
+    internal class FrontExternalHttpProcessor : IProcessor
     {
         private ILogger logger;
         private ILoggerProvider loggerProvider;
@@ -35,11 +34,11 @@ namespace SAL.Core.Processors
 
         private ISalClient salClient;
 
-        private readonly IDictionary<string, FrontCommandHandlerInfo> commandHandlers = new Dictionary<string, FrontCommandHandlerInfo>();
+        private readonly IDictionary<string, FrontExternalHttpHandlerInfo> handlers = new Dictionary<string, FrontExternalHttpHandlerInfo>();
 
         private ISubscription subscription;
 
-        public FrontCommandProcessor(ILifetimeScope container, ILoggerProvider loggerProvider, ISalLogger salLogger)
+        public FrontExternalHttpProcessor(ILifetimeScope container, ILoggerProvider loggerProvider, ISalLogger salLogger)
         {
             this.container = container;
             this.loggerProvider = loggerProvider;
@@ -49,7 +48,7 @@ namespace SAL.Core.Processors
             salService = container.Resolve<ISalService>();
         }
 
-        private CommandProcessorConfig commandProcessorConfig;
+        private ExternalHttpProcessorConfig processorConfig;
 
 
         public void Start()
@@ -57,17 +56,19 @@ namespace SAL.Core.Processors
             try
             {
                 container.ComponentRegistry.Registrations
-                    .Where(r => r.Services.OfType<TypedService>().Any(ts => ts.ServiceType == typeof(IFrontCommandHandler)))
+                    .Where(r => r.Services.OfType<TypedService>().Any(ts => ts.ServiceType == typeof(IFrontExternalHttpMethod)))
                     .Select(a => a.Activator.LimitType)
-                    .ForEach(RegisterCommandHandler);
-                
-                var processingCommand = commandHandlers.ToArray();
+                    .ForEach(RegisterHandler);
 
-                var baseJsonConfig = new CommandProcessorConfig
+                var processingPath = handlers.ToArray();
+                
+                if(!processingPath.Any())
+                    return;
+                
+                var baseJsonConfig = new ExternalHttpProcessorConfig
                 {
                     GlobalPrefetchCount = 1,
-                    CommandPrefetchCount = 1,
-                    CommandProcessingSettings = processingCommand.ToDictionary(kv => kv.Key, kv => new CommandProcessingSettings
+                    ExternalHttpSettings = processingPath.ToDictionary(kv => kv.Key, kv => new CommandProcessingSettings
                     {
                         PrefetchCount = 0
                     })
@@ -76,16 +77,16 @@ namespace SAL.Core.Processors
 
                 var configWatcher = container.Resolve<IConfigWatcher>();
 
-                var config = configWatcher.GetSection(ConfigurationSectionNames.FrontCommandProcessor);
+                var config = configWatcher.GetSection(ConfigurationSectionNames.FrontExternalHttpProcessor);
                 if (config != null)
                 {
                     baseJsonConfig.Merge(config, new JsonMergeSettings {MergeArrayHandling = MergeArrayHandling.Merge});
                 }
 
-                commandProcessorConfig = baseJsonConfig.ToObject<CommandProcessorConfig>();
+                processorConfig = baseJsonConfig.ToObject<ExternalHttpProcessorConfig>();
 
-                var configStr = commandProcessorConfig.ToIndentedJson();
-                File.WriteAllText(Path.Combine(AdapterConfiguration.ConfigPath, $"{ConfigurationSectionNames.FrontCommandProcessor}.txt"), configStr);
+                var configStr = processorConfig.ToIndentedJson();
+                File.WriteAllText(Path.Combine(AdapterConfiguration.ConfigPath, $"{ConfigurationSectionNames.FrontExternalHttpProcessor}.txt"), configStr);
 
                 logger.Info($"Command processing config \n{configStr}");
 
@@ -94,16 +95,15 @@ namespace SAL.Core.Processors
                 var subscriptionFactory = transport.CreateMessageSubscription();
 
 
-                subscription = subscriptionFactory.CreateCommand(
-                    commandProcessorConfig.GlobalPrefetchCount,
-                    commandProcessorConfig.CommandPrefetchCount,
-                    processingCommand.Select(k => new CommandInfo
+                subscription = subscriptionFactory.CreateExternalHttp(
+                    processorConfig.GlobalPrefetchCount,
+                    processingPath.Select(k => new ExternalHttpInfo
                     {
-                        CommandName = k.Key,
-                        PrefetchCount = commandProcessorConfig.CommandProcessingSettings[k.Key].PrefetchCount
+                        Path = k.Key,
+                        PrefetchCount = processorConfig.ExternalHttpSettings[k.Key].PrefetchCount
                     }).ToArray(),
                     Handler,
-                    "FrontCommand");
+                    "ExternalHttp");
             }
             catch (Exception ex)
             {
@@ -112,95 +112,43 @@ namespace SAL.Core.Processors
             }
         }
 
-        private void RegisterCommandHandler(Type handlerType)
+        private void RegisterHandler(Type handlerType)
         {
-            var genericValidator = typeof(IValidator<>);
+            var externalPathMethod = handlerType.GetCustomAttributes(typeof(SalExternalHttpPathAttribute))
+                .OfType<SalExternalHttpPathAttribute>().FirstOrDefault();
+            if (externalPathMethod == null)
+                throw new Exception($"Для обработчика {handlerType.Name} не заданн внешний адрес");
 
-            var handlerInterfaces = handlerType.GetInterfaces()
-                .Where(i => i.IsAssignableTo<IFrontCommandHandler>() && i.IsGenericType).ToArray();
-
-
-            if (handlerInterfaces.Length == 0)
-                return;
-
-            if (handlerInterfaces.Length > 1)
-                throw new Exception($"Для обработчика {handlerType.Name} заданно больше чем один обрабатываемый внешний метод");
+            if (handlers.ContainsKey(externalPathMethod.Uri))
+                throw new Exception($"Внешний адрес {externalPathMethod} уже имеет обработчик");
 
 
-            var externalServiceMethod = handlerType.GetCustomAttributes(typeof(SalExternalMethodAttribute))
-                .OfType<SalExternalMethodAttribute>().FirstOrDefault();
-
-            if (externalServiceMethod == null)
-                throw new Exception($"Для обработчика {handlerType.Name} не заданно имя внешнего метода.");
-
-
-            var externalUris = handlerType.GetCustomAttributes(typeof(SalExternalUriAttribute))
-                .OfType<SalExternalUriAttribute>().Select(a => a.Uri).ToArray();
-
-
-            foreach (var handlerInterface in handlerInterfaces)
+            var handlerInfo = new FrontExternalHttpHandlerInfo
             {
-                var commandType = handlerInterface.GetGenericArguments()[0];
-
-                var commandName = externalServiceMethod.ServiceMethod;
-
-                if (commandHandlers.ContainsKey(commandName))
-                    throw new Exception($"метод {commandName} уже имеет обработчик");
-
-
-                var commandHandlerInfo = new FrontCommandHandlerInfo
-                {
-                    CommandName = commandName,
-                    CommandType = commandType,
-                    ResultType = handlerInterface.GetGenericArguments()[1],
-
-                    HandlerType = handlerType,
-
-                    HandlerMethod = handlerInterface.GetMethod("Handle"),
-                    ValidationMethod = null,
-                };
-
-
-                var validator = genericValidator.MakeGenericType(commandType);
-
-                if (handlerType.GetInterfaces().Any(i => i == validator))
-                {
-                    commandHandlerInfo.ValidationMethod = validator.GetMethod("Validate");
-                }
-
-                commandHandlers.Add(commandName, commandHandlerInfo);
-                logger.Info($"Для команды {commandName} добавлен обработчик {handlerType.Name}");
-
-                var dtos = new List<DtoInfo>();
-                dtos.AddRange(commandHandlerInfo.CommandType.GetDtoInfos());
-                dtos.AddRange(commandHandlerInfo.ResultType.GetDtoInfos());
-
-                salService.AddFrontCommandHandler(new API.FrontCommandHandlerInfo
-                {
-                    CommandName = commandHandlerInfo.CommandName,
-                    CommandDto = commandHandlerInfo.CommandType.Name,
-                    ResultDto = commandHandlerInfo.ResultType.Name,
-                    Dtos = dtos.ToArray(),
-                    ExternalMethod = externalServiceMethod.ServiceMethod,
-                    ExternalUri = externalUris
-                });
-            }
+                HandlerType = handlerType,
+                ExternalPath = externalPathMethod.Uri.ToLower()
+            };
+            
+            handlers.Add(externalPathMethod.Uri, handlerInfo);
+            logger.Info($"Для внешнего адреса {externalPathMethod.Uri} добавлен обработчик {handlerType.Name}");
+            
+            salService.AddExternalHttpHandler(externalPathMethod.Uri);
         }
 
 
         public void Online()
         {
-            subscription.Start();
+            subscription?.Start();
         }
 
         public void Offline()
         {
-            subscription.Stop();
+            subscription?.Stop();
         }
 
         public void Stop()
         {
-            subscription.Stop();
+            subscription?.Stop();
         }
 
         private async Task Handler(RabbitMessage rabbitMessage, Action ack, Action nack)
@@ -218,7 +166,7 @@ namespace SAL.Core.Processors
             catch (SalException ex)
             {
                 nack();
-                logger.Error("При обработке результата команды произошла ошибка", ex);
+                logger.Error("При обработке произошла ошибка", ex);
                 await salClient.RaiseExceptionDetectEvent(rabbitMessage.CorrelationId, ex.ToDto());
             }
             catch (TargetInvocationException ex)
@@ -226,13 +174,13 @@ namespace SAL.Core.Processors
                 nack();
                 if (ex.InnerException is SalException sex)
                 {
-                    logger.Error("При обработке команды произошла ошибка", ex);
+                    logger.Error("При обработке произошла ошибка", ex);
                     await salClient.RaiseExceptionDetectEvent(rabbitMessage.CorrelationId, ex.ToDto());
                 }
                 else
                 {
                     var dto = SalError.CreateDto(SalErrorCodes.Fatal,
-                        "При обработке команды произошла ошибка"
+                        "При обработке произошла ошибка"
                         , innerException: ex.InnerException
                         , properties: new
                         {
@@ -247,7 +195,7 @@ namespace SAL.Core.Processors
             {
                 nack();
                 var dto = SalError.CreateDto(SalErrorCodes.Fatal,
-                    "При обработке команды произошла ошибка"
+                    "При обработке произошла ошибка"
                     , innerException: ex
                     , properties: new
                     {
@@ -318,14 +266,18 @@ namespace SAL.Core.Processors
             HandlerContext.Type = HandlerTypes.CommandHandler;
             HandlerContext.Name = commandPayload.Descriptor.CommandName;
 
-            if (commandHandlers.TryGetValue(commandPayload.Descriptor.CommandName, out var commandHandlerInfo))
+            
+            var externalHttpRequest = commandPayload.Payload.ConvertValue<ExternalHttpRequest>();
+            
+            if (handlers.TryGetValue(externalHttpRequest.Path.ToLower(), out var commandHandlerInfo))
             {
                 HandlerContext.Name = commandHandlerInfo.HandlerType.Name;
 
                 salLogger.LogHandler(commandPayload, HandlerContext.Name);
 
                 using var scope = container.BeginLifetimeScope();
-                var handler = (IFrontCommandHandler) scope.Resolve(commandHandlerInfo.HandlerType);
+                var handler = (IFrontExternalHttpMethod) scope.Resolve(commandHandlerInfo.HandlerType);
+
                 var executingContext = new ExecutingContext
                 {
                     Scope = scope,
@@ -339,36 +291,18 @@ namespace SAL.Core.Processors
                     Session = message.Session.DeepClone() as JObject,
                 };
 
-                handler.SetContexts(commandContext, executingContext);
 
 
-                var commandObject = commandPayload.Payload.ConvertValue(commandHandlerInfo.CommandType);
-                var validator = scope.Resolve<ObjectValidator>();
 
-                var validationErrors = await validator.ValidateData(commandObject,
-                    o => Validate(handler, commandHandlerInfo, o));
 
-                if (validationErrors.Any())
-                {
-                    await salClient.PublishResultAsync(validationErrors, commandPayload.Descriptor);
-                    return;
-                }
-
-                await (Task) commandHandlerInfo.HandlerMethod.Invoke(handler, new[] {commandObject});
+                await handler.Handle(externalHttpRequest, commandContext, executingContext);
+                
             }
             else
             {
-                throw SalError.CreateException(SalErrorCodes.Fatal, "Обработчик команды не найден");
+                throw SalError.CreateException(SalErrorCodes.Fatal, "Обработчик не найден");
             }
         }
-
-        private Task<IEnumerable<FieldError>> Validate(object handler, FrontCommandHandlerInfo handlerInfo, object validateObject)
-        {
-            if (handlerInfo.ValidationMethod == null)
-                return Task.FromResult(new List<FieldError>().AsEnumerable());
-
-            return (Task<IEnumerable<FieldError>>) handlerInfo.ValidationMethod.Invoke(handler, new[] {validateObject});
-        }
-
+        
     }
 }
