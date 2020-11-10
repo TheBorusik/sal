@@ -24,27 +24,22 @@ namespace SAL.Test
     {
         public void Configure(ContainerBuilder builder)
         {
-            builder.RegisterSalHandler<ResetCacheHandler>();
+            builder.RegisterSalHandler<TestEH>();
         }
     }
 
-    
-    public class ResetCacheCommand : IHaveResult<Nothing>
-    {
-        public string ProcessName { get; set; }
-        public string ProcessVersion { get; set; }
-    }
-    
-    [SalExternalMethod("Test.J2")]
-    public class ResetCacheHandler : BaseFrontCommandHandlerAsync<ResetCacheCommand, Nothing>
-    {
-        public ResetCacheHandler(ISalClient backClient) : base(backClient)
-        {
-        }
 
-        public override async Task Handle(ResetCacheCommand command)
+    [SalExternalHttpPath("/api/test")]
+    public class TestEH : FrontExternalHttpMethod
+    {
+        public override async Task Handle(ExternalHttpRequest request)
         {
-            await PublishSuccess(new Nothing());
+            await PublishResult(new ExternalHttpResponse
+            {
+                Body = new byte[0],
+                StatusCode = 400
+            });
         }
     }
+    
 }
