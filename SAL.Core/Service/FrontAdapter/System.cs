@@ -24,7 +24,8 @@ namespace SAL.Core.Service
 
         protected override void SendOnline()
         {
-            SendIm(frontClient.Contour).Wait();
+            SendIm(backClient.Contour);
+            SendIm(frontClient.Contour);
         }
 
         protected override void SendOffline()

@@ -16,6 +16,9 @@ namespace SAL.Test
         public void Configure(ContainerBuilder builder)
         {
             builder.RegisterSalHandler<TestEH>();
+            
+            builder.RegisterSalHandler<TestCommandHandler>();
+            builder.RegisterSalHandler<CommonCommandResultHandler>();
         }
     }
 
@@ -28,8 +31,7 @@ namespace SAL.Test
             await PublishResult(new ExternalHttpResponse
             {
                 Body = new byte[0],
-                StatusCode = 400,
-                RedirectLocation = "https://ya.ru"
+                StatusCode = 200,
             });
         }
     }
