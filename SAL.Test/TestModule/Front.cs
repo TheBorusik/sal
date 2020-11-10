@@ -1,18 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using Autofac;
-using Microsoft.Extensions.Logging;
-using Newtonsoft.Json.Linq;
 using SAL.API;
-using SAL.API.Command;
-using SAL.API.CommandResult;
-using SAL.API.Events;
 using SAL.API.FrontCommand;
-using SAL.API.SystemCommand;
 using SAL.Infrastructure;
-using SAL.Infrastructure.FrontAttributes;
+
 
 [assembly: SalAdapterType("SalTest")]
 [assembly: SalServiceType("SalTest")]
@@ -37,7 +28,8 @@ namespace SAL.Test
             await PublishResult(new ExternalHttpResponse
             {
                 Body = new byte[0],
-                StatusCode = 400
+                StatusCode = 400,
+                RedirectLocation = "https://ya.ru"
             });
         }
     }

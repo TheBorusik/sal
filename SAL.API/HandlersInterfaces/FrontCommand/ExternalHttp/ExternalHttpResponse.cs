@@ -8,5 +8,7 @@ namespace SAL.API.FrontCommand
         public byte[] Body { get; set; }
         public JObject Headers { get; set; }
         public string ContentType { get; set; }
+        public string RedirectLocation { get; set; }
+        public bool? RedirectPermanent { get; set; }
     }
 }

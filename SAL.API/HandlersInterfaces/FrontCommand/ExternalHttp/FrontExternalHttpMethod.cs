@@ -17,6 +17,7 @@ namespace SAL.API.FrontCommand
         {
             salClient = executingContext.SalClient ;
             logger = executingContext.Logger;
+            commandContext = context;
             await Handle(payload);
         }
         
