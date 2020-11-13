@@ -34,18 +34,14 @@ namespace SAL.Core.Service
             AdapterConfiguration.AdapterName = service.AdapterName;
 
             if (string.IsNullOrWhiteSpace(service.LogRoot))
-                service.LogRoot = "c:\\.Logs";
+                service.LogRoot = "/logs";
 
             AdapterConfiguration.LogRootPath = !Path.IsPathRooted(service.LogRoot)
                 ? Path.Combine(AdapterConfiguration.RootPath, service.LogRoot)
                 : service.LogRoot;
-
-            if (string.IsNullOrWhiteSpace(service.DataPath))
-                service.DataPath = "Dto";
-
-
+            
             if (string.IsNullOrWhiteSpace(service.DiskStorePath))
-                service.DiskStorePath = "Store";
+                service.DiskStorePath = "store";
 
             AdapterConfiguration.DiskStorePath = !Path.IsPathRooted(service.DiskStorePath)
                 ? Path.Combine(AdapterConfiguration.RootPath, service.DiskStorePath)

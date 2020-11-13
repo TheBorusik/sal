@@ -1,4 +1,6 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Text;
+using System.Threading.Tasks;
 using Autofac;
 using SAL.API;
 using SAL.API.FrontCommand;
@@ -23,14 +25,17 @@ namespace SAL.Test
     }
 
 
+
+    
     [SalExternalHttpPath("/api/test")]
     public class TestEH : FrontExternalHttpMethod
     {
+        static int index = 0;
         public override async Task Handle(ExternalHttpRequest request)
         {
             await PublishResult(new ExternalHttpResponse
             {
-                Body = new byte[0],
+                Body = Encoding.UTF8.GetBytes(new {test = 110, tests = ++index , dt = DateTime.UtcNow}.ToIndentedJson()),
                 StatusCode = 200,
             });
         }

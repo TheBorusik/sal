@@ -2,7 +2,7 @@
   "SystemLogging": {
     "Events": {
       "System.*": {
-        "Ignore": false
+        "Ignore": true
       },
       ".*": {
         "Ignore": false,

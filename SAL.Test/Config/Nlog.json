@@ -3,7 +3,7 @@
     "AutoReload": true,
     "ThrowExceptions": false,
     "InternalLogLevel": "Off",
-    "internalLogFile": "c:\\temp\\nlog-internal.log",
+    "internalLogFile": "/temp/nlog-internal.log",
 
     "Targets": {
       "@async": true,

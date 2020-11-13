@@ -24,7 +24,6 @@ namespace SAL.Core.NLogEx.Layout
         public string HandlerType { get; set; }
         public string HandlerName { get; set; }
         public string SessionId { get; set; }
-        public string OperationId { get; set; }
         public string Level { get; set; }
         public string Logger { get; set; }
         public string Message { get; set; }
