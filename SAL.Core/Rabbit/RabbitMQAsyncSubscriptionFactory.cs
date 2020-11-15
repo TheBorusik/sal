@@ -289,7 +289,7 @@ namespace SAL.Core.Rabbit
             return new MultiConsumerSubscription(transport, subscriptionName, globalPrefetchCount, queueList.ToArray(), handler);
         }
 
-        public ISubscription CreateExternalHttp(ushort globalPrefetchCount, ExternalHttpInfo[] queues, Func<RabbitMessageEx, Action, Action, Task> handler, string subscriptionName = "Custom")
+        public ISubscription CreateExternalHttp(ushort globalPrefetchCount, ExternalHttpInfo[] queues, Func<RabbitMessageEx, Action, Action, Task> handler, string subscriptionName = "ExternalHttp")
         {
               var queueList = new List<QueueInfo>();
               string queueName;
@@ -324,6 +324,10 @@ namespace SAL.Core.Rabbit
             return new MultiConsumerSubscriptionEx(transport, subscriptionName, globalPrefetchCount, queueList.ToArray(), handler);
         }
 
+        public ISubscription CreateCustom(ushort globalPrefetchCount, QueueInfo[] queues, Func<RabbitMessageEx, Action, Action, Task> handler, string subscriptionName = "Custom")
+        {
+            return new MultiConsumerSubscriptionEx(transport, subscriptionName, globalPrefetchCount, queues, handler);
+        }
       
 
         public bool AddSystemEvent(string eventName)

@@ -13,7 +13,7 @@ namespace SAL.Core.Rabbit.Interfaces
         ISubscription CreateSyncCommandResult(ushort syncPrefetchCount, Func<RabbitMessage, Action, Action, Task> handler, string subscriptionName = "SyncCommandResults");
         ISubscription CreateCommand(ushort globalPrefetchCount, ushort mainPrefetchCount, CommandInfo[] commands, Func<RabbitMessage, Action, Action, Task> handler, string subscriptionName = "Command");
         ISubscription CreateExternalHttp(ushort globalPrefetchCount, ExternalHttpInfo[] queues,  Func<RabbitMessageEx, Action, Action, Task> handler, string subscriptionName = "ExternalHttp");
-        
+        ISubscription CreateCustom(ushort globalPrefetchCount, QueueInfo[] queues, Func<RabbitMessageEx, Action, Action, Task> handler, string subscriptionName = "Custom");
         bool AddSystemEvent(string eventName);
         bool AddEvent(string eventName);
 
