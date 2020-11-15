@@ -26,6 +26,8 @@ namespace SAL.Core.Processors.System
                 {
                     Type = AdapterConfiguration.AdapterType,
                     Name = AdapterConfiguration.AdapterName,
+                    AdapterVersion = AdapterConfiguration.AdapterVersion,
+                    SalVersion = AdapterConfiguration.SalVersion,
                     Timestamp = DateTime.UtcNow
                 }, SystemEventTimes.BaseTTL);
             }
