@@ -6,7 +6,7 @@ namespace SAL.Core.Helpers
     {
         public static int CalculateVersion(this Version version)
         {
-            return version.Major * 100000 + version.Minor * 1000 + version.Build;
+            return version.Major * 10000 + version.Minor * 100 + version.Build;
         }
     }
 }

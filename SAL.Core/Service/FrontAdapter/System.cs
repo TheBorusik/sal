@@ -77,6 +77,8 @@ namespace SAL.Core.Service
                     {
                         Type = AdapterConfiguration.AdapterType,
                         Name = AdapterConfiguration.AdapterName,
+                        AdapterVersion = AdapterConfiguration.AdapterVersion,
+                        SalVersion = AdapterConfiguration.SalVersion,
                         CommandHandlers = frontCommands.ToArray(),
                         CommandResultHandlers = frontCommandResults.ToArray(),
                         EventHandlers = frontEvents.ToArray(),

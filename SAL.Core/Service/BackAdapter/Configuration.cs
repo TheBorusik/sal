@@ -40,7 +40,7 @@ namespace SAL.Core.Service
             {
                 var version = assembly.GetName().Version;
                 AdapterConfiguration.SalVersion = version.CalculateVersion();
-                AdapterConfiguration.Revision = version.Revision;
+                AdapterConfiguration.Revision = version.Build;
             }
             var configWatcher = new ConfigWatcher();
 
@@ -66,9 +66,14 @@ namespace SAL.Core.Service
                     .OfType<AssemblyFileVersionAttribute>().FirstOrDefault();
 
 
-                AdapterConfiguration.AdapterVersion = fileVersionAttribute?.Version ?? "unknown";
-
-
+                if (string.IsNullOrWhiteSpace(fileVersionAttribute?.Version))
+                {
+                    AdapterConfiguration.AdapterVersion = "unknown";
+                }
+                else
+                {
+                    AdapterConfiguration.AdapterVersion = Regex.Replace(fileVersionAttribute?.Version, @"(\d+.\d+.\d+).*", "$1");
+                }
             }
             else
             {

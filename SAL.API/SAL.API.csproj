@@ -8,8 +8,8 @@
     <PackageTags>SAL3 API</PackageTags>
     <PackageId>SAL3.API</PackageId>
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
-    <AssemblyVersion>3.0.0.15</AssemblyVersion>
-    <FileVersion>3.0.0.15</FileVersion>
+    <AssemblyVersion>3.0.1.0</AssemblyVersion>
+    <FileVersion>3.0.1.0</FileVersion>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Autofac" Version="4.8.1" />
