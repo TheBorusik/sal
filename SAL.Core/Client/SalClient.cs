@@ -444,8 +444,11 @@ namespace SAL.Core.Client
         
         public Task PublishEventAsync(string eventName, object eventBody, TimeSpan? ttl, bool isSystem, string handlerServiceType, string handlerServiceName)
         {
-            var correlationId = Guid.NewGuid().ToString("N");
-
+            return PublishEventAsync(eventName,eventBody ,Guid.NewGuid().ToString("N"),ttl,isSystem,handlerServiceType,handlerServiceName);
+        }
+        
+        public Task PublishEventAsync(string eventName, object eventBody, string correlationId ,TimeSpan? ttl, bool isSystem, string handlerServiceType, string handlerServiceName)
+        {
             var eventDescriptor = new EventDescriptor
             {
                 CorrelationId = correlationId,

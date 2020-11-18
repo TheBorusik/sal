@@ -39,6 +39,15 @@ namespace SAL.API
             string handlerServiceType,
             string handlerServiceName);
         
+        Task PublishEventAsync(
+            string eventName, 
+            object eventBody,
+            string correlationId,
+            TimeSpan? ttl,
+            bool isSystem,
+            string handlerServiceType,
+            string handlerServiceName);
+        
         Task PublishCommandAsync(CommandDescriptor commandDescriptor, JObject commandBody);
 
         Task PublishResultAsync(CommandResultDescriptor commandResultDescriptor, CommonCommandResult result);

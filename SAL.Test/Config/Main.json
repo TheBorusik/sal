@@ -2,7 +2,7 @@
   "Service": {
     "AdapterName": "SRAM",
     "DiskStorePath": null,
-    "DataPath": null
+    "LogRoot": null
   },
 
   "ConnectionManager": {

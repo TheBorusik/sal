@@ -2,9 +2,12 @@
 using System.Text;
 using System.Threading.Tasks;
 using Autofac;
+using Newtonsoft.Json.Linq;
 using SAL.API;
+using SAL.API.Events;
 using SAL.API.FrontCommand;
 using SAL.Infrastructure;
+using SAL.Infrastructure.EventAttributes;
 
 
 [assembly: SalAdapterType("SalTest")]
@@ -17,28 +20,66 @@ namespace SAL.Test
     {
         public void Configure(ContainerBuilder builder)
         {
-            builder.RegisterSalHandler<TestEH>();
-            
-            builder.RegisterSalHandler<TestCommandHandler>();
-            builder.RegisterSalHandler<CommonCommandResultHandler>();
+            builder.RegisterSalHandler<TestEventAdapter>();
+            builder.RegisterProcessor<TestFront>();
+
         }
     }
 
-
-
-    
-    [SalExternalHttpPath("/api/test")]
-    public class TestEH : FrontExternalHttpMethod
+    public class TestFront : IProcessor
     {
-        static int index = 0;
-        public override async Task Handle(ExternalHttpRequest request)
+        private ILifetimeScope scope;
+
+        public TestFront(ILifetimeScope scope)
         {
-            await PublishResult(new ExternalHttpResponse
+            this.scope = scope;
+        }
+
+        public void Start()
+        {
+
+        }
+
+        public void Online()
+        {
+            var client = scope.Resolve<ISalClient>();
+            client.PublishEventAsync(new TestBackEvent
             {
-                Body = Encoding.UTF8.GetBytes(new {test = 110, tests = ++index , dt = DateTime.UtcNow}.ToIndentedJson()),
-                StatusCode = 200,
+                Data = "testData"
             });
         }
+
+        public void Offline()
+        {
+
+        }
+
+        public void Stop()
+        {
+
+        }
+    }
+
+
+    [SalEventName("SRATest")]
+    public class TestBackEvent : IEvent
+    {
+        public string Data { get; set; }
     }
     
+    
+    [SalEventHandler("SRATest")]
+    public class TestEventAdapter : BaseAuthServerEventConvertor
+    {
+        public TestEventAdapter(ILifetimeScope scope) : base(scope)
+        {
+        }
+
+        protected override Task<NotifyEvent> Convert(EventDescriptor eventDescriptor, JObject evnt)
+        {
+            var result =  base.Convert(eventDescriptor, evnt).Result;
+
+            return Task.FromResult(result);
+        }
+    }
 }

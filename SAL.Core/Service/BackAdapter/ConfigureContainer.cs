@@ -2,6 +2,7 @@
 using SAL.API;
 using SAL.Core.Client;
 using SAL.Core.DB;
+using SAL.Core.DB.LocalStore;
 using SAL.Core.Processors;
 using SAL.Core.Processors.System;
 using SAL.Core.Rabbit;
@@ -66,6 +67,10 @@ namespace SAL.Core.Service
             builder.RegisterSalHandler<AddCommandTestCaseHandler>();
             builder.RegisterSalHandler<GetAdapterConfigurationHandler>();
             builder.RegisterSalHandler<UpdateAdapterConfigurationHandler>();
+
+            builder.RegisterType<LiteDbLocalStore>()
+                .As<ILocalStore>()
+                .SingleInstance();
 
 
             AdapterConfigureContainer(builder);
