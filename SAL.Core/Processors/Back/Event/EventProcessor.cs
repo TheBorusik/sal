@@ -17,7 +17,7 @@ using SAL.Core.Rabbit.Interfaces;
 using SAL.Core.Service;
 using SAL.Infrastructure.EventAttributes;
 
-// ReSharper disable once CheckNamespace
+
 namespace SAL.Core.Processors
 {
     internal class EventProcessor : IProcessor

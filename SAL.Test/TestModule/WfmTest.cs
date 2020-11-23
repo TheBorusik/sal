@@ -16,7 +16,9 @@ namespace SAL.Test
         public void Configure(ContainerBuilder builder)
         {
 
-            builder.RegisterSalHandler<ProcessResultCommandResultHandler>();
+            builder.RegisterSalHandler<WfmResultHandler1>();
+            builder.RegisterSalHandler<WfmResultHandler2>();
+            
             builder.RegisterSalHandler<WFMTestCommandHandler>();
             builder.RegisterProcessor<WfmTestProcessor>();
 
@@ -104,24 +106,23 @@ namespace SAL.Test
         }
     }
 
-    public class ProcessResultCommandResultHandler : ICommandHandlerAsync<ProcessResultCommandResult, Nothing>
+    [WfmResultHandlerName("test")]
+
+    public class WfmResultHandler1 : IWfmResultHandler
     {
-        private CommandContext commandContext;
-
-
-
-
-
-
-
-        public Task Handle(ProcessResultCommandResult command)
+        public Task Handle(CommonCommandResult processResult, WfmProcessInfo ProcessInfo)
         {
-             return Task.CompletedTask;
+            return Task.CompletedTask;
         }
+    }
+    
 
-        public void SetContexts(CommandContext commandContext, ExecutingContext executingContext)
+
+    public class WfmResultHandler2 : IWfmResultHandler
+    {
+        public Task Handle(CommonCommandResult processResult, WfmProcessInfo ProcessInfo)
         {
-            this.commandContext = commandContext;
+            return Task.CompletedTask;
         }
     }
 

@@ -70,6 +70,13 @@ namespace SAL.API
                 registration = registration.As<IFrontExternalHttpMethod>();
                 anyHandler = true;
             }
+            
+            if (interfaces.Any(i => i.IsAssignableTo<IWfmResultHandler>()))
+            {
+                registration = registration.As<IWfmResultHandler>();
+                anyHandler = true;
+            }
+            
 
             if (anyHandler == false)
                 throw new System.Exception($"{handlerType.Name} - Не реализует ни одного извесного обработчика");

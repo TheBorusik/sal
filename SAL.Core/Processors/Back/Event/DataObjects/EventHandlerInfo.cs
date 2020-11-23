@@ -13,12 +13,4 @@ namespace SAL.Core.Processors
         public bool IsCommon;
 
     }
-
-
-    internal class EventProcessorConfig
-    {
-        public ushort PrefetchCount { get; set; } = 25;
-        public ushort SystemPrefetchCount { get; set; } = 15;
-    }
-
 }

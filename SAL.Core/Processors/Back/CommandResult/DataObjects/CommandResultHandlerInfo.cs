@@ -1,7 +1,5 @@
 ﻿using System;
 using System.Reflection;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace SAL.Core.Processors
 {
@@ -18,30 +16,4 @@ namespace SAL.Core.Processors
         public MethodInfo HandlerMethod;
         public bool IsCommon;
     }
-
-    internal class CommandResultProcessorConfig
-    {
-        public ushort GlobalPrefetchCount { get; set; } = 25;
-        public ushort InstancePrefetchCount { get; set; } = 15;
-        public ushort TypePrefetchCount { get; set; } = 5;
-        public ushort SyncPrefetchCount { get; set; } = 5;
-
-    }
-
-
-
-
-    internal class SimpleCommandResultHandlerInfo
-    {
-        public string CommandCorrelationId;
-        public DateTime ExpireDate;
-        public TaskCompletionSource<SimpleCommandResult> CompletionSource;
-        public CancellationTokenSource CancellationTokenSource;
-
-        //   public Canselation
-
-    }
-
-
-
 }

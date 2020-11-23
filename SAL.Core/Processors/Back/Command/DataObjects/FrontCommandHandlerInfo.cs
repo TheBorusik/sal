@@ -3,7 +3,7 @@ using System.Reflection;
 
 namespace SAL.Core.Processors
 {
-    internal class CommandHandlerInfo
+    internal class FrontCommandHandlerInfo
     {
         public string CommandName;
         public Type CommandType;
@@ -14,16 +14,6 @@ namespace SAL.Core.Processors
         public MethodInfo HandlerMethod;
         public MethodInfo ValidationMethod;
 
-        public bool IsCommon;
-        public bool IsInstanceHandler;
-
         public CommandProcessingSettings CommandProcessingSettings;
-    }
-
-    internal class WfmResultHandlerInfo
-    {
-        public string HandlerName;
-        public Type HandlerType;
-        public MethodInfo HandlerMethod;
     }
 }
