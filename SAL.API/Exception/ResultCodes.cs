@@ -20,5 +20,7 @@ namespace SAL.API
         public const string UnknownResultCode = "UnknownResultCode";
         public const string NotFound = "NotFound";
         public const string Obsolete = "Obsolete";
+        public const string NotSuccess = "NotSuccess";
+        public const string NotError = "NotError";
     }
 }

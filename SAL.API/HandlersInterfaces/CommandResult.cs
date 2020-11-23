@@ -19,6 +19,8 @@ namespace SAL.API
         }
         public T GetResult<T>() => Result.ConvertValue<T>();
 
+        public JObject GetRawResult() => Result.Clone();
+
 
         public CommandResult()
         {
