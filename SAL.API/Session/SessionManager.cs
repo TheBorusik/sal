@@ -97,10 +97,18 @@ namespace SAL.API
             curSession.RemoveAll();
             session.ForEach(t =>
             {
-                if (t is JProperty p)
+                try
                 {
-                    curSession.Add(p.Name, p.Value.DeepClone());
+                    if (t is JProperty p)
+                    {
+                        curSession.AddOrUpdate(p.Name, p.Value.DeepClone());
+                    }
                 }
+                catch (Exception)
+                {
+                    //
+                }
+
             });
 
         }
@@ -118,8 +126,15 @@ namespace SAL.API
 
                 if (!checkKey(p.Name))
                     return;
-
-                curSession.Add(p.Name, p.Value.DeepClone());
+                
+                try
+                {
+                    curSession.AddOrUpdate(p.Name, p.Value.DeepClone());
+                }
+                catch (Exception)
+                {
+                    //
+                }
             });
 
         }
