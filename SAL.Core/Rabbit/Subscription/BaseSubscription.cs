@@ -44,7 +44,7 @@ namespace SAL.Core.Rabbit.Subscription
                 try
                 {
 
-                    logger?.Debug($"Принято сообщение consumerTag:{consumerTag}|CID:{args.BasicProperties.CorrelationId} из {busMessage.QueueName}");
+                    logger?.Trace($"Принято сообщение CID:{args.BasicProperties.CorrelationId} из {busMessage.QueueName} ex:{args.Exchange}");
                     await Handler(busMessage, 
                         () =>
                         {

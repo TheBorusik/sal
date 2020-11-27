@@ -137,6 +137,8 @@ namespace SAL.Core.Processors
             sb.Append($"| IS:{commandPayload.Descriptor.IsSync} ");
             if (commandPayload.Descriptor.TTL.HasValue)
                 sb.Append($"| TTL:{commandPayload.Descriptor.TTL} ");
+            if (string.IsNullOrWhiteSpace(commandPayload.Descriptor.DestinationAdapterType))
+                sb.Append($"| DST:{commandPayload.Descriptor.DestinationAdapterType}.{commandPayload.Descriptor.DestinationAdapterName}");
 
             if (loggerSettings.CropSize == 0)
             {

@@ -21,8 +21,4 @@ namespace SAL.API
             };
         }
     }
-
-
-
-
 }

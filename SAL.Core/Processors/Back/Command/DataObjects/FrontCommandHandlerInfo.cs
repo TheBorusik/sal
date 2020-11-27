@@ -14,6 +14,8 @@ namespace SAL.Core.Processors
         public MethodInfo HandlerMethod;
         public MethodInfo ValidationMethod;
 
+        public bool IsCommon;
+
         public CommandProcessingSettings CommandProcessingSettings;
     }
 }
