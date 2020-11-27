@@ -231,8 +231,8 @@ namespace SAL.Core.Processors
             salService.AddFrontCommandHandler(new API.FrontCommandHandlerInfo
             {
                 CommandName = commandHandlerInfo.CommandName,
-                CommandDto = "Object",
-                ResultDto = "Object",
+                CommandDto = null,
+                ResultDto = null,
                 Dtos = new DtoInfo[0],
                 ExternalMethod = externalServiceMethod.ServiceMethod,
                 ExternalUri = externalUris
