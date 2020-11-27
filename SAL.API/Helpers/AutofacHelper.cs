@@ -75,7 +75,7 @@ namespace SAL.API
 
             if (interfaces.Any(i => i.IsAssignableTo<IFrontCommonCommandHandlerAsync>()))
             {
-                registration = registration.As<IFrontCommandHandler>();
+                registration = registration.As<IFrontCommonCommandHandlerAsync>();
                 anyHandler = true;
             }
 
