@@ -18,7 +18,7 @@ namespace SAL.Test
 {
     public class Front : IModule
     {
-        public void Configure(ContainerBuilder builder)
+        public void Configure(ContainerBuilder builder, IConfigWatcher config)
         {
             builder.RegisterSalHandler<TestEventAdapter>();
             builder.RegisterProcessor<TestFront>();

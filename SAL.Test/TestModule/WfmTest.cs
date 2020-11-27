@@ -13,7 +13,7 @@ namespace SAL.Test
 {
     public class WfmTest : IModule
     {
-        public void Configure(ContainerBuilder builder)
+        public void Configure(ContainerBuilder builder, IConfigWatcher config)
         {
 
             builder.RegisterSalHandler<WfmResultHandler1>();

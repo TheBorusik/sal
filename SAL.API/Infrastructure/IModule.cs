@@ -4,6 +4,6 @@ namespace SAL.API
 {
     public interface IModule
     {
-        void Configure(ContainerBuilder builder);
+        void Configure(ContainerBuilder builder, IConfigWatcher config);
     }
 }

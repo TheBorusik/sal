@@ -11,16 +11,25 @@ namespace SAL.API
 {
     public static partial class AutofacHelper
     {
-        public static IRegistrationBuilder<T, ConcreteReflectionActivatorData, SingleRegistrationStyle> RegisterSalHandler<T>(this ContainerBuilder builder)
+        public static IRegistrationBuilder<object, ConcreteReflectionActivatorData, SingleRegistrationStyle> RegisterSalHandler<T>(this ContainerBuilder builder)
         {
             var handlerType = typeof(T);
+            var registration = builder.RegisterType(handlerType);
+            ConfigureRgistration(registration, handlerType);
+            return registration;
+        }
 
+        public static IRegistrationBuilder<object, ConcreteReflectionActivatorData, SingleRegistrationStyle> RegisterSalHandler(this ContainerBuilder builder, Type handlerType)
+        {
+            var registration = builder.RegisterType(handlerType);
+            ConfigureRgistration(registration, handlerType);
+            return registration;
+        }
 
-            bool anyHandler = false;
-            var registration = builder.RegisterType<T>();
-
+        private static void ConfigureRgistration(IRegistrationBuilder<object, ConcreteReflectionActivatorData, SingleRegistrationStyle> registration, Type handlerType)
+        {
             var interfaces = handlerType.GetInterfaces();
-
+            bool anyHandler = false;
             if (interfaces.Any(i => i.IsAssignableTo<ICommandHandler>()))
             {
                 registration = registration.As<ICommandHandler>();
@@ -57,35 +66,38 @@ namespace SAL.API
                 anyHandler = true;
             }
 
-            
 
             if (interfaces.Any(i => i.IsAssignableTo<IFrontCommandHandler>()))
             {
                 registration = registration.As<IFrontCommandHandler>();
                 anyHandler = true;
             }
-            
+
+            if (interfaces.Any(i => i.IsAssignableTo<IFrontCommonCommandHandlerAsync>()))
+            {
+                registration = registration.As<IFrontCommandHandler>();
+                anyHandler = true;
+            }
+
+
             if (interfaces.Any(i => i.IsAssignableTo<IFrontExternalHttpMethod>()))
             {
                 registration = registration.As<IFrontExternalHttpMethod>();
                 anyHandler = true;
             }
-            
+
             if (interfaces.Any(i => i.IsAssignableTo<IWfmResultHandler>()))
             {
                 registration = registration.As<IWfmResultHandler>();
                 anyHandler = true;
             }
-            
+
 
             if (anyHandler == false)
                 throw new System.Exception($"{handlerType.Name} - Не реализует ни одного извесного обработчика");
 
 
             registration = registration.AsSelf();
-
-
-            return registration;
         }
 
         public static IRegistrationBuilder<T, ConcreteReflectionActivatorData, SingleRegistrationStyle> RegisterProcessor<T>(this ContainerBuilder builder)

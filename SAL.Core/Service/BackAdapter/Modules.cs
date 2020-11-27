@@ -32,7 +32,7 @@ namespace SAL.Core.Service
             //    Log.Trace("ConfigureModules...");
             modules?.ForEach(m =>
             {
-                m.Configure(builder);
+                m.Configure(builder, ConfigWatcher);
                 //   Log.Trace($"{m.GetType().FullName}.Configure();");
             });
 
