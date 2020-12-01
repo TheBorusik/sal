@@ -26,9 +26,10 @@ build-master:
     script: 
         - dotnet nuget add source $NUGET_URL -n BroPay3
         - dotnet restore --packages ./nugets
-        - dotnet pack $salInfrProj --no-restore -c Release --output $nugetPubDir -p:Version="$masterVersion"
-        - dotnet pack $salApiProj --no-restore -c Release --output $nugetPubDir -p:Version="$masterVersion"
-        - dotnet pack $salCoreProj --no-restore -c Release --output $nugetPubDir -p:Version="$masterVersion"
+        - dotnet build -c Release --no-restore -p:Version="$prereleaseVersion"
+        - dotnet pack $salInfrProj --no-build -c Release --output $nugetPubDir -p:Version="$masterVersion"
+        - dotnet pack $salApiProj --no-build -c Release --output $nugetPubDir -p:Version="$masterVersion"
+        - dotnet pack $salCoreProj --no-build -c Release --output $nugetPubDir -p:Version="$masterVersion"
     artifacts:
         paths:
             - $nugetPubDir
@@ -48,7 +49,7 @@ build-debug:
         - echo $prereleaseVersion
         - dotnet nuget add source $NUGET_URL -n BroPay3
         - dotnet restore --packages ./nugets
-        - dotnet build -c Debug --no-restore -p:Version="prereleaseVersion"
+        - dotnet build -c Debug --no-restore -p:Version="$prereleaseVersion"
         - dotnet pack $salInfrProj --no-build -c Debug --output $nugetPubDir -p:IncludeSymbols=true -p:SymbolPackageFormat=snupkg -p:Version="$prereleaseVersion"
         - dotnet pack $salApiProj --no-build -c Debug --output $nugetPubDir -p:IncludeSymbols=true -p:SymbolPackageFormat=snupkg -p:Version="$prereleaseVersion"
         - dotnet pack $salCoreProj --no-build -c Debug --output $nugetPubDir -p:IncludeSymbols=true -p:SymbolPackageFormat=snupkg -p:Version="$prereleaseVersion"
