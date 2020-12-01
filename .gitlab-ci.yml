@@ -45,6 +45,7 @@ build-debug:
         paths:
             - ./nugets/
     script:
+        - echo $prereleaseVersion
         - dotnet nuget add source $NUGET_URL -n BroPay3
         - dotnet restore --packages ./nugets
         - dotnet pack $salInfrProj --no-restore -c Debug --output $nugetPubDir -p:IncludeSymbols=true -p:SymbolPackageFormat=snupkg -p:Version="prereleaseVersion"
