@@ -4,6 +4,7 @@ using Autofac;
 using Microsoft.Extensions.Logging;
 using SAL.API;
 using SAL.API.Command;
+using SAL.API.CommandResult;
 using SAL.API.SystemCommand;
 using SAL.Infrastructure;
 using SAL.Infrastructure.ValidationAttribute;
@@ -20,6 +21,9 @@ namespace SAL.Test
             builder.RegisterSalHandler<WfmResultHandler2>();
             
             builder.RegisterSalHandler<WFMTestCommandHandler>();
+            builder.RegisterSalHandler<WFMTestResulHandler>();
+
+            
             builder.RegisterProcessor<WfmTestProcessor>();
 
         }
@@ -135,6 +139,14 @@ namespace SAL.Test
 
         public async Task Handle(WFMTestCommand command)
         {
+            executingContext.Logger.Debug(SessionManager.Current.ToIndentedJson());
+            var operationList = SessionManager.Current.GetSafeValue<long[]>(SessionNames.OperationList, new long[0]);
+            if(operationList.Length < 5)
+                await executingContext.SalClient.ExecuteCommandAsync<WFMTestCommand, WFMTestCommandResult>(new WFMTestCommand
+                {
+                    TestString = "test"
+                });
+                
             await executingContext.SalClient.PublishResultAsync(new WFMTestCommandResult
             {
                 RetStr = command.TestString.ToUpper()
@@ -148,6 +160,23 @@ namespace SAL.Test
         }
     }
 
+
+    public class WFMTestResulHandler : ICommandResultHandlerAsync<WFMTestCommand, WFMTestCommandResult>
+    {
+        private ExecutingContext executingContext;
+        public async Task<bool> ResultHandle(CommandResult<WFMTestCommandResult> result)
+        {
+            executingContext.Logger.Trace(SessionManager.Current.ToIndentedJson());
+            
+            return true;
+        }
+
+        public void SetContexts(CommandResultContext commandContext, ExecutingContext executingContext)
+        {
+            this.executingContext = executingContext;
+        }
+    }
+    
     //dtos
 
     [SalServiceType("WFMTest")]
@@ -164,44 +193,6 @@ namespace SAL.Test
 
     }
 
-    [SalServiceType("WFM")]
-    [SalCommandName("Start")]
-    public class StartProcessCommand : IHaveResult<StartProcessCommandResult>
-    {
-        [Required]
-        public string ProcessName { get; set; }
-        public string Version { get; set; }
-        [Required]
-        public object InitialData { get; set; }
-
-        [Required]
-        public string ResultHandlerType { get; set; }
-        public string ResultHandlerName { get; set; }
-        public string ProcessCorrelationId { get; set; }
-
-
-        public int? Priority { get; set; }
-    }
-
-    public class StartProcessCommandResult : ICommandResult
-    {
-        public long ProcessId { get; set; }
-        public string ProcessName { get; set; }
-        public string Version { get; set; }
-        public int Priority { get; set; }
-
-    }
-
-    [SalServiceType("WFM")]
-    [SalCommandName("Result")]
-    public class ProcessResultCommandResult : IHaveResult<Nothing>
-    {
-        public string ProcessCorrelationId { get; set; }
-        public long ProcessId { get; set; }
-        public string ProcessName { get; set; }
-        public string Version { get; set; }
-
-        public CommonCommandResult ProcessResult { get; set; }
-    }
+  
 
 }
