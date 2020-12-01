@@ -47,9 +47,9 @@ build-debug:
     script:
         - dotnet nuget add source $NUGET_URL -n BroPay3
         - dotnet restore --packages ./nugets
-        - dotnet pack $salInfrProj --no-restore -c Debug --output $nugetPubDir -p:IncludeSymbols=true -p:SymbolPackageFormat=snupkg -p:Version="$masterVersion"
-        - dotnet pack $salApiProj --no-restore -c Debug --output $nugetPubDir -p:IncludeSymbols=true -p:SymbolPackageFormat=snupkg -p:Version="$masterVersion"
-        - dotnet pack $salCoreProj --no-restore -c Debug --output $nugetPubDir -p:IncludeSymbols=true -p:SymbolPackageFormat=snupkg -p:Version="$masterVersion"
+        - dotnet pack $salInfrProj --no-restore -c Debug --output $nugetPubDir -p:IncludeSymbols=true -p:SymbolPackageFormat=snupkg -p:Version="prereleaseVersion"
+        - dotnet pack $salApiProj --no-restore -c Debug --output $nugetPubDir -p:IncludeSymbols=true -p:SymbolPackageFormat=snupkg -p:Version="prereleaseVersion"
+        - dotnet pack $salCoreProj --no-restore -c Debug --output $nugetPubDir -p:IncludeSymbols=true -p:SymbolPackageFormat=snupkg -p:Version="prereleaseVersion"
     artifacts:
         paths:
             - $nugetPubDir
