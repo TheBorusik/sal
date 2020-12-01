@@ -48,7 +48,7 @@ build-debug:
         - echo $prereleaseVersion
         - dotnet nuget add source $NUGET_URL -n BroPay3
         - dotnet restore --packages ./nugets
-        - dotnet build -c Debug --no-restore
+        - dotnet build -c Debug --no-restore -p:Version="prereleaseVersion"
         - dotnet pack $salInfrProj --no-build -c Debug --output $nugetPubDir -p:IncludeSymbols=true -p:SymbolPackageFormat=snupkg -p:Version="prereleaseVersion"
         - dotnet pack $salApiProj --no-build -c Debug --output $nugetPubDir -p:IncludeSymbols=true -p:SymbolPackageFormat=snupkg -p:Version="prereleaseVersion"
         - dotnet pack $salCoreProj --no-build -c Debug --output $nugetPubDir -p:IncludeSymbols=true -p:SymbolPackageFormat=snupkg -p:Version="prereleaseVersion"
