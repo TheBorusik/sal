@@ -28,7 +28,7 @@ build-master:
         - dotnet restore --packages ./nugets
         - dotnet pack $salInfrProj --no-restore -c Release --output $nugetPubDir -p:Version="$masterVersion"
         - dotnet pack $salApiProj --no-restore -c Release --output $nugetPubDir -p:Version="$masterVersion"
-        - dotnet pack salCoreProj --no-restore -c Release --output $nugetPubDir -p:Version="$masterVersion"
+        - dotnet pack $salCoreProj --no-restore -c Release --output $nugetPubDir -p:Version="$masterVersion"
     artifacts:
         paths:
             - $nugetPubDir
@@ -49,7 +49,7 @@ build-debug:
         - dotnet restore --packages ./nugets
         - dotnet pack $salInfrProj --no-restore -c Debug --output $nugetPubDir -p:IncludeSymbols=true -p:SymbolPackageFormat=snupkg -p:Version="$masterVersion"
         - dotnet pack $salApiProj --no-restore -c Debug --output $nugetPubDir -p:IncludeSymbols=true -p:SymbolPackageFormat=snupkg -p:Version="$masterVersion"
-        - dotnet pack salCoreProj --no-restore -c Debug --output $nugetPubDir -p:IncludeSymbols=true -p:SymbolPackageFormat=snupkg -p:Version="$masterVersion"
+        - dotnet pack $salCoreProj --no-restore -c Debug --output $nugetPubDir -p:IncludeSymbols=true -p:SymbolPackageFormat=snupkg -p:Version="$masterVersion"
     artifacts:
         paths:
             - $nugetPubDir
