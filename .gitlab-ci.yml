@@ -65,4 +65,4 @@ nuget-deploy:
           when: manual
         - when: on_success
     script:
-        - dotnet nuget push $nugetPubDir/*.nupkg --skip-duplicate -k $env:NUGET_KEY -s $env:NUGET_URL
+        - dotnet nuget push $nugetPubDir/*.nupkg --skip-duplicate -k $NUGET_KEY -s $NUGET_URL
