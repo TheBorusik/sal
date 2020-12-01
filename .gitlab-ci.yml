@@ -1,22 +1,68 @@
 stages:
     - build
     - deploy
+      
+variables:
+    masterVersion: '$MajorVersion.$MinorVersion.$CI_PIPELINE_ID'
+    prereleaseVersion: '$MajorVersion.$MinorVersion.$CI_PIPELINE_ID-$CI_COMMIT_BRANCH.$CI_BUILD_ID'
+    nugetPubDir: './pub/SAL'
+    salInfrProj: './SAL.Infrastructure/SAL.Infrastructure.csproj'
+    salApiProj: './SAL.API/SAL.API.csproj'
+    salCoreProj: './SAL.Core/SAL.Core.csproj'
 
-build:
+    
+
+build-master:
     stage: build
-    tags: [powershell, netCore]
+    image : mcr.microsoft.com/dotnet/sdk:5.0
+    tags: [docker]
+    only:
+        variables:
+            - $CI_COMMIT_REF_NAME == "master"
+    cache:
+        key: "NugetsCache"
+        paths:
+            - ./nugets/
     script: 
-        - .\build.ps1
+        - dotnet nuget add source $NUGET_URL -n BroPay3
+        - dotnet restore --packages ./nugets
+        - dotnet pack $salInfrProj --no-restore -c Release --output $nugetPubDir -p:Version="$masterVersion"
+        - dotnet pack $salApiProj --no-restore -c Release --output $nugetPubDir -p:Version="$masterVersion"
+        - dotnet pack salCoreProj --no-restore -c Release --output $nugetPubDir -p:Version="$masterVersion"
     artifacts:
         paths:
-            - nupkgs\
+            - $nugetPubDir
+              
+build-debug:
+    stage: build
+    image : mcr.microsoft.com/dotnet/sdk:5.0
+    tags: [docker]
+    only:
+        variables:
+            - $CI_COMMIT_REF_NAME != "master"
+    cache:
+        key: "NugetsCache"
+        paths:
+            - ./nugets/
+    script:
+        - dotnet nuget add source $NUGET_URL -n BroPay3
+        - dotnet restore --packages ./nugets
+        - dotnet pack $salInfrProj --no-restore -c Debug --output $nugetPubDir -p:IncludeSymbols=true -p:SymbolPackageFormat=snupkg -p:Version="$masterVersion"
+        - dotnet pack $salApiProj --no-restore -c Debug --output $nugetPubDir -p:IncludeSymbols=true -p:SymbolPackageFormat=snupkg -p:Version="$masterVersion"
+        - dotnet pack salCoreProj --no-restore -c Debug --output $nugetPubDir -p:IncludeSymbols=true -p:SymbolPackageFormat=snupkg -p:Version="$masterVersion"
+    artifacts:
+        paths:
+            - $nugetPubDir
 
 nuget-deploy:
     stage: deploy
-    tags: [powershell, netCore]
+    image : mcr.microsoft.com/dotnet/sdk:5.0
+    tags: [docker]
+    variables:
+        GIT_STRATEGY: none
     rules:
         - if: '$CI_COMMIT_BRANCH == "master"'
           when: manual
         - when: on_success
     script:
-        - dotnet nuget push nupkgs\*.nupkg --skip-duplicate -k $env:NUGET_KEY -s $env:NUGET_URL
+        - dotnet nuget push $nugetPubDir/*.nupkg --skip-duplicate -k $env:NUGET_KEY -s $env:NUGET_URL
