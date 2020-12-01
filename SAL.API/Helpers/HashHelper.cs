@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
+using Newtonsoft.Json.Linq;
 
 namespace SAL.API
 {
@@ -12,6 +13,10 @@ namespace SAL.API
         {
             var alg = HashAlgorithm.Create("MD5");
             return MakeHashFromString(alg, value, hexString);
+        }
+        public static string MD5(this JValue value, bool hexString = true)
+        {
+            return MD5(value.Value != null ? value.Value.ToString() : "", hexString);
         }
         public static string MD5(this object value, bool hexString = true)
         {
@@ -29,6 +34,10 @@ namespace SAL.API
             var alg = HashAlgorithm.Create("SHA1");
             return MakeHashFromObject(alg, value, hexString);
         }
+        public static string SHA1(this JValue value, bool hexString = true)
+        {
+            return SHA1(value.Value != null ? value.Value.ToString() : "", hexString);
+        }
         public static string SHA256(this string value, bool hexString = true)
         {
             var alg = HashAlgorithm.Create("SHA256");
@@ -39,6 +48,11 @@ namespace SAL.API
             var alg = HashAlgorithm.Create("SHA256");
             return MakeHashFromObject(alg, value, hexString);
         }
+        
+        public static string SHA256(this JValue value, bool hexString = true)
+        {
+            return SHA256(value.Value != null ? value.Value.ToString() : "", hexString);
+        }
         public static string SHA384(this string value, bool hexString = true)
         {
             var alg = HashAlgorithm.Create("SHA256");
@@ -48,6 +62,11 @@ namespace SAL.API
         {
             var alg = HashAlgorithm.Create("SHA256");
             return MakeHashFromObject(alg, value, hexString);
+        }
+        
+        public static string SHA384(this JValue value, bool hexString = true)
+        {
+            return SHA384(value.Value != null ? value.Value.ToString() : "", hexString);
         }
         public static string SHA512(this string value, bool hexString = true)
         {
@@ -60,9 +79,14 @@ namespace SAL.API
             return MakeHashFromObject(alg, value, hexString);
         }
         
-        private static string MakeHashFromObject(HashAlgorithm alg, object str, bool hexString)
+        public static string SHA512(this JValue value, bool hexString = true)
         {
-            return MakeHash(alg, SalSerializer.BinarySerialize(str), hexString);
+            return SHA512(value.Value != null ? value.Value.ToString() : "", hexString);
+        }
+        
+        private static string MakeHashFromObject(HashAlgorithm alg, object obj, bool hexString)
+        {
+            return MakeHash(alg, SalSerializer.BinarySerialize(obj), hexString);
         }
         private static string MakeHashFromString(HashAlgorithm alg, string str, bool hexString)
         {

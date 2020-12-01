@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 using System.Text.RegularExpressions;
+using Newtonsoft.Json.Linq;
 
 namespace SAL.API
 {
@@ -24,6 +25,11 @@ namespace SAL.API
 
             var parts = mnumber.SplitInParts(4);
             return string.Join(" ", parts);
+        }
+        
+        public static string MaskNumber(this JValue value)
+        {
+            return MaskNumber(value.Value != null ? value.Value.ToString() : "");
         }
 
         public static string Repeat(char ch, int length)
