@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
+    <TargetFramework>netcoreapp5.0</TargetFramework>
     <Authors>Kooklev P.A.</Authors>
     <Company>
     </Company>
@@ -11,5 +11,6 @@
     <PackageId>SAL3.Infrastructure</PackageId>
     <AssemblyVersion>3.1.0.0</AssemblyVersion>
     <FileVersion>3.1.0.0</FileVersion>
+    <LangVersion>9</LangVersion>
   </PropertyGroup>
 </Project>

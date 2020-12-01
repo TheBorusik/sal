@@ -3,6 +3,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using RabbitMQ.Client;
+using RabbitMQ.Client.Events;
 using SAL.Core.Config.Rabbit;
 using SAL.Core.Exceptions.Rabbit;
 using SAL.Core.Rabbit.EventArgs;
@@ -15,6 +16,7 @@ namespace SAL.Core.Rabbit
         private IConnection connection;
         private CancellationTokenSource tokenSource;
         private Task connectionTask = Task.CompletedTask;
+        private Task waitingTask = Task.CompletedTask;
 
         public event EventHandler<ConnectionFailureEventArgs> ConnectionFailure;
         public event EventHandler<ConnectionRestoreEventArgs> ConnectionRestore;
@@ -37,13 +39,14 @@ namespace SAL.Core.Rabbit
 
             config = rabbitConfig;
             this.logger = loggerProvider.CreateLogger("RMQ.CM");
+            
+            tokenSource = new CancellationTokenSource();
 
             factory = new ConnectionFactory
             {
                 UserName = config.Username,
                 Password = config.Password,
                 VirtualHost = config.VirtualHost,
-                Protocol = Protocols.DefaultProtocol,
                 HostName = config.Host,
                 Port = config.Port,
                 AutomaticRecoveryEnabled = true,
@@ -79,7 +82,7 @@ namespace SAL.Core.Rabbit
             if (connection != null)
                 return;
 
-            tokenSource = new CancellationTokenSource();
+
 
             if (connectionTask.Status == TaskStatus.RanToCompletion)
             {
@@ -95,7 +98,6 @@ namespace SAL.Core.Rabbit
 
                             connection = factory.CreateConnection();
                             connection.ConnectionShutdown += OnConnectionShutdown;
-                            connection.RecoverySucceeded += ConnectionOnRecoverySucceeded;
                             OnConnectionRestore(new ConnectionRestoreEventArgs());
                             break;
                         }
@@ -118,6 +120,19 @@ namespace SAL.Core.Rabbit
             }
         }
 
+/*
+        private void ConnectionOnConnectionBlocked(object? sender, ConnectionBlockedEventArgs e)
+        {
+            logger.Info($"Cоединение с шиной {config.Host}/{config.VirtualHost} заблокорованно");
+            OnConnectionFailure(new ConnectionFailureEventArgs(e.ToString()));
+        }
+
+        private void ConnectionOnConnectionUnblocked(object? sender, System.EventArgs e)
+        {
+            logger.Info($"Cоединение с шиной {config.Host}/{config.VirtualHost} разблокорованно");
+            OnConnectionRestore(new ConnectionRestoreEventArgs());
+        }
+
 
         private void ConnectionOnRecoverySucceeded(object sender, System.EventArgs e)
         {
@@ -126,12 +141,45 @@ namespace SAL.Core.Rabbit
 
         }
 
+*/
         private void OnConnectionShutdown(object sender, ShutdownEventArgs e)
         {
             if (e.Initiator == ShutdownInitiator.Application) return;
 
             logger.Info($"Cоединение с шиной {config.Host}/{config.VirtualHost} прерванно");
             OnConnectionFailure(new ConnectionFailureEventArgs(e.ToString()));
+            WaitConnectionRestored();
+        }
+
+        private void WaitConnectionRestored()
+        {
+            if (waitingTask.Status == TaskStatus.RanToCompletion)
+            {
+                waitingTask = Task.Run(async () =>
+                {
+                    while (true)
+                    {
+                        if (tokenSource.IsCancellationRequested)
+                            break;
+
+                        if (connection.IsOpen)
+                        {
+                            OnConnectionRestore(new ConnectionRestoreEventArgs());
+                            break;
+                        }
+
+                        try
+                        {
+                            await Task.Delay(1000, tokenSource.Token);
+                        }
+                        catch (OperationCanceledException)
+                        {
+                            break;
+                        }
+
+                    }
+                });
+            }
         }
 
         private void OnConnectionRestore(ConnectionRestoreEventArgs e)
