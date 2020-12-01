@@ -4,7 +4,7 @@ stages:
       
 variables:
     masterVersion: '$MajorVersion.$MinorVersion.$CI_PIPELINE_ID'
-    prereleaseVersion: '$MajorVersion.$MinorVersion.$CI_PIPELINE_ID-$CI_COMMIT_BRANCH.$CI_BUILD_ID'
+    prereleaseVersion: '$MajorVersion.$MinorVersion.$CI_PIPELINE_ID-$CI_COMMIT_BRANCH'
     nugetPubDir: './pub/SAL'
     salInfrProj: './SAL.Infrastructure/SAL.Infrastructure.csproj'
     salApiProj: './SAL.API/SAL.API.csproj'
