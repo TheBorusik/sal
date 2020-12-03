@@ -8,8 +8,6 @@
     <Product>SAL 3.0 Core</Product>
     <PackageTags>SAL3 Core</PackageTags>
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
-    <AssemblyVersion>3.0.1.0</AssemblyVersion>
-    <FileVersion>3.0.1.0</FileVersion>
     <LangVersion>9</LangVersion>
   </PropertyGroup>
   <ItemGroup>

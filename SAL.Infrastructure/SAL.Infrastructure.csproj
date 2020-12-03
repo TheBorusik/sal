@@ -9,8 +9,6 @@
     <PackageTags>SAL3 Infrastructure</PackageTags>
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
     <PackageId>SAL3.Infrastructure</PackageId>
-    <AssemblyVersion>3.1.0.0</AssemblyVersion>
-    <FileVersion>3.1.0.0</FileVersion>
     <LangVersion>9</LangVersion>
   </PropertyGroup>
 </Project>
