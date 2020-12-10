@@ -16,9 +16,8 @@ namespace SAL.Core.NLogEx.LayoutRenderer
             {
                 var sessionId = session.GetSafeValue(SessionNames.SessionId, "");
                 var operationId = session.GetSafeValue(SessionNames.OperationId, "");
-                var oList = session.GetSafeValue(SessionNames.OperationList, new long[0]);
 
-                builder.Append($"[SID:{sessionId}:{string.Join(":", oList)}:{operationId}]");
+                builder.Append($"[SID:{sessionId}:{operationId}]");
             }
         }
     }

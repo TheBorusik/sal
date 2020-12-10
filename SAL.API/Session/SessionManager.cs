@@ -54,10 +54,8 @@ namespace SAL.API
 
         public static void StartAdapterSession(JObject session)
         {
-            var operationList = session.GetSafeValue<long[]>(SessionNames.OperationList, new long[0]).ToList();
-            operationList.Add(session.GetSafeValue(SessionNames.OperationId, 0L));
-            session.AddOrUpdate(SessionNames.OperationList, operationList);
-            session.AddOrUpdate(SessionNames.OperationId, 1L);
+            var operation = session.GetSafeValue(SessionNames.OperationId, 0L);
+            session.AddOrUpdate(SessionNames.OperationId, ++operation);
             SetSession(session);
         }
 
@@ -72,20 +70,8 @@ namespace SAL.API
         {
             if (session == null)
                 return;
-
-            var operationList = session.GetSafeValue<long[]>(SessionNames.OperationList, new long[0]);
-
-            if (operationList.Any())
-            {
-                session.AddOrUpdate(SessionNames.OperationId, operationList.Last());
-                operationList = operationList.TakeAllButLast().ToArray();
-                session.AddOrUpdate(SessionNames.OperationList, operationList);
-            }
-
-
+            
             SetSession(session);
-
-
         }
 
         public static void UpdateCurrent(JObject session)
@@ -149,7 +135,7 @@ namespace SAL.API
                 return;
 
 
-            var notMergedProp = new string[] {SessionNames.OperationList, SessionNames.OperationId, SessionNames.SessionId, SessionNames.Version};
+            var notMergedProp = new string[] {SessionNames.OperationId, SessionNames.SessionId, SessionNames.Version};
 
 
             session.ForEach(t =>

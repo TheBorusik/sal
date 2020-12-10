@@ -4,7 +4,6 @@
     {
         public const string SessionId = "__sessionid";
         public const string OperationId = "__operationid";
-        public const string OperationList = "__operationlist";
         public const string Version = "__version";
         public const string WfmProcessId = "#WfmProcessId";
         public const string OrderId = "#OrderId";
