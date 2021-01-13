@@ -20,9 +20,9 @@ namespace SAL.Test
     {
         public void Configure(ContainerBuilder builder, IConfigWatcher config)
         {
-            builder.RegisterSalHandler<TestEventAdapter>();
-            builder.RegisterProcessor<TestFront>();
-
+            //   builder.RegisterSalHandler<TestEventAdapter>();
+            builder.RegisterSalHandler<TestExternal>();
+            //   builder.RegisterProcessor<TestFront>();
         }
     }
 
@@ -37,49 +37,49 @@ namespace SAL.Test
 
         public void Start()
         {
-
         }
 
         public void Online()
         {
-            var client = scope.Resolve<ISalClient>();
-            client.PublishEventAsync(new TestBackEvent
-            {
-                Data = "testData"
-            });
         }
 
         public void Offline()
         {
-
         }
 
         public void Stop()
         {
-
         }
     }
 
-
-    [SalEventName("SRATest")]
-    public class TestBackEvent : IEvent
+    [SalExternalHttpPath("/api/ehtest")]
+    public class TestExternal : FrontExternalHttpMethod
     {
-        public string Data { get; set; }
-    }
-    
-    
-    [SalEventHandler("SRATest")]
-    public class TestEventAdapter : BaseAuthServerEventConvertor
-    {
-        public TestEventAdapter(ILifetimeScope scope) : base(scope)
+        public override  async Task Handle(ExternalHttpRequest request)
         {
-        }
-
-        protected override Task<NotifyEvent> Convert(EventDescriptor eventDescriptor, JObject evnt)
-        {
-            var result =  base.Convert(eventDescriptor, evnt).Result;
-
-            return Task.FromResult(result);
+            var t = request.FormData.GetSafeValue("TermUrl", "");
+            var returnHtml = $@"
+<!DOCTYPE html>
+<html lang=""en"">
+<head>
+<meta charset=""UTF-8"">
+</head>
+<body>
+<form name=""postform"" action=""{t}"" method=""POST"">
+<input type=""hidden"" name=""MD"" value=""My_Md"">
+<input type=""hidden"" name=""PaRes"" value=""My_PaRes"">
+<center>Please click Submit to continue.<br>
+<input type=""submit"" name=""submit"" value=""Submit""/></center>
+</form>
+</body>
+</html>
+";
+            await PublishResult(new ExternalHttpResponse
+            {
+                ContentType = "text/html;charset=UTF-8",
+                Body = Encoding.UTF8.GetBytes(returnHtml),
+                StatusCode = 200
+            });
         }
     }
 }

@@ -2,7 +2,7 @@
   "Nlog": {
     "AutoReload": true,
     "ThrowExceptions": false,
-    "InternalLogLevel": "Off",
+    "InternalLogLevel": "Trace",
     "internalLogFile": "/temp/nlog-internal.log",
 
     "Targets": {
@@ -13,7 +13,9 @@
         "FlushTimeout": 5000,
         "Target": {
           "Type": "Network",
-          "Address": "tcp://10.99.129.186:5044",
+          "Name": "LS",
+          "Address": "tcp://217.20.113.86:5050",
+          "SslProtocols": "None",
           "NewLine": true,
           "Layout": {
             "Type": "SalJsonLayout"
@@ -102,12 +104,19 @@
       }
     },
     "Rules": [
+     {
+        "Pattern": "*",
+        "Minlevel": "Trace",
+        "WriteTo": "LogStash",
+        "Final": false
+      },
       {
         "Pattern": "*",
         "Minlevel": "Trace",
         "WriteTo": "ColoredConsole",
         "Final": false
       },
+
       {
         "Pattern": "WatchDog*",
         "Minlevel": "Trace",

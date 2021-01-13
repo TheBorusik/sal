@@ -216,6 +216,8 @@ namespace SAL.Core.Processors
         {
             try
             {
+                HandlerContext.Type = HandlerTypes.Processor;
+                HandlerContext.Name = "EventProcessor";
                 var transportMessage = await ExtractMessage(rabbitMessage);
                 var eventPayload = await ExtractEventPayload(transportMessage);
                 SessionManager.StartAdapterSession(transportMessage.Session);

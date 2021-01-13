@@ -232,6 +232,8 @@ namespace SAL.Core.Processors
         {
             try
             {
+                HandlerContext.Type = HandlerTypes.Processor;
+                HandlerContext.Name = "FrontCommandResultProcessor";
                 var transportMessage = await ExtractMessage(rabbitMessage);
                 var commandResultPayload = await ExtractCommandResultPayload(transportMessage);
                 SessionManager.Restore(transportMessage.Session);

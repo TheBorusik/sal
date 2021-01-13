@@ -279,6 +279,9 @@ namespace SAL.Core.Processors
         {
             try
             {
+                HandlerContext.Type = HandlerTypes.Processor;
+                HandlerContext.Name = "CommandProcessor";
+                
                 var transportMessage = await ExtractMessage(rabbitMessage);
                 var commandPayload = await ExtractCommandPayload(transportMessage);
                 SessionManager.StartAdapterSession(transportMessage.Session);
