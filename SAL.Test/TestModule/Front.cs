@@ -78,7 +78,7 @@ namespace SAL.Test
             {
                 ContentType = "text/html;charset=UTF-8",
                 Body = Encoding.UTF8.GetBytes(returnHtml),
-                StatusCode = 200
+                StatusCode = 200 
             });
         }
     }
