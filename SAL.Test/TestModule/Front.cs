@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
 using Autofac;
@@ -8,6 +9,7 @@ using SAL.API.Events;
 using SAL.API.FrontCommand;
 using SAL.Infrastructure;
 using SAL.Infrastructure.EventAttributes;
+using SAL.Infrastructure.FrontAttributes;
 
 
 [assembly: SalAdapterType("SalTest")]
@@ -21,8 +23,10 @@ namespace SAL.Test
         public void Configure(ContainerBuilder builder, IConfigWatcher config)
         {
             //   builder.RegisterSalHandler<TestEventAdapter>();
-            builder.RegisterSalHandler<TestExternal>();
+       //     builder.RegisterSalHandler<TestExternal>();
             //   builder.RegisterProcessor<TestFront>();
+            
+            builder.RegisterSalHandler<GetPermissionTreeHandler>();
         }
     }
 
@@ -81,5 +85,57 @@ namespace SAL.Test
                 StatusCode = 200 
             });
         }
+    }
+    
+    
+    
+    [SalExternalMethod("SalTest.GetPermissionTree")] 
+    public class GetPermissionTreeHandler : BaseFrontBackCommandHandlerAsync<GetPermissionTreeCommand , GetPermissionTreeResult>
+    {
+
+
+        public GetPermissionTreeHandler()
+        {
+        }
+
+        public override async Task Handle(GetPermissionTreeCommand command)
+        {
+            await PublishResult(new GetPermissionTreeResult
+            {
+            });
+        }
+    }
+    
+    
+    [SalServiceType("SalTest")]
+    [SalCommandName("Permissions.GetPermissionTree")]
+    public class GetPermissionTreeCommand : IHaveResult<GetPermissionTreeResult>
+    {
+        
+    }
+
+    public class GetPermissionTreeResult : ICommandResult
+    {
+        public PermissionTreeItem[] PermissionTree { get; set; }
+    }
+    
+    public class PermissionTreeItem
+    {
+        public PermissionTreeItemType Type { get; set; }
+        public long? PermissionId { get; set; }
+        public long? CatalogId { get; set; }
+        public long? ParentId { get; set; }
+        public string Name { get; set; }
+        public string Description { get; set; }
+        public string StrId { get; set; }
+        public JObject PermissionSettings { get; set; }
+        public List<PermissionTreeItem> PermissionTree { get; set; }
+    }
+    
+    public enum PermissionTreeItemType
+    {
+        Unknown,
+        Catalog,
+        Permission
     }
 }

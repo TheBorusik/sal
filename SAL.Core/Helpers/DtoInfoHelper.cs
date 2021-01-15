@@ -15,6 +15,87 @@ namespace SAL.Core.Helpers
         public static DtoInfo[] GetDtoInfos(this Type dtoType)
         {
             var list = new List<Type>();
+            list.Add(dtoType);
+            EnumType(dtoType, list);
+
+            var dtoList = new List<DtoInfo>();
+
+            foreach(var type in list)
+            {
+                AddDtoInfo(dtoList, type.GetDtoInfo());
+            }
+
+            return dtoList.ToArray();
+        }
+
+        public static void EnumType(Type dtoType, List<Type> fullType)
+        {
+            List<Type> list = new();
+            foreach(var pi in dtoType.GetProperties(BindingFlags.Instance | BindingFlags.Public))
+            {
+                var fieldRequired = pi.CustomAttributes.Any(a => a.AttributeType == typeof(RequiredAttribute));
+
+                var pft = GetFieldType(pi.PropertyType);
+                switch (pft)
+                {
+                    case FieldType.Object:
+                    {
+                        if (pi.PropertyType == typeof(object) || pi.PropertyType.IsAssignableTo<JToken>())
+                        {
+                            continue;
+                        }
+
+                        AddType(list, pi.PropertyType);
+                        break;
+                    }
+                    case FieldType.Dictionary:
+                    {
+                        var elementType = pi.PropertyType.GetGenericArguments()[1];
+                        if (elementType != typeof(object) && !elementType.IsAssignableTo<JToken>())
+                        {
+                            if (GetFieldType(elementType) == FieldType.Object)
+                            {
+                                AddType(list, elementType);
+                            }
+                        }
+
+                        break;
+                    }
+                    case FieldType.Array:
+                    {
+                        Type elementType;
+                        if (pi.PropertyType.IsGenericType)
+                        {
+                            elementType = pi.PropertyType.GetGenericArguments()[0];
+                        }
+                        else
+                        {
+                            elementType = pi.PropertyType.GetElementType();
+                        }
+
+                        if (elementType != typeof(object) && !elementType.IsAssignableTo<JToken>())
+                        {
+                            if (GetFieldType(elementType) == FieldType.Object)
+                            {
+                                AddType(list, elementType);
+                            }
+                        }
+
+                        break;
+                    }
+                }
+            }
+
+            foreach(var type in list)
+            {
+                if (AddType(fullType, type))
+                    EnumType(type, fullType);
+            }
+        }
+
+
+        public static DtoInfo GetDtoInfo(this Type dtoType)
+        {
             var fieldList = new List<FieldInfo>();
 
             var dtoInfo = new DtoInfo
@@ -22,9 +103,7 @@ namespace SAL.Core.Helpers
                 Name = dtoType.Name
             };
 
-            list.Add(dtoType);
-
-            foreach (var pi in dtoType.GetProperties(BindingFlags.Instance | BindingFlags.Public))
+            foreach(var pi in dtoType.GetProperties(BindingFlags.Instance | BindingFlags.Public))
             {
                 var fieldRequired = pi.CustomAttributes.Any(a => a.AttributeType == typeof(RequiredAttribute));
 
@@ -44,19 +123,13 @@ namespace SAL.Core.Helpers
                         }
                         else
                         {
-
-                            if (list.All(di => di.Name != pi.PropertyType.Name))
+                            fieldList.Add(new FieldInfo
                             {
-                                var propertyType=pi.PropertyType;
-                                AddType(list, propertyType);
-                                fieldList.Add(new FieldInfo
-                                {
-                                    Type = pft,
-                                    IsRequired = fieldRequired,
-                                    Name = pi.Name,
-                                    ObjectName = propertyType.Name
-                                });
-                            }
+                                Type = pft,
+                                IsRequired = fieldRequired,
+                                Name = pi.Name,
+                                ObjectName = pi.PropertyType.Name
+                            });
                         }
 
                         break;
@@ -78,7 +151,6 @@ namespace SAL.Core.Helpers
                             if (fieldInfo.ElementType == FieldType.Object)
                             {
                                 fieldInfo.ElementObjectName = elementType.Name;
-                                AddType(list, elementType);
                             }
                         }
 
@@ -95,14 +167,23 @@ namespace SAL.Core.Helpers
                             Name = pi.Name,
                         };
 
-                        var elementType = pi.PropertyType.GetElementType();
+                        Type elementType;
+                        if (pi.PropertyType.IsGenericType)
+                        {
+                            elementType = pi.PropertyType.GetGenericArguments()[0];
+                        }
+                        else
+                        {
+                            elementType = pi.PropertyType.GetElementType();
+                        }
+
+
                         fieldInfo.ElementType = GetFieldType(elementType);
                         if (elementType != typeof(object) && !elementType.IsAssignableTo<JToken>())
                         {
                             if (fieldInfo.ElementType == FieldType.Object)
                             {
                                 fieldInfo.ElementObjectName = elementType.Name;
-                                AddType(list, elementType);
                             }
                         }
 
@@ -126,25 +207,16 @@ namespace SAL.Core.Helpers
             }
 
             dtoInfo.FieldsInfos = fieldList.ToArray();
-            
-            
-            var dtoList = new List<DtoInfo>();
-            dtoList.Add(dtoInfo);
 
-            foreach(var type in list.Where(type => type != dtoType))
-            {
-                AddDtoInfo(dtoList, type.GetDtoInfos());
-            }
-
-            return dtoList.ToArray();
-
+            return dtoInfo;
         }
 
-        private static void AddType(List<Type> list, Type type)
+        private static bool AddType(List<Type> list, Type type)
         {
             if (list.Any(i => i == type))
-                return;
+                return false;
             list.Add(type);
+            return true;
         }
 
         private static void AddDtoInfo(List<DtoInfo> list, DtoInfo info)
@@ -154,6 +226,7 @@ namespace SAL.Core.Helpers
             list.Add(info);
         }
 
+        /*
         private static void AddDtoInfo(List<DtoInfo> list, DtoInfo[] infos)
         {
             foreach (var dtoInfo in infos)
@@ -161,7 +234,7 @@ namespace SAL.Core.Helpers
                 AddDtoInfo(list, dtoInfo);
             }
         }
-
+*/
         private static FieldType GetFieldType(Type t)
         {
             if (t == typeof(byte[]))
@@ -207,8 +280,9 @@ namespace SAL.Core.Helpers
                 var genericType = t.GetGenericTypeDefinition();
                 if (genericType == typeof(Dictionary<,>))
                     return FieldType.Dictionary;
+                if (genericType == typeof(List<>))
+                    return FieldType.Array;
             }
-
 
             if (t.IsValueType)
                 return FieldType.String;
