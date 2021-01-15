@@ -14,7 +14,7 @@ namespace SAL.Core.Helpers
     {
         public static DtoInfo[] GetDtoInfos(this Type dtoType)
         {
-            var list = new List<DtoInfo>();
+            var list = new List<Type>();
             var fieldList = new List<FieldInfo>();
 
             var dtoInfo = new DtoInfo
@@ -22,7 +22,7 @@ namespace SAL.Core.Helpers
                 Name = dtoType.Name
             };
 
-            list.Add(dtoInfo);
+            list.Add(dtoType);
 
             foreach (var pi in dtoType.GetProperties(BindingFlags.Instance | BindingFlags.Public))
             {
@@ -47,15 +47,14 @@ namespace SAL.Core.Helpers
 
                             if (list.All(di => di.Name != pi.PropertyType.Name))
                             {
-
-                                var objDtoInfos = pi.PropertyType.GetDtoInfos();
-                                AddDtoInfo(list, objDtoInfos);
+                                var propertyType=pi.PropertyType;
+                                AddType(list, propertyType);
                                 fieldList.Add(new FieldInfo
                                 {
                                     Type = pft,
                                     IsRequired = fieldRequired,
                                     Name = pi.Name,
-                                    ObjectName = objDtoInfos.First().Name
+                                    ObjectName = propertyType.Name
                                 });
                             }
                         }
@@ -78,9 +77,8 @@ namespace SAL.Core.Helpers
                         {
                             if (fieldInfo.ElementType == FieldType.Object)
                             {
-                                var elementDtoInfos = elementType.GetDtoInfos();
-                                fieldInfo.ElementObjectName = elementDtoInfos.First().Name;
-                                AddDtoInfo(list, elementDtoInfos);
+                                fieldInfo.ElementObjectName = elementType.Name;
+                                AddType(list, elementType);
                             }
                         }
 
@@ -103,9 +101,8 @@ namespace SAL.Core.Helpers
                         {
                             if (fieldInfo.ElementType == FieldType.Object)
                             {
-                                var elementDtoInfos = elementType.GetDtoInfos();
-                                fieldInfo.ElementObjectName = elementDtoInfos.First().Name;
-                                AddDtoInfo(list, elementDtoInfos);
+                                fieldInfo.ElementObjectName = elementType.Name;
+                                AddType(list, elementType);
                             }
                         }
 
@@ -129,8 +126,25 @@ namespace SAL.Core.Helpers
             }
 
             dtoInfo.FieldsInfos = fieldList.ToArray();
+            
+            
+            var dtoList = new List<DtoInfo>();
+            dtoList.Add(dtoInfo);
 
-            return list.ToArray();
+            foreach(var type in list.Where(type => type != dtoType))
+            {
+                AddDtoInfo(dtoList, type.GetDtoInfos());
+            }
+
+            return dtoList.ToArray();
+
+        }
+
+        private static void AddType(List<Type> list, Type type)
+        {
+            if (list.Any(i => i == type))
+                return;
+            list.Add(type);
         }
 
         private static void AddDtoInfo(List<DtoInfo> list, DtoInfo info)
