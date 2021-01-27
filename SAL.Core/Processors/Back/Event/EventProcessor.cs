@@ -2,10 +2,12 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Text;
 using System.Threading.Tasks;
 using Autofac;
 using Autofac.Core;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using SAL.API;
 using SAL.API.Events;
@@ -218,12 +220,24 @@ namespace SAL.Core.Processors
             {
                 HandlerContext.Type = HandlerTypes.Processor;
                 HandlerContext.Name = "EventProcessor";
-                var transportMessage = await ExtractMessage(rabbitMessage);
-                var eventPayload = await ExtractEventPayload(transportMessage);
+                var transportMessage = ExtractMessage(rabbitMessage);
+                var eventPayload = ExtractEventPayload(transportMessage);
                 SessionManager.StartAdapterSession(transportMessage.Session);
                 salLogger.LogIncoming(eventPayload);
                 await Processing(transportMessage, eventPayload);
                 ack();
+            }
+            catch (JsonReaderException ex)
+            {
+       
+                var dto = ex.ToDto();
+                logger.Error("При обработке команды произошла ошибка десериализации", ex);
+                var sb = new StringBuilder();
+                sb.AppendLine("Rabbit message Payload");
+                sb.AppendLine(SalEncoding.GetString(rabbitMessage.Payload.Span));
+                logger.Info(sb.ToString());
+                nack();
+                await salClient.RaiseExceptionDetectEvent(rabbitMessage.CorrelationId, dto); 
             }
             catch (SalException ex)
             {
@@ -269,9 +283,9 @@ namespace SAL.Core.Processors
             }
         }
 
-        protected Task<Message> ExtractMessage(RabbitMessage rabbitMessage)
+        protected Message ExtractMessage(RabbitMessage rabbitMessage)
         {
-            var transportMessage = SalSerializer.BinaryDeserialize<Message>(rabbitMessage.Payload);
+            var transportMessage = SalSerializer.BinaryDeserialize<Message>(rabbitMessage.Payload.Span);
             if (transportMessage == null)
                 throw new Exception($"Неудалось десерилизовать сообщение | CorrelationId:{rabbitMessage.CorrelationId}");
             if (transportMessage.Type != MessageTypes.Event)
@@ -283,10 +297,10 @@ namespace SAL.Core.Processors
             if (transportMessage.Payload.Type == JTokenType.Null)
                 throw new Exception($"Отсутствует message.Payload | CorrelationId:{rabbitMessage.CorrelationId}");
 
-            return Task.FromResult(transportMessage);
+            return transportMessage;
         }
 
-        protected Task<EventPayload> ExtractEventPayload(Message transportMessage)
+        protected EventPayload ExtractEventPayload(Message transportMessage)
         {
             var eventPayload = transportMessage.Payload.ConvertValue<EventPayload>();
 
@@ -299,7 +313,7 @@ namespace SAL.Core.Processors
             if (eventPayload.Payload == null)
                 throw new Exception($"Отсутствует eventPayload.Payload | CorrelationId:{transportMessage.CorrelationId}");
 
-            return Task.FromResult(eventPayload);
+            return eventPayload;
         }
 
         private async Task Processing(Message message, EventPayload eventPayload)

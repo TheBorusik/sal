@@ -3,12 +3,14 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using Autofac;
 using Autofac.Core;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using SAL.API;
 using SAL.API.CommandResult;
@@ -234,8 +236,8 @@ namespace SAL.Core.Processors
             {
                 HandlerContext.Type = HandlerTypes.Processor;
                 HandlerContext.Name = "FrontCommandResultProcessor";
-                var transportMessage = await ExtractMessage(rabbitMessage);
-                var commandResultPayload = await ExtractCommandResultPayload(transportMessage);
+                var transportMessage = ExtractMessage(rabbitMessage);
+                var commandResultPayload = ExtractCommandResultPayload(transportMessage);
                 SessionManager.Restore(transportMessage.Session);
                 salLogger.LogIncoming(commandResultPayload);
                 await Processing(transportMessage, commandResultPayload);
@@ -289,12 +291,24 @@ namespace SAL.Core.Processors
         {
             try
             {
-                var transportMessage = await ExtractMessage(rabbitMessage);
-                var commandResultPayload = await ExtractCommandResultPayload(transportMessage);
+                var transportMessage = ExtractMessage(rabbitMessage);
+                var commandResultPayload = ExtractCommandResultPayload(transportMessage);
                 SessionManager.Restore(transportMessage.Session);
                 salLogger.LogIncoming(commandResultPayload);
                 await SyncProcessing(transportMessage, commandResultPayload);
                 ack();
+            }
+            catch (JsonReaderException ex)
+            {
+       
+                var dto = ex.ToDto();
+                logger.Error("При обработке команды произошла ошибка десериализации", ex);
+                var sb = new StringBuilder();
+                sb.AppendLine("Rabbit message Payload");
+                sb.AppendLine(SalEncoding.GetString(rabbitMessage.Payload.Span));
+                logger.Info(sb.ToString());
+                nack();
+                await salClient.RaiseExceptionDetectEvent(rabbitMessage.CorrelationId, dto); 
             }
             catch (SalException ex)
             {
@@ -341,9 +355,9 @@ namespace SAL.Core.Processors
             }
         }
 
-        protected Task<Message> ExtractMessage(RabbitMessage rabbitMessage)
+        protected Message ExtractMessage(RabbitMessage rabbitMessage)
         {
-            var transportMessage = SalSerializer.BinaryDeserialize<Message>(rabbitMessage.Payload);
+            var transportMessage = SalSerializer.BinaryDeserialize<Message>(rabbitMessage.Payload.Span);
             if (transportMessage == null)
                 throw new Exception($"Неудалось десерилизовать сообщение | CorrelationId:{rabbitMessage.CorrelationId}");
             if (transportMessage.Type != MessageTypes.CommandResult)
@@ -355,10 +369,10 @@ namespace SAL.Core.Processors
             if (transportMessage.Payload.Type == JTokenType.Null)
                 throw new Exception($"Отсутствует message.Payload | CorrelationId:{rabbitMessage.CorrelationId}");
 
-            return Task.FromResult(transportMessage);
+            return transportMessage;
         }
 
-        protected Task<CommandResultPayload> ExtractCommandResultPayload(Message transportMessage)
+        protected CommandResultPayload ExtractCommandResultPayload(Message transportMessage)
         {
             var commandResultPayload = transportMessage.Payload.ConvertValue<CommandResultPayload>();
 
@@ -380,7 +394,7 @@ namespace SAL.Core.Processors
                 !string.Equals(commandResultPayload.Descriptor.ResultAdapterName, AdapterConfiguration.AdapterName, StringComparison.InvariantCultureIgnoreCase))
                 throw new Exception($"Не соответствие Descriptor.ResultAdapterName и AdapterName для результата CorrelationId:{transportMessage.CorrelationId}");
 
-            return Task.FromResult(commandResultPayload);
+            return commandResultPayload;
         }
 
         private async Task Processing(Message message, CommandResultPayload commandResultPayload)

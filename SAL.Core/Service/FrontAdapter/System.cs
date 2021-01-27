@@ -41,7 +41,7 @@ namespace SAL.Core.Service
             }
             catch (Exception ex)
             {
-                logger.Error(ex, "Ошибка отправки сообщения IAmOffline во front");
+                logger.Error("Ошибка отправки сообщения IAmOffline во front");
             }
         }
 

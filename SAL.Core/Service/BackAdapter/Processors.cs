@@ -1,4 +1,6 @@
-﻿using Autofac;
+﻿using System.Linq;
+using System.Threading.Tasks;
+using Autofac;
 using SAL.API;
 using SAL.API.Monad;
 
@@ -37,23 +39,30 @@ namespace SAL.Core.Service
         protected void OnlineProcessors()
         {
 
-            HandlerContext.Type = HandlerTypes.Processor;
-            processors.ForEach(p =>
+            
+
+            var onlineTasks = processors.Select(p => Task.Run(() =>
             {
+                HandlerContext.Type = HandlerTypes.Processor;
                 HandlerContext.Name = p.GetType().Name;
                 p.Online();
-            });
+            })).ToArray();
+
+            Task.WaitAll(onlineTasks);
+
 
         }
 
         protected void OfflineProcessors()
         {
-            HandlerContext.Type = HandlerTypes.Processor;
-            processors.ForEach(p =>
+            var offlineTasks = processors.Select(p => Task.Run(() =>
             {
+                HandlerContext.Type = HandlerTypes.Processor;
                 HandlerContext.Name = p.GetType().Name;
                 p.Offline();
-            });
+            })).ToArray();
+            
+            Task.WaitAll(offlineTasks);
         }
     }
 }

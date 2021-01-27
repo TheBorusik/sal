@@ -39,7 +39,7 @@ namespace SAL.Core.Service
             }
             catch (Exception ex)
             {
-                logger.Error(ex, "Ошибка отправки сообщения IAmOffline");
+                logger.Error( "Ошибка отправки сообщения IAmOffline");
             }
         }
 

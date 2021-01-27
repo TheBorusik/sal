@@ -15,7 +15,7 @@ namespace SAL.Core.Rabbit.Interfaces
 
         public DateTime TimeStamp { get; set; }
 
-        public byte[] Payload { get; set; }
+        public ReadOnlyMemory<byte> Payload { get; set; }
         // доп поля при получении
 
         public string QueueName { get; set; }

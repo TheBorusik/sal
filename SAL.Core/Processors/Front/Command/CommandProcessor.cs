@@ -3,10 +3,12 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Text;
 using System.Threading.Tasks;
 using Autofac;
 using Autofac.Core;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using SAL.API;
 using SAL.API.Command;
@@ -261,14 +263,25 @@ namespace SAL.Core.Processors
             {
                 HandlerContext.Type = HandlerTypes.Processor;
                 HandlerContext.Name = "FrontCommandProcessor";
-                var transportMessage = await ExtractMessage(rabbitMessage);
-                var commandPayload = await ExtractCommandPayload(transportMessage);
+                var transportMessage = ExtractMessage(rabbitMessage);
+                var commandPayload = ExtractCommandPayload(transportMessage);
                 SessionManager.StartAdapterSession(transportMessage.Session);
                 salLogger.LogIncoming(commandPayload);
                 await Processing(transportMessage, commandPayload);
                 ack();
             }
-
+            catch (JsonReaderException ex)
+            {
+       
+                var dto = ex.ToDto();
+                logger.Error("При обработке команды произошла ошибка десериализации", ex);
+                var sb = new StringBuilder();
+                sb.AppendLine("Rabbit message Payload");
+                sb.AppendLine(SalEncoding.GetString(rabbitMessage.Payload.Span));
+                logger.Info(sb.ToString());
+                nack();
+                await salClient.RaiseExceptionDetectEvent(rabbitMessage.CorrelationId, dto); 
+            }
             catch (SalException ex)
             {
                 nack();
@@ -313,9 +326,9 @@ namespace SAL.Core.Processors
             }
         }
 
-        protected Task<Message> ExtractMessage(RabbitMessage rabbitMessage)
+        protected Message ExtractMessage(RabbitMessage rabbitMessage)
         {
-            var transportMessage = SalSerializer.BinaryDeserialize<Message>(rabbitMessage.Payload);
+            var transportMessage = SalSerializer.BinaryDeserialize<Message>(rabbitMessage.Payload.Span);
             if (transportMessage == null)
                 throw new Exception($"Неудалось десерилизовать сообщение | CorrelationId:{rabbitMessage.CorrelationId}");
             if (transportMessage.Type != MessageTypes.Command)
@@ -327,10 +340,10 @@ namespace SAL.Core.Processors
             if (transportMessage.Payload.Type == JTokenType.Null)
                 throw new Exception($"Отсутствует message.Payload | CorrelationId:{rabbitMessage.CorrelationId}");
 
-            return Task.FromResult(transportMessage);
+            return transportMessage;
         }
 
-        protected Task<CommandPayload> ExtractCommandPayload(Message transportMessage)
+        protected CommandPayload ExtractCommandPayload(Message transportMessage)
         {
             var commandPayload = transportMessage.Payload.ConvertValue<CommandPayload>();
 
@@ -354,7 +367,7 @@ namespace SAL.Core.Processors
 
             commandPayload.Descriptor.HandlerTimeStamp = DateTime.UtcNow;
 
-            return Task.FromResult(commandPayload);
+            return commandPayload;
         }
 
         protected virtual async Task Processing(Message message, CommandPayload commandPayload)

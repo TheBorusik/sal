@@ -47,7 +47,7 @@ namespace SAL.Core.Rabbit.Subscription
         {
             return new RabbitMessage
             {
-                Payload = args.Body.ToArray(),
+                Payload = args.Body,
                 TimeStamp = args.BasicProperties.Timestamp.ToDateTime(),
                 CorrelationId = args.BasicProperties.CorrelationId,
                 Priority = args.BasicProperties.Priority,

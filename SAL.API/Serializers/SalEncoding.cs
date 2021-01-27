@@ -1,3 +1,4 @@
+using System;
 using System.Text;
 
 namespace SAL.API
@@ -11,6 +12,11 @@ namespace SAL.API
             return encoding.GetBytes(s);
         }
 
+        public static string GetString(ReadOnlySpan<byte> bytes)
+        {
+            return encoding.GetString(bytes);
+        }
+        
         public static string GetString(byte[] bytes)
         {
             return encoding.GetString(bytes);
