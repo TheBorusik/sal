@@ -12,10 +12,10 @@ namespace SAL.API
             return encoding.GetBytes(s);
         }
 
-        public static string GetString(ReadOnlySpan<byte> bytes)
+        /*public static string GetString(ReadOnlySpan<byte> bytes)
         {
             return encoding.GetString(bytes);
-        }
+        }*/
         
         public static string GetString(byte[] bytes)
         {

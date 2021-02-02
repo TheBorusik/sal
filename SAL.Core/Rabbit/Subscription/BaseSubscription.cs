@@ -35,10 +35,10 @@ namespace SAL.Core.Rabbit.Subscription
 
         protected virtual void ConsumerOnReceived(object sender, BasicDeliverEventArgs args)
         {
+            var consumerTag = GetConsumerTag(sender);
+            var busMessage = Transform(args, consumerTag);
             Task.Run(async () =>
             {
-                var consumerTag = GetConsumerTag(sender);
-                var busMessage = Transform(args, consumerTag);
                 Interlocked.Increment(ref CurrentThread);
                 var acknowledgment = false;
                 try

@@ -39,7 +39,7 @@ namespace SAL.Core.Service
                     Name = AdapterConfiguration.AdapterName
                 }, SystemEventTimes.BaseTTL).Wait();
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 logger.Error("Ошибка отправки сообщения IAmOffline во front");
             }

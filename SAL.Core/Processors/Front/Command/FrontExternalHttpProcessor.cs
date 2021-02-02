@@ -168,7 +168,7 @@ namespace SAL.Core.Processors
                 logger.Error("При обработке команды произошла ошибка десериализации", ex);
                 var sb = new StringBuilder();
                 sb.AppendLine("Rabbit message Payload");
-                sb.AppendLine(SalEncoding.GetString(rabbitMessage.Payload.Span));
+                sb.AppendLine(SalEncoding.GetString(rabbitMessage.Payload));
                 logger.Info(sb.ToString());
                 nack();
                 await salClient.RaiseExceptionDetectEvent(rabbitMessage.CorrelationId, dto); 
@@ -219,7 +219,7 @@ namespace SAL.Core.Processors
 
         protected Message ExtractMessage(RabbitMessage rabbitMessage)
         {
-            var transportMessage = SalSerializer.BinaryDeserialize<Message>(rabbitMessage.Payload.Span);
+            var transportMessage = SalSerializer.BinaryDeserialize<Message>(rabbitMessage.Payload);
             if (transportMessage == null)
                 throw new Exception($"Неудалось десерилизовать сообщение | CorrelationId:{rabbitMessage.CorrelationId}");
             if (transportMessage.Type != MessageTypes.Command)

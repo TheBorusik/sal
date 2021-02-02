@@ -34,10 +34,15 @@ namespace SAL.API
 	    }
 
 
-	    public static T BinaryDeserialize<T>(ReadOnlySpan<byte> data)
+	    /*public static T BinaryDeserialize<T>(ReadOnlySpan<byte> data)
 	    {
 	        return JsonConvert.DeserializeObject<T>(SalEncoding.GetString(data), sal.SerializerSettings);
-	    }
+	    }*/
+	    
+	    public static T BinaryDeserialize<T>(byte[] data)
+		{
+			return JsonConvert.DeserializeObject<T>(SalEncoding.GetString(data), sal.SerializerSettings);
+		}
 
 	    public static object BinaryDeserialize(byte[] data, Type dataType)
 	    {
