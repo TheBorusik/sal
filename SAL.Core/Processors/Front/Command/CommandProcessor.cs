@@ -229,16 +229,25 @@ namespace SAL.Core.Processors
             
             commandHandlers.Add(commandName, commandHandlerInfo);
             logger.Info($"Для команды {commandName} добавлен обработчик {handlerType.Name}");
-            
-            salService.AddFrontCommandHandler(new API.FrontCommandHandlerInfo
+
+
+            var handlerInfo = new API.FrontCommandHandlerInfo
             {
                 CommandName = commandHandlerInfo.CommandName,
-                CommandDto = null,
-                ResultDto = null,
-                Dtos = new DtoInfo[0],
                 ExternalMethod = externalServiceMethod.ServiceMethod,
                 ExternalUri = externalUris
-            });
+            };
+            
+            ICommandDtoCreator dtoCreater = null;
+            if (handlerType.IsAssignableTo<ICommandDtoCreator>())
+            {
+                dtoCreater = (ICommandDtoCreator)container.Resolve(handlerType);
+                handlerInfo.Dtos = dtoCreater.GetCommandDtos(commandName);
+                handlerInfo.CommandDto = dtoCreater.GetCommandDtoName(commandName);
+                handlerInfo.ResultDto = dtoCreater.GetResultDtoName(commandName);
+            }
+            
+            salService.AddFrontCommandHandler(handlerInfo);
         }
 
 

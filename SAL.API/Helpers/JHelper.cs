@@ -8,13 +8,11 @@ namespace SAL.API
         // base
         public static T ConvertValue<T>(this JToken jToken)
         {
-            return (T)jToken.ConvertValue(typeof(T));
+            return (T) jToken.ConvertValue(typeof(T));
         }
 
         public static object ConvertValue(this JToken jToken, Type type)
         {
-
-
             var underlyingType = Nullable.GetUnderlyingType(type);
 
             if (jToken == null)
@@ -36,7 +34,6 @@ namespace SAL.API
             }
 
 
-
             if (jToken is JValue jVal)
             {
                 if (jVal.GetType() == type)
@@ -45,11 +42,6 @@ namespace SAL.API
                 }
                 else
                 {
-                   
-   
- 
-
-
 /*                    if (type.IsEnum)
                     {
                         return jVal.ToObject(type);
@@ -61,7 +53,7 @@ namespace SAL.API
                         return Convert.ChangeType(jVal.Value, underlyingType ?? type);
                     }*/
                     return jVal.ToObject(type);
-                   // throw new InvalidCastException($"Type: \"{jVal.GetType().Name}\" can't convert to type \"{type.Name}\".");
+                    // throw new InvalidCastException($"Type: \"{jVal.GetType().Name}\" can't convert to type \"{type.Name}\".");
                 }
             }
 
@@ -76,7 +68,6 @@ namespace SAL.API
                     throw new InvalidCastException($"Object can't convert to type \"{type.Name}\".");
 
                 return jObj.ToObject(type);
-
             }
 
 
@@ -89,10 +80,7 @@ namespace SAL.API
             }
 
 
-
-
             throw new InvalidCastException($"Unknown type can't convert to type \"{type.Name}\".");
-
         }
 
         public static JToken GetValueIC(this JToken jToken, string propertyName)
@@ -110,16 +98,14 @@ namespace SAL.API
 
         public static string ToIndentedJson(this object jToken)
         {
-
             return SalSerializer.SerializeIndented(jToken);
-
         }
 
         // string
 
         public static T ConvertValue<T>(this string str)
         {
-            return (T)str.ConvertValue(typeof(T));
+            return (T) str.ConvertValue(typeof(T));
         }
 
         public static object ConvertValue(this string str, Type type)
@@ -139,10 +125,16 @@ namespace SAL.API
             else
             {
                 if (value != null)
-                    jObj.Add(propertyName, JToken.FromObject(value));
-            
+                    try
+                    {
+                        jObj.Add(propertyName, JToken.FromObject(value));
+                    }
+                    catch (Exception e)
+                    {
+                        var x = 0;
+                        x++;
+                    }
             }
-
         }
 
         public static bool TryGetValue(this JObject jObj, string propertyName, Type type, out object value)
@@ -156,12 +148,13 @@ namespace SAL.API
             {
                 value = null;
             }
+
             return false;
         }
 
         public static bool TryGetValue<T>(this JObject jObj, string propertyName, out T value)
-        { 
-           try
+        {
+            try
             {
                 value = jObj.GetValueIC(propertyName).ConvertValue<T>();
                 return value != null;
@@ -170,12 +163,13 @@ namespace SAL.API
             {
                 value = default(T);
             }
+
             return false;
         }
 
         public static object GetValue(this JObject jObj, string propertyName, Type type)
         {
-           return jObj.GetValueIC(propertyName).ConvertValue(type);
+            return jObj.GetValueIC(propertyName).ConvertValue(type);
         }
 
         public static T GetValue<T>(this JObject jObj, string propertyName)
@@ -199,7 +193,6 @@ namespace SAL.API
         {
             try
             {
-
                 var token = jObj.GetValueIC(propertyName);
                 if (token == null)
                     return safeValue;
@@ -209,7 +202,6 @@ namespace SAL.API
             {
                 return safeValue;
             }
-
         }
 
         public static bool ContainsKey(this JObject jObj, string propertyName)
@@ -221,7 +213,7 @@ namespace SAL.API
 
         public static T ConvertValue<T>(this JProperty jProperty)
         {
-            return (T)jProperty.ConvertValue(typeof(T));
+            return (T) jProperty.ConvertValue(typeof(T));
         }
 
         public static object ConvertValue(this JProperty jProperty, Type type)
@@ -234,7 +226,7 @@ namespace SAL.API
 
         public static T ConvertValue<T>(this object obj)
         {
-            return (T)obj.ConvertValue(typeof(T));
+            return (T) obj.ConvertValue(typeof(T));
         }
 
         public static object ConvertValue(this object obj, Type type)
@@ -290,7 +282,7 @@ namespace SAL.API
 
             return JObject.FromObject(obj).ConvertValue<T>();
         }
-        
+
         public static T Convert<T>(this object obj) where T : class, new()
         {
             if (obj == null)
@@ -314,7 +306,6 @@ namespace SAL.API
             {
                 return safeValue;
             }
-
         }
 
         public static bool ContainsKey(this object obj, string propertyName)
@@ -364,6 +355,5 @@ namespace SAL.API
         {
             return (JObject) obj?.DeepClone();
         }
-
     }
 }

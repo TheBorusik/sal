@@ -196,15 +196,17 @@ namespace SAL.Core.Processors
         {
             var isInstanceHandler = handlerType.GetCustomAttributes(typeof(SalInstanceHandlerAttribute)).Any();
 
+            ICommandDtoCreator dtoCreater = null;
+            if (handlerType.IsAssignableTo<ICommandDtoCreator>())
+                dtoCreater = (ICommandDtoCreator)container.Resolve(handlerType);
+
+
             handlerType.GetCustomAttributes(typeof(SalCommandHandlerAttribute))
                 .OfType<SalCommandHandlerAttribute>().ForEach(a =>
                 {
                     var name = a.Name;
                     name = Regex.Replace(name, "(.+)command$", "$1", RegexOptions.IgnoreCase);
                     var commandName = $"{a.ServiceType}.{name}";
-
-                    if (commandName.Count(c => c == '.') > 1)
-                        throw new Exception($"{commandName} - неправильное указанеие");
 
                     if (commandHandlers.ContainsKey(commandName))
                         throw new Exception($"{commandName} уже имеет обработчик");
@@ -225,12 +227,25 @@ namespace SAL.Core.Processors
 
                     logger.Info($"Для команды {commandName} добавлен уневерсальный обработчик {handlerType.Name}");
 
-                    salService.AddBackCommandHandler(new API.CommandHandlerInfo
+
+                    var handlerInfo =
+                        new API.CommandHandlerInfo
+                        {
+                            IsCommon = commandHandlerInfo.IsCommon,
+                            CommandName = commandHandlerInfo.CommandName,
+                            IsInstanceHandler = commandHandlerInfo.IsInstanceHandler,
+                        };
+
+                    if (dtoCreater != null)
                     {
-                        IsCommon = commandHandlerInfo.IsCommon,
-                        CommandName = commandHandlerInfo.CommandName,
-                        IsInstanceHandler = commandHandlerInfo.IsInstanceHandler
-                    });
+                        handlerInfo.Dtos = dtoCreater.GetCommandDtos(commandName);
+                        handlerInfo.CommandDto = dtoCreater.GetCommandDtoName(commandName);
+                        handlerInfo.ResultDto = dtoCreater.GetResultDtoName(commandName);
+                    }
+
+
+
+                    salService.AddBackCommandHandler(handlerInfo);
                 });
         }
 
@@ -242,7 +257,7 @@ namespace SAL.Core.Processors
             var wfmResultHandlerName = "default";
             if (wfmResultHandlerNameAttr != null)
                 wfmResultHandlerName = wfmResultHandlerNameAttr.Name;
-            
+
             if (wfmResultHandler.ContainsKey(wfmResultHandlerName))
                 throw new Exception($"Результат ВФМ {wfmResultHandlerName} -> уже имеет обработчик");
 
@@ -253,9 +268,6 @@ namespace SAL.Core.Processors
                 HandlerType = handlerType,
                 HandlerMethod = typeof(IWfmResultHandler).GetMethod("Handle"),
             };
-
-
-
 
 
             wfmResultHandler.Add(wfmResultHandlerName, wfmResultHandlerInfo);
@@ -296,7 +308,6 @@ namespace SAL.Core.Processors
             }
             catch (JsonReaderException ex)
             {
-       
                 var dto = ex.ToDto();
                 logger.Error("При обработке команды произошла ошибка десериализации", ex);
                 var sb = new StringBuilder();
@@ -304,7 +315,7 @@ namespace SAL.Core.Processors
                 sb.AppendLine(SalEncoding.GetString(rabbitMessage.Payload));
                 logger.Info(sb.ToString());
                 nack();
-                await salClient.RaiseExceptionDetectEvent(rabbitMessage.CorrelationId, dto); 
+                await salClient.RaiseExceptionDetectEvent(rabbitMessage.CorrelationId, dto);
             }
             catch (SalException ex)
             {

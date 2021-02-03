@@ -26,6 +26,7 @@
     <ProjectReference Include="..\SAL.Infrastructure\SAL.Infrastructure.csproj" />
   </ItemGroup>
   <ItemGroup>
+    <Folder Include="Config\Commands" />
     <Folder Include="DB\RedisStore" />
   </ItemGroup>
 </Project>

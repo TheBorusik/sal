@@ -167,7 +167,5 @@ namespace SAL.Core.Service
             nLogFactory = new NLogFactoryAdapter(ConfigWatcher.GetSection(ConfigurationSectionNames.Nlog));
             logger = nLogFactory.GetLogger(nameof(BackAdapter));
         }
-
-
     }
 }

@@ -1,4 +1,4 @@
-﻿namespace SAL.Core.Config
+﻿namespace SAL.API
 {
     public static class ConfigurationSectionNames
     {
@@ -9,7 +9,7 @@
         public const string BridgedMessageBus = "bridgedmessagebus";
         public const string Modules = "modules";
         public const string ConnectionManager = "connectionmanager";
-        public const string Nlog = "nlog";
+        public const string Nlog = "Nlog";
 
         public const string CommandProcessor = "CommandProcessor";
         public const string CommandResultProcessor = "CommandResultProcessor";
@@ -22,6 +22,5 @@
 
         public const string CommandTestData = "CommandTestData";
         public const string EventTestData = "EventTestData";
-
     }
 }

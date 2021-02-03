@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Autofac;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
+using NLog;
 using SAL.API;
 using SAL.API.Command;
 using SAL.API.CommandResult;
@@ -23,7 +24,8 @@ namespace SAL.Test
     {
         public void Configure(ContainerBuilder builder, IConfigWatcher config)
         {
-            builder.RegisterSalHandler<TestCommandHandler>();
+         //   builder.RegisterSalHandler<TestCommandHandler>();
+            builder.RegisterSalHandler<CommonCommandHandler>();
             builder.RegisterSalHandler<CommonCommandResultHandler>();
             builder.RegisterSalHandler<EventHandler>();
 
@@ -58,7 +60,7 @@ namespace SAL.Test
     [SalCommandHandler("SalTest", "Test2")]
     [SalCommandHandler("SalTest", "Test")]
     [SalCommandHandler("Test1", "Jopa")]
-    public class CommonCommandHandler : ICommonCommandHandler
+    public class CommonCommandHandler : ICommonCommandHandler //, ICommandDtoCreator
     {
         private CommandContext commandContext;
         private ExecutingContext executingContext;
@@ -81,6 +83,21 @@ namespace SAL.Test
             }, commandContext.Descriptor);
 
             await Task.Delay(10000);
+        }
+
+        public DtoInfo[] GetCommandDtos(string commandName)
+        {
+            return null;
+        }
+
+        public string GetCommandDtoName(string commandName)
+        {
+            return null;
+        }
+
+        public string GetResultDtoName(string commandName)
+        {
+            return null;
         }
     }
 
@@ -147,7 +164,7 @@ namespace SAL.Test
     }
 
 
-    public class CommonCommandResultHandler : ICommonCommandResultHandler
+    public class CommonCommandResultHandler : ICommonCommandResultHandler , ICommandDtoCreator
     {
         ExecutingContext executingContext;
 
@@ -161,6 +178,21 @@ namespace SAL.Test
    //          executingContext.SalClient.PublishEventAsync(new TestEvent());
              return Task.FromResult(true);
              //    throw new Exception("Test result");
+        }
+
+        public DtoInfo[] GetCommandDtos(string commandName)
+        {
+            return null;
+        }
+
+        public string GetCommandDtoName(string commandName)
+        {
+            return null;
+        }
+
+        public string GetResultDtoName(string commandName)
+        {
+            return null;
         }
     }
 

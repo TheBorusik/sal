@@ -152,6 +152,10 @@ namespace SAL.Core.Processors
                 HandlerMethod = null,
                 IsCommon = true,
             };
+            
+            ICommandDtoCreator dtoCreater = null;
+            if (handlerType.IsAssignableTo<ICommandDtoCreator>())
+                dtoCreater = (ICommandDtoCreator)container.Resolve(handlerType);
 
 
             var attrs = handlerType.GetCustomAttributes(typeof(SalCommandResultHandlerAttribute)).OfType<SalCommandResultHandlerAttribute>().ToArray();
@@ -174,11 +178,20 @@ namespace SAL.Core.Processors
                         resultHandlers.Add(commandName, handlers);
 
 
-                        salService.AddFrontCommandResultHandler(new API.CommandResultHandlerInfo()
+                        var handlerInfo = new API.CommandResultHandlerInfo()
                         {
                             IsCommon = commandResultHandlerInfo.IsCommon,
                             CommandName = commandName
-                        });
+                        };
+                        
+                        if (dtoCreater != null)
+                        {
+                            handlerInfo.Dtos = dtoCreater.GetCommandDtos(commandName);
+                            handlerInfo.CommandDto = dtoCreater.GetCommandDtoName(commandName);
+                            handlerInfo.ResultDto = dtoCreater.GetResultDtoName(commandName);
+                        }
+                        
+                        salService.AddFrontCommandResultHandler(handlerInfo);
                     }
 
                     logger.Info($"Для команды {commandName} добавлен уневерсальный обработчик результата {handlerType.Name}");

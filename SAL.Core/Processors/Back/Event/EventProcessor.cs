@@ -159,9 +159,15 @@ namespace SAL.Core.Processors
         {
             var attrs = handlerType
                 .GetCustomAttributes(typeof(SalEventHandlerAttribute)).OfType<SalEventHandlerAttribute>().ToArray();
+            
+
 
             if (attrs.Any())
             {
+                IEventDtoCreator dtoCreater = null;
+                if (handlerType.IsAssignableTo<IEventDtoCreator>())
+                    dtoCreater = (IEventDtoCreator)container.Resolve(handlerType);
+                
                 attrs.ForEach(a =>
                 {
                     var eventName = a.EventName;
@@ -186,12 +192,22 @@ namespace SAL.Core.Processors
                         handlers = new List<EventHandlerInfo>();
                         handlers.Add(eventHandlerInfo);
                         eventHandlers.Add(eventName, handlers);
-                        salService.AddBackEventHandler(new API.EventHandlerInfo
+                        
+                        var eventInfo = new API.EventHandlerInfo
                         {
                             IsSystem = eventHandlerInfo.IsSystem,
                             IsCommon = eventHandlerInfo.IsCommon,
                             EventName = eventName
-                        });
+                        };
+
+                        if (dtoCreater != null)
+                        {
+                            eventInfo.EventDto = dtoCreater.GetEventDtoName(eventName);
+                            eventInfo.Dtos = dtoCreater.GetEventDtos(eventName);
+                        }
+                        
+                        
+                        salService.AddBackEventHandler(eventInfo);
                     }
 
                     logger.Info($"Для евента {eventName} добавлен уневерсальный обработчик результата {handlerType.Name}");
