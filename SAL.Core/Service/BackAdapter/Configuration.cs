@@ -45,17 +45,20 @@ namespace SAL.Core.Service
                 AdapterConfiguration.Revision = version.Build;
             }
 
-            if (string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("UseLocalConfigs")))
-            {
-                var remote = new RemoteConfigWatcher();
-                remote.Init();
-                ConfigWatcher = remote;
-            }
-            else
+            if(!bool.TryParse(Environment.GetEnvironmentVariable("UseLocalConfigs"), out var useLocalConfig))
+                useLocalConfig = false;
+
+            if (useLocalConfig)
             {
                 var local = new ConfigWatcher();
                 local.Init(AdapterConfiguration.ConfigPath);
                 ConfigWatcher = local;
+            }
+            else
+            {
+                var remote = new RemoteConfigWatcher();
+                remote.Init();
+                ConfigWatcher = remote;
             }
             
             var firstConfig = ConfigWatcher.GetConfig();
