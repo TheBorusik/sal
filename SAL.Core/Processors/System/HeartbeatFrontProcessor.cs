@@ -28,6 +28,8 @@ namespace SAL.Core.Processors.System
                     Name = AdapterConfiguration.AdapterName,
                     AdapterVersion = AdapterConfiguration.AdapterVersion,
                     SalVersion = AdapterConfiguration.SalVersion,
+                    AdapterHostName = AdapterConfiguration.AdapterHostName,
+                    AdapterHostIp = AdapterConfiguration.AdapterHostIp,
                     Timestamp = DateTime.UtcNow
                 }, SystemEventTimes.BaseTTL);
             }

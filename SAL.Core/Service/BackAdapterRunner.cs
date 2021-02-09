@@ -1,31 +1,35 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
 using Autofac;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using SAL.Core.Exceptions;
 using SAL.Core.NLogEx;
 
 namespace SAL.Core.Service
 {
-    public class BackAdapterRunner 
+    public class BackAdapterRunner
     {
-        public async Task RunAsync()
+        public async Task RunAsync(string[] args)
         {
+            var adapter = new BackAdapter();
+            try
+            {
+                adapter.LoadConfiguration();
+            }
+            catch (ConfigurationErrorException e)
+            {
+                Console.WriteLine(e.Message);
+                return;
+            }
             
 
-            var adapter = new BackAdapter();
-            adapter.LoadConfiguration();
 
             var host = new HostBuilder()
                 .UseServiceProviderFactory(adapter)
-                .ConfigureServices((hc, services) =>
-                {
-                    services.AddHostedService<LifetimeEventsHostedService>();
-                })
-                .ConfigureContainer<ContainerBuilder>((hostContent, builder) =>
-                {
-                    builder.RegisterInstance<ISalService>(adapter);
-                })
+                .ConfigureServices((hc, services) => { services.AddHostedService<LifetimeEventsHostedService>(); })
+                .ConfigureContainer<ContainerBuilder>((hostContent, builder) => { builder.RegisterInstance<ISalService>(adapter); })
                 .ConfigureLogging(logging =>
                 {
                     logging.ClearProviders();
@@ -35,11 +39,16 @@ namespace SAL.Core.Service
                 .Build();
 
             adapter.Initialization();
+            try
+            {
+                await host.RunAsync();
+            }
+            catch (OperationCanceledException)
+            {
+                //
+            }
 
-            await host.RunAsync();
+            adapter.Done();
         }
     }
 }
-
-
-

@@ -13,6 +13,8 @@ namespace SAL.API
         public string Name { get; set; }
         public string AdapterVersion { get; set; }
         public int SalVersion { get; set; }
+        public string AdapterHostName { get; set; }
+        public string[] AdapterHostIp { get; set; }
         public DateTime Timestamp { get; set; }
     }
 }

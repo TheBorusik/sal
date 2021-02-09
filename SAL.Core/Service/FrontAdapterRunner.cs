@@ -4,16 +4,25 @@ using Autofac;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using SAL.Core.Exceptions;
 using SAL.Core.NLogEx;
 
 namespace SAL.Core.Service
 {
     public class FrontAdapterRunner 
     {
-        public async Task RunAsync()
+        public async Task RunAsync(string[] args)
         {
             var adapter = new FrontAdapter();
-            adapter.LoadConfiguration();
+            try
+            {
+                adapter.LoadConfiguration();
+            }
+            catch (ConfigurationErrorException e)
+            {
+                Console.WriteLine($"InitConfiguration error: {e.Message}");
+                return;
+            }
 
             var host = new HostBuilder()
                 .UseServiceProviderFactory(adapter)
@@ -33,7 +42,16 @@ namespace SAL.Core.Service
                 .UseNlog(adapter.LogFactory)
                 .Build();
 
-            adapter.Initialization();
+            try
+            {
+                adapter.Initialization();
+            }
+            catch (ConfigurationErrorException e)
+            {
+                Console.WriteLine($"Adapter Initialization error: {e.Message}");
+                return;
+            }
+
 
             try
             {
@@ -43,6 +61,8 @@ namespace SAL.Core.Service
             {
                 //
             }
+            
+            adapter.Done();
 
         }
     }

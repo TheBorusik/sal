@@ -53,8 +53,7 @@ namespace SAL.Core.Processors
         }
 
         private CommandProcessorConfig commandProcessorConfig;
-
-
+        
         public void Start()
         {
             try
@@ -234,6 +233,7 @@ namespace SAL.Core.Processors
                             IsCommon = commandHandlerInfo.IsCommon,
                             CommandName = commandHandlerInfo.CommandName,
                             IsInstanceHandler = commandHandlerInfo.IsInstanceHandler,
+                            Dtos = new DtoInfo[0]
                         };
 
                     if (dtoCreater != null)

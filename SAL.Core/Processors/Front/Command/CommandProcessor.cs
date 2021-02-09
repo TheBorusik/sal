@@ -52,8 +52,7 @@ namespace SAL.Core.Processors
         }
 
         private CommandProcessorConfig commandProcessorConfig;
-
-
+        
         public void Start()
         {
             try
@@ -235,7 +234,8 @@ namespace SAL.Core.Processors
             {
                 CommandName = commandHandlerInfo.CommandName,
                 ExternalMethod = externalServiceMethod.ServiceMethod,
-                ExternalUri = externalUris
+                ExternalUri = externalUris,
+                Dtos = new DtoInfo[0]
             };
             
             ICommandDtoCreator dtoCreater = null;

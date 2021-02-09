@@ -50,7 +50,7 @@ namespace SAL.Core.Processors
             logger = loggerProvider.CreateLogger(nameof(FrontCommandResultProcessor));
             salService = container.Resolve<ISalService>();
         }
-
+        
         public void Start()
         {
             try
@@ -181,7 +181,8 @@ namespace SAL.Core.Processors
                         var handlerInfo = new API.CommandResultHandlerInfo()
                         {
                             IsCommon = commandResultHandlerInfo.IsCommon,
-                            CommandName = commandName
+                            CommandName = commandName,
+                            Dtos = new DtoInfo[0]
                         };
                         
                         if (dtoCreater != null)

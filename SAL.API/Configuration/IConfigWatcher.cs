@@ -11,10 +11,5 @@ namespace SAL.API
 
         JToken GetSection(string sectionName);
         JObject GetConfig();
-
-        [Obsolete]
-        void UpdateSection(string sectionName, JObject newData);
-        [Obsolete]
-        void MergeSection(string sectionName, JObject mergeData);
     }
 }

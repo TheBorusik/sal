@@ -9,6 +9,4 @@ namespace SAL.Core.Exceptions
         {
         }
     }
-
-
 }

@@ -20,13 +20,13 @@
     <PackageReference Include="NLog" Version="4.7.5" />
     <PackageReference Include="NLog.Extensions.Logging" Version="1.6.5" />
     <PackageReference Include="RabbitMQ.Client" Version="6.2.1" />
+    <PackageReference Include="StackExchange.Redis" Version="2.2.4" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\SAL.API\SAL.API.csproj" />
     <ProjectReference Include="..\SAL.Infrastructure\SAL.Infrastructure.csproj" />
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="Config\Commands" />
     <Folder Include="DB\RedisStore" />
   </ItemGroup>
 </Project>

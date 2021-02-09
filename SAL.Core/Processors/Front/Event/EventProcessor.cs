@@ -46,7 +46,7 @@ namespace SAL.Core.Processors
             logger = loggerProvider.CreateLogger("FrontEventProcessor");
             salService = container.Resolve<ISalService>();
         }
-
+        
         public void Start()
         {
             try
@@ -192,7 +192,8 @@ namespace SAL.Core.Processors
                     {
                         IsSystem = eventHandlerInfo.IsSystem,
                         IsCommon = eventHandlerInfo.IsCommon,
-                        EventName = eventName
+                        EventName = eventName,
+                        Dtos = new DtoInfo[0]
                     };
 
                     if (dtoCreater != null)

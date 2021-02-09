@@ -88,6 +88,8 @@ namespace SAL.Core.Service
                         Name = AdapterConfiguration.AdapterName,
                         AdapterVersion = AdapterConfiguration.AdapterVersion,
                         SalVersion = AdapterConfiguration.SalVersion,
+                        AdapterHostName = AdapterConfiguration.AdapterHostName,
+                        AdapterHostIp = AdapterConfiguration.AdapterHostIp,
                         CommandHandlers = backCommands.ToArray(),
                         CommandResultHandlers = backCommandResults.ToArray(),
                         EventHandlers = backEvents.ToArray()

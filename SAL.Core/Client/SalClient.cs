@@ -194,8 +194,9 @@ namespace SAL.Core.Client
             {
                 CorrelationId = cid,
                 ExceptionDto = exceptionDTO,
-                ServiceName = AdapterConfiguration.AdapterName,
-                ServiceType = AdapterConfiguration.AdapterType
+                AdapterType = AdapterConfiguration.AdapterType,
+                AdapterName = AdapterConfiguration.AdapterName
+
             });
         }
 
@@ -206,8 +207,9 @@ namespace SAL.Core.Client
             {
                 CorrelationId = cid,
                 ExceptionDto = ex.ToDto(SalErrorCodes.Fatal),
-                ServiceName = AdapterConfiguration.AdapterName,
-                ServiceType = AdapterConfiguration.AdapterType
+                AdapterType = AdapterConfiguration.AdapterType,
+                AdapterName = AdapterConfiguration.AdapterName
+
             });
         }
 

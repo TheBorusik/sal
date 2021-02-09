@@ -11,18 +11,19 @@ namespace SAL.Core.Service
             sb.AppendLine()
                 .AppendLine("-------------------------------------------------------------")
                 .AppendLine($"RunnerType      : {GetType().Name}")
-                .AppendLine($"AdapterName     : {AdapterConfiguration.AdapterName}")
+                .AppendLine($"Contour         : {AdapterConfiguration.Contour}")
                 .AppendLine($"AdapterType     : {AdapterConfiguration.AdapterType}")
+                .AppendLine($"AdapterName     : {AdapterConfiguration.AdapterName}")
                 .AppendLine($"AdapterVersion  : {AdapterConfiguration.AdapterVersion}")
                 .AppendLine($"AdapterHostName : {AdapterConfiguration.AdapterHostName}")
                 .AppendLine($"AdapterHostIp   : {string.Join(", ", AdapterConfiguration.AdapterHostIp)}")
-                .AppendLine($"FrontContour    : {AdapterConfiguration.Contour}")
-                .AppendLine($"BackContour     : {AdapterConfiguration.BackContour}")
+                .AppendLine($"FrontContourName: {AdapterConfiguration.ContourName}")
+                .AppendLine($"BackContourName : {AdapterConfiguration.BackContourName}")
                 .AppendLine($"SalVersion      : {AdapterConfiguration.SalVersion} ({AdapterConfiguration.Revision})")
                 .AppendLine($"RootPath        : {AdapterConfiguration.RootPath}")
                 .AppendLine($"ConfigPath      : {AdapterConfiguration.ConfigPath}")
                 .AppendLine($"LogRootPath     : {AdapterConfiguration.LogRootPath}")
-                .AppendLine($"DiskStorePath   : {AdapterConfiguration.DiskStorePath}")
+                .AppendLine($"RootStorePath   : {AdapterConfiguration.DiskStorePath}")
                 .AppendLine("-------------------------------------------------------------");
             logger.Info(sb.ToString());
         }

@@ -24,10 +24,10 @@ namespace SAL.Core.NLogEx.Adapter
 
             logFactory.KeepVariablesOnReload = true;
 
-            logFactory.Configuration.Variables["serviceName"] = $"{AdapterConfiguration.AdapterType}.{AdapterConfiguration.AdapterName}";
-            logFactory.Configuration.Variables["serviceContour"] = AdapterConfiguration.Contour;
+            logFactory.Configuration.Variables["adapterName"] = $"{AdapterConfiguration.AdapterType}.{AdapterConfiguration.AdapterName}";
+            logFactory.Configuration.Variables["adapterContour"] = AdapterConfiguration.Contour;
 
-            var logDir = Path.Combine(AdapterConfiguration.LogRootPath, $"{AdapterConfiguration.Contour}-{ AdapterConfiguration.AdapterType}.{ AdapterConfiguration.AdapterName}");
+            var logDir = Path.Combine(AdapterConfiguration.LogRootPath, $"{AdapterConfiguration.Contour}-{AdapterConfiguration.AdapterType}.{AdapterConfiguration.AdapterName}");
             logFactory.Configuration.Variables["logDir"] = logDir;
 
 

@@ -49,7 +49,7 @@ namespace SAL.Core.Processors
 
         private ExternalHttpProcessorConfig processorConfig;
 
-
+        public void Init() { }
         public void Start()
         {
             try

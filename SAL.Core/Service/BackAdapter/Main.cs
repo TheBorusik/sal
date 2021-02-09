@@ -37,8 +37,6 @@ namespace SAL.Core.Service
         }
 
 
-
-
         public void Start()
         {
             SessionManager.SetNewSession($"{AdapterConfiguration.AdapterType}.{AdapterConfiguration.AdapterName}#Start#");
@@ -51,6 +49,7 @@ namespace SAL.Core.Service
 
 
         private bool stoping = false;
+
         public void Stop()
         {
             SessionManager.SetNewSession($"{AdapterConfiguration.AdapterType}.{AdapterConfiguration.AdapterName}#Stop#");
@@ -63,14 +62,12 @@ namespace SAL.Core.Service
         }
 
 
-
-
         protected virtual void InitUnhandledExceptionHandler()
         {
             logger.Trace("Init Unhandled Exception Handler");
             AppDomain.CurrentDomain.UnhandledException += (sender, args) =>
             {
-                logger.Fatal((Exception)args.ExceptionObject, $"AppDomain.UnhandledException:\r\n");
+                logger.Fatal((Exception) args.ExceptionObject, $"AppDomain.UnhandledException:\r\n");
 
                 try
                 {
@@ -123,17 +120,18 @@ namespace SAL.Core.Service
             sb.AppendLine()
                 .AppendLine("-------------------------------------------------------------")
                 .AppendLine($"RunnerType      : {GetType().Name}")
-                .AppendLine($"AdapterName     : {AdapterConfiguration.AdapterName}")
+                .AppendLine($"Contour         : {AdapterConfiguration.Contour}")
                 .AppendLine($"AdapterType     : {AdapterConfiguration.AdapterType}")
+                .AppendLine($"AdapterName     : {AdapterConfiguration.AdapterName}")
                 .AppendLine($"AdapterVersion  : {AdapterConfiguration.AdapterVersion}")
                 .AppendLine($"AdapterHostName : {AdapterConfiguration.AdapterHostName}")
                 .AppendLine($"AdapterHostIp   : {string.Join(", ", AdapterConfiguration.AdapterHostIp)}")
-                .AppendLine($"Contour         : {AdapterConfiguration.Contour}")
+                .AppendLine($"ContourName     : {AdapterConfiguration.ContourName}")
                 .AppendLine($"SalVersion      : {AdapterConfiguration.SalVersion} ({AdapterConfiguration.Revision})")
                 .AppendLine($"RootPath        : {AdapterConfiguration.RootPath}")
                 .AppendLine($"ConfigPath      : {AdapterConfiguration.ConfigPath}")
                 .AppendLine($"LogRootPath     : {AdapterConfiguration.LogRootPath}")
-                .AppendLine($"DiskStorePath   : {AdapterConfiguration.DiskStorePath}")
+                .AppendLine($"RootStorePath   : {AdapterConfiguration.DiskStorePath}")
                 .AppendLine("-------------------------------------------------------------");
             logger.Info(sb.ToString());
         }

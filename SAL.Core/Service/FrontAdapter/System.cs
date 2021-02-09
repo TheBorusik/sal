@@ -79,6 +79,8 @@ namespace SAL.Core.Service
                         Name = AdapterConfiguration.AdapterName,
                         AdapterVersion = AdapterConfiguration.AdapterVersion,
                         SalVersion = AdapterConfiguration.SalVersion,
+                        AdapterHostName = AdapterConfiguration.AdapterHostName,
+                        AdapterHostIp = AdapterConfiguration.AdapterHostIp,
                         CommandHandlers = frontCommands.ToArray(),
                         CommandResultHandlers = frontCommandResults.ToArray(),
                         EventHandlers = frontEvents.ToArray(),

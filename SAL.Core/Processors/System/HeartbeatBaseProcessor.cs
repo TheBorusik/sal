@@ -10,7 +10,7 @@ namespace SAL.Core.Processors.System
         private CancellationTokenSource cancellationToken;
         private Task beatTask = Task.CompletedTask;
 
-
+        public void Init() { }
         public void Start()
         {
         }

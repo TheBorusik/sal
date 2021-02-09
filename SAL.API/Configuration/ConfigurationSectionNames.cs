@@ -1,14 +1,14 @@
-﻿namespace SAL.API
+﻿namespace SAL.Core.Config
 {
     public static class ConfigurationSectionNames
     {
-        public const string Service = "service";
-        public const string MessageBus = "messagebus";
-        public const string FrontMessageBus = "frontmessagebus";
+        public const string Service = "Service";
+        public const string MessageBus = "MessageBus";
+        public const string FrontMessageBus = "FrontMessageBus";
 
-        public const string BridgedMessageBus = "bridgedmessagebus";
-        public const string Modules = "modules";
-        public const string ConnectionManager = "connectionmanager";
+        public const string BridgedMessageBus = "BridgedMessageBus";
+        public const string Modules = "Modules";
+        public const string ConnectionManager = "ConnectionManager";
         public const string Nlog = "Nlog";
 
         public const string CommandProcessor = "CommandProcessor";

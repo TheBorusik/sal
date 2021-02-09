@@ -11,8 +11,6 @@ using SAL.Infrastructure;
 using SAL.Infrastructure.EventAttributes;
 using SAL.Infrastructure.FrontAttributes;
 
-
-[assembly: SalAdapterType("SalTest")]
 [assembly: SalServiceType("SalTest")]
 
 // ReSharper disable once CheckNamespace
@@ -38,6 +36,7 @@ namespace SAL.Test
         {
             this.scope = scope;
         }
+
 
         public void Start()
         {

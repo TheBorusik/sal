@@ -8,8 +8,8 @@ namespace SAL.API
     public class ExceptionDetectedEvent : IEvent
     {
         public string CorrelationId { get; set; }
-        public string ServiceType { get; set; }
-        public string ServiceName { get; set; }
+        public string AdapterType { get; set; }
+        public string AdapterName { get; set; }
         public InternalExceptionDTO ExceptionDto { get; set; }
     }
 }

@@ -17,7 +17,7 @@ namespace SAL.Core.Service
     {
         protected override void ApplyConfiguration()
         {
-            var service = ConfigWatcher.GetSection(ConfigurationSectionNames.Service)?.ConvertValue<Config.Service.Service>();
+            var service = ConfigWatcher.GetSection(ConfigurationSectionNames.Service)?.ConvertValue<Config.Service>();
             if (service == null)
                 throw new ConfigurationErrorException($"Не найдена секция {ConfigurationSectionNames.Service}");
 
@@ -34,18 +34,18 @@ namespace SAL.Core.Service
             AdapterConfiguration.AdapterName = service.AdapterName;
 
             if (string.IsNullOrWhiteSpace(service.LogRoot))
-                service.LogRoot = "/logs";
+                service.LogRoot = "logs";
 
             AdapterConfiguration.LogRootPath = !Path.IsPathRooted(service.LogRoot)
                 ? Path.Combine(AdapterConfiguration.RootPath, service.LogRoot)
                 : service.LogRoot;
             
-            if (string.IsNullOrWhiteSpace(service.DiskStorePath))
-                service.DiskStorePath = "store";
+            if (string.IsNullOrWhiteSpace(service.RootStorePath))
+                service.RootStorePath = "store";
 
-            AdapterConfiguration.DiskStorePath = !Path.IsPathRooted(service.DiskStorePath)
-                ? Path.Combine(AdapterConfiguration.RootPath, service.DiskStorePath)
-                : service.DiskStorePath;
+            AdapterConfiguration.DiskStorePath = !Path.IsPathRooted(service.RootStorePath)
+                ? Path.Combine(AdapterConfiguration.RootPath, service.RootStorePath)
+                : service.RootStorePath;
 
             if (!Directory.Exists(AdapterConfiguration.DiskStorePath))
                 Directory.CreateDirectory(AdapterConfiguration.DiskStorePath);
@@ -65,13 +65,15 @@ namespace SAL.Core.Service
                 throw new ConfigurationErrorException($"DiskStore - Ошибка конфигурации. Проверте  доступность \"{AdapterConfiguration.DiskStorePath}\".");
             }
 
+            AdapterConfiguration.Contour = "FRONT";
+            
             var messageBus = ConfigWatcher.GetSection(ConfigurationSectionNames.MessageBus)?.ConvertValue<RabbitConfig>();
             if (messageBus == null)
             {
                 throw new ConfigurationErrorException("Не найдена секция MessageBus");
             }
 
-            AdapterConfiguration.BackContour = messageBus.VirtualHost.ToUpperInvariant();
+            AdapterConfiguration.BackContourName = messageBus.VirtualHost.ToUpperInvariant();
 
             var frontMessageBus = ConfigWatcher.GetSection(ConfigurationSectionNames.FrontMessageBus)?.ConvertValue<RabbitConfig>();
             if (frontMessageBus == null)
@@ -79,7 +81,7 @@ namespace SAL.Core.Service
                 throw new ConfigurationErrorException("Не найдена секция FrontMessageBus");
             }
             
-            AdapterConfiguration.Contour = frontMessageBus.VirtualHost.ToUpperInvariant();
+            AdapterConfiguration.ContourName = frontMessageBus.VirtualHost.ToUpperInvariant();
 
         }
 

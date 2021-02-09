@@ -29,12 +29,14 @@ namespace SAL.Core.Service
 
             AdapterConfiguration.AdapterHostName = System.Net.Dns.GetHostName();
             AdapterConfiguration.AdapterHostIp = System.Net.Dns.GetHostAddresses(AdapterConfiguration.AdapterHostName).Where(ip => ip.AddressFamily == AddressFamily.InterNetwork).Select(ip => ip.ToString()).ToArray();
-
-
+            
             AdapterConfiguration.RootPath = AppDomain.CurrentDomain.BaseDirectory;
             AdapterConfiguration.ConfigPath = Path.Combine(AdapterConfiguration.RootPath, "config");
-
-
+            AdapterConfiguration.AdapterType = Environment.GetEnvironmentVariable("AdapterType");
+            
+            if(string.IsNullOrWhiteSpace(AdapterConfiguration.AdapterType))
+                throw new ConfigurationErrorException("Не заданно значение AdapterType в переменных окружения");
+            
             var assembly = AppDomain.CurrentDomain.GetAssemblies().FirstOrDefault(a => a.GetName().Name.Equals("SAL.Core", StringComparison.InvariantCultureIgnoreCase));
             if (assembly != null)
             {
@@ -42,9 +44,22 @@ namespace SAL.Core.Service
                 AdapterConfiguration.SalVersion = version.CalculateVersion();
                 AdapterConfiguration.Revision = version.Build;
             }
-            var configWatcher = new ConfigWatcher();
 
-            var firstConfig = configWatcher.Init(AdapterConfiguration.ConfigPath);
+            if (string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("UseLocalConfigs")))
+            {
+                var remote = new RemoteConfigWatcher();
+                remote.Init();
+                ConfigWatcher = remote;
+            }
+            else
+            {
+                var local = new ConfigWatcher();
+                local.Init(AdapterConfiguration.ConfigPath);
+                ConfigWatcher = local;
+            }
+            
+            var firstConfig = ConfigWatcher.GetConfig();
+            
             var modules = firstConfig.GetSafeValue<string[]>("Modules", null);
             if (modules != null && modules.Any())
             {
@@ -54,18 +69,10 @@ namespace SAL.Core.Service
                     throw new ConfigurationErrorException("Не возможно получить тип первого модуля.");
 
                 var mainAssembly = firstModuleType.Assembly;
-                var ssAttribute = mainAssembly.GetCustomAttributes(typeof(SalAdapterTypeAttribute))
-                    .OfType<SalAdapterTypeAttribute>().FirstOrDefault();
-                if (string.IsNullOrWhiteSpace(ssAttribute?.Type))
-                {
-                    throw new ConfigurationErrorException("Не заданно значение SalAdapterTypeAttribute в главной сборке");
-                }
-                AdapterConfiguration.AdapterType = ssAttribute.Type;
-
+                
                 var fileVersionAttribute = mainAssembly.GetCustomAttributes(typeof(AssemblyFileVersionAttribute))
                     .OfType<AssemblyFileVersionAttribute>().FirstOrDefault();
-
-
+                
                 if (string.IsNullOrWhiteSpace(fileVersionAttribute?.Version))
                 {
                     AdapterConfiguration.AdapterVersion = "unknown";
@@ -75,16 +82,7 @@ namespace SAL.Core.Service
                     AdapterConfiguration.AdapterVersion = Regex.Replace(fileVersionAttribute?.Version, @"(\d+.\d+.\d+).*", "$1");
                 }
             }
-            else
-            {
-                throw new ConfigurationErrorException("Не заданно значение Modules в конфиге");
-            }
-
-
-
-            ConfigWatcher = configWatcher;
-
-
+            
             ApplyConfiguration();
 
             ConfigWatcher.Subscribe(ConfigurationSectionNames.Nlog, NlogConfigChanged);
@@ -98,7 +96,7 @@ namespace SAL.Core.Service
 
         protected virtual void ApplyConfiguration()
         {
-            var service = ConfigWatcher.GetSection(ConfigurationSectionNames.Service)?.ConvertValue<Config.Service.Service>();
+            var service = ConfigWatcher.GetSection(ConfigurationSectionNames.Service)?.ConvertValue<Config.Service>();
             if (service == null)
                 throw new ConfigurationErrorException($"Не найдена секция {ConfigurationSectionNames.Service}");
 
@@ -115,18 +113,18 @@ namespace SAL.Core.Service
             AdapterConfiguration.AdapterName = service.AdapterName;
 
             if (string.IsNullOrWhiteSpace(service.LogRoot))
-                service.LogRoot = "/logs";
+                service.LogRoot = "logs";
 
             AdapterConfiguration.LogRootPath = !Path.IsPathRooted(service.LogRoot)
                 ? Path.Combine(AdapterConfiguration.RootPath, service.LogRoot)
                 : service.LogRoot;
             
-            if (string.IsNullOrWhiteSpace(service.DiskStorePath))
-                service.DiskStorePath = "store";
+            if (string.IsNullOrWhiteSpace(service.RootStorePath))
+                service.RootStorePath = "store";
 
-            AdapterConfiguration.DiskStorePath = !Path.IsPathRooted(service.DiskStorePath)
-                ? Path.Combine(AdapterConfiguration.RootPath, service.DiskStorePath)
-                : service.DiskStorePath;
+            AdapterConfiguration.DiskStorePath = !Path.IsPathRooted(service.RootStorePath)
+                ? Path.Combine(AdapterConfiguration.RootPath, service.RootStorePath, $"{AdapterConfiguration.AdapterType}.{AdapterConfiguration.AdapterName}")
+                : service.RootStorePath;
 
             if (!Directory.Exists(AdapterConfiguration.DiskStorePath))
                 Directory.CreateDirectory(AdapterConfiguration.DiskStorePath);
@@ -152,7 +150,8 @@ namespace SAL.Core.Service
                 throw new ConfigurationErrorException("Не найдена секция MessageBus");
             }
 
-            AdapterConfiguration.Contour = messageBus.VirtualHost.ToUpperInvariant();
+            AdapterConfiguration.Contour = "BACK";
+            AdapterConfiguration.ContourName = messageBus.VirtualHost.ToUpperInvariant();
 
 
         }
@@ -166,6 +165,11 @@ namespace SAL.Core.Service
             SalLayoutRenderRegistrar.Register(LayoutRenderer.Register);
             nLogFactory = new NLogFactoryAdapter(ConfigWatcher.GetSection(ConfigurationSectionNames.Nlog));
             logger = nLogFactory.GetLogger(nameof(BackAdapter));
+        }
+
+        public virtual void Done()
+        {
+
         }
     }
 }

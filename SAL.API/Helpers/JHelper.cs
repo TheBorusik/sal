@@ -86,7 +86,10 @@ namespace SAL.API
         public static JToken GetValueIC(this JToken jToken, string propertyName)
         {
             if (jToken is JObject jObj)
-                return jObj.GetValue(propertyName, StringComparison.OrdinalIgnoreCase);
+                foreach(var property in jObj.Properties())
+                    if (string.Equals(property.Name, propertyName, StringComparison.InvariantCultureIgnoreCase))
+                        return property.Value;
+            
             return jToken?.SelectToken(propertyName);
         }
 
@@ -116,27 +119,35 @@ namespace SAL.API
 
         // JObject
 
-        public static void AddOrUpdate(this JObject jObj, string propertyName, object value)
+        public static JObject AddOrUpdate(this JObject jObj, string propertyName, object value)
         {
-            if (jObj.GetValueIC(propertyName)?.Parent is JProperty jprop)
+            var find = false;
+            foreach(var property in jObj.Properties())
             {
-                jprop.Value = value != null ? JToken.FromObject(value) : JValue.CreateNull();
+                if (string.Equals(property.Name, propertyName, StringComparison.InvariantCultureIgnoreCase))
+                {
+                    property.Value = value != null ? JToken.FromObject(value) : JValue.CreateNull();
+                    find = true;
+                    break;
+                }
             }
-            else
+
+            if (find) return jObj;
+
+            try
             {
                 if (value != null)
-                    try
-                    {
-                        jObj.Add(propertyName, JToken.FromObject(value));
-                    }
-                    catch (Exception e)
-                    {
-                        var x = 0;
-                        x++;
-                    }
+                    jObj.Add(propertyName, JToken.FromObject(value));
             }
-        }
+            catch (Exception)
+            {
+                // ignored
+            }
 
+            return jObj;
+        }
+        
+        
         public static bool TryGetValue(this JObject jObj, string propertyName, Type type, out object value)
         {
             try

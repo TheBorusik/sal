@@ -19,28 +19,32 @@ namespace SAL.Core.Service
         protected void StartProcessors()
         {
             HandlerContext.Type = HandlerTypes.Processor;
-            processors.ForEach(p =>
+            
+            var onlineTasks = processors.Select(p => Task.Run(() =>
             {
+                HandlerContext.Type = HandlerTypes.Processor;
                 HandlerContext.Name = p.GetType().Name;
                 p.Start();
-            });
+            })).ToArray();
+
+            Task.WaitAll(onlineTasks);
+            
         }
 
         protected void StopProcessors()
         {
-            HandlerContext.Type = HandlerTypes.Processor;
-            processors.TryForEach(p =>
+            var onlineTasks = processors.Select(p => Task.Run(() =>
             {
+                HandlerContext.Type = HandlerTypes.Processor;
                 HandlerContext.Name = p.GetType().Name;
                 p.Stop();
-            });
+            })).ToArray();
+
+            Task.WaitAll(onlineTasks);
         }
 
         protected void OnlineProcessors()
         {
-
-            
-
             var onlineTasks = processors.Select(p => Task.Run(() =>
             {
                 HandlerContext.Type = HandlerTypes.Processor;

@@ -60,7 +60,7 @@ namespace SAL.Test
     [SalCommandHandler("SalTest", "Test2")]
     [SalCommandHandler("SalTest", "Test")]
     [SalCommandHandler("Test1", "Jopa")]
-    public class CommonCommandHandler : ICommonCommandHandler //, ICommandDtoCreator
+    public class CommonCommandHandler : ICommonCommandHandler , ICommandDtoCreator
     {
         private CommandContext commandContext;
         private ExecutingContext executingContext;
@@ -240,10 +240,12 @@ namespace SAL.Test
             this.client = scope.Resolve<ISalClient>();
         }
 
+        
         public void Start()
         {
             logger.LogInformation("Тестовое сообщение", new {MercId = 10});
 
+         //   throw new Exception("test");
         }
 
 

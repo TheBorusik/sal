@@ -1,9 +1,9 @@
-namespace SAL.Core.Config.Service
+namespace SAL.Core.Config
 {
     public class Service
     {
         public string AdapterName { get; set; }
         public string LogRoot { get; set; }
-        public string DiskStorePath { get; set; }
+        public string RootStorePath { get; set; }
     }
 }
