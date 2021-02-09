@@ -11,7 +11,7 @@ namespace SAL.Core.Service
 {
     public class FrontAdapterRunner 
     {
-        public async Task RunAsync(string[] args)
+        public async Task RunAsync()
         {
             var adapter = new FrontAdapter();
             try

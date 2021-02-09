@@ -9,7 +9,7 @@ namespace SAL.Test
         public static async Task Main(string[] args)
         {
             var back = new FrontAdapterRunner();
-            await back.RunAsync(args);
+            await back.RunAsync();
         }
     }
 }
