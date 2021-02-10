@@ -2,7 +2,7 @@
   "Nlog": {
     "AutoReload": true,
     "ThrowExceptions": false,
-    "InternalLogLevel": "Trace",
+    "InternalLogLevel": "Off",
     "internalLogFile": "/temp/nlog-internal.log",
 
     "Targets": {
@@ -26,44 +26,38 @@
       "File": {
         "Type": "File",
         "Layout": "${longdate} ${sid:padding} ${level}: ${Logger} -> ${message} ${exception:format=Message,StackTrace}",
-        "FileName": "${var:logDir}\\${date:format=yyyy-MM-dd}.${var:adapterName}.Log",
+        "FileName": "${var:logDir}/${date:format=yyyy-MM-dd}.${var:adapterName}.Log",
         "CreateDirs": true
       },
       "LoggerFile": {
         "Type": "File",
         "Layout": "${longdate} ${sid:padding} ${level}: -> ${message} ${exception:format=Type, Message}",
-        "FileName": "${var:logDir}\\${date:format=yyyy-MM-dd}.${Logger}.Log",
+        "FileName": "${var:logDir}/${date:format=yyyy-MM-dd}.${Logger}.${var:adapterName}.Log",
         "CreateDirs": true
       },
       "RMQFile": {
         "Type": "File",
         "Layout": "${longdate} ${sid:padding} ${Logger} ${level} -> ${message} ${exception:format=Type, Message}",
-        "FileName": "${var:logDir}\\${date:format=yyyy-MM-dd}.Rabbit.Log",
+        "FileName": "${var:logDir}/${date:format=yyyy-MM-dd}.Rabbit.${var:adapterName}.Log",
         "CreateDirs": "true"
       },
       "WDFile": {
         "Type": "File",
         "Layout": "${longdate} ${sid:padding} ${level:padding=-6}:${Logger:padding=-17} -> ${message} ${exception:format=Type, Message}",
-        "FileName": "${var:logDir}\\${date:format=yyyy-MM-dd}.WatchDog.Log",
+        "FileName": "${var:logDir}/${date:format=yyyy-MM-dd}.WatchDog.${var:adapterName}.Log",
         "CreateDirs": true
       },
-      "DataFile": {
-        "Type": "File",
-        "Layout": "${longdate} ${sid:padding} ${message} ${exception:format=Type, Message}",
-        "FileName": "${var:logDir}\\${date:format=yyyy-MM-dd}.${Logger}.Log",
-        "CreateDirs": true
-      },
-
+      
       "CommandFile": {
         "Type": "File",
         "Layout": "${longdate} ${sid:padding} ${message} ${exception:format=Type, Message}",
-        "FileName": "${var:logDir}\\Commands\\${date:format=yyyy-MM-dd}.${Logger}.Log",
+        "FileName": "${var:logDir}/Commands/${date:format=yyyy-MM-dd}.${Logger}.Log",
         "CreateDirs": true
       },
       "EventFile": {
         "Type": "File",
         "Layout": "${longdate} ${sid:padding} ${message} ${exception:format=Type, Message}",
-        "FileName": "${var:logDir}\\Events\\${date:format=yyyy-MM-dd}.${Logger}.Log",
+        "FileName": "${var:logDir}/Events/${date:format=yyyy-MM-dd}.${Logger}.Log",
         "CreateDirs": true
       },
 
