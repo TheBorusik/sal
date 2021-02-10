@@ -64,10 +64,9 @@ namespace SAL.Core.Service
                 .SingleInstance();
 
             builder.RegisterSalHandler<GetCommandTestCasesHandler>();
-          //  builder.RegisterSalHandler<AddCommandTestCaseHandler>();
+            builder.RegisterSalHandler<AddCommandTestCaseHandler>();
             builder.RegisterSalHandler<GetAdapterConfigurationHandler>();
-          //  builder.RegisterSalHandler<UpdateAdapterConfigurationHandler>();
-
+            
             builder.RegisterType<LiteDbLocalStore>()
                 .As<ILocalStore>()
                 .SingleInstance();

@@ -242,14 +242,19 @@ namespace SAL.Core.Config
             subscriber?.UnsubscribeAll();
         }
 
-        [Obsolete]
+
         public void UpdateSection(string sectionName, JObject newData)
+        {
+            
+        }
+        
+        public void MergeSection(string sectionName, JObject mergeData)
         {
         }
 
-        [Obsolete]
-        public void MergeSection(string sectionName, JObject mergeData)
+        public bool CanUpdateConfig()
         {
+            return false;
         }
     }
 }

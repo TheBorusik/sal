@@ -133,5 +133,165 @@ namespace SAL.Core.Config
             return configurationRoot.Clone();
         }
         
+        public void UpdateSection(string sectionName, JObject newData)
+        {
+            configurationRoot.AddOrUpdate(sectionName, newData);
+            configWatcher.EnableRaisingEvents = false;
+            var fileCount = SectionInFiles(sectionName);
+            var fileName = "";
+            if (fileCount > 1)
+            {
+                RemoveSectionFromFiles(sectionName);
+            }else if(fileCount == 1)
+            {
+                fileName = SectionFileName(sectionName);
+            }
+            
+            SaveSection(sectionName, newData, fileName);
+            configWatcher.EnableRaisingEvents = true;
+        }
+
+        public void MergeSection(string sectionName, JObject mergeData)
+        {
+            var section = configurationRoot.GetValueIC(sectionName);
+            if (section == null)
+            {
+                configurationRoot.AddOrUpdate(sectionName, mergeData);
+                section = mergeData;
+            }
+            else
+            {
+                if (section is JObject js)
+                {
+                    js.Merge(mergeData);
+                }
+                else
+                {
+                    section.Parent?.Remove();
+                    configurationRoot.AddOrUpdate(sectionName, mergeData);
+                    section = mergeData;
+                }
+            }
+            
+            configWatcher.EnableRaisingEvents = false;
+            var fileCount = SectionInFiles(sectionName);
+            var fileName = "";
+            if (fileCount > 1)
+            {
+                RemoveSectionFromFiles(sectionName);
+            }else if(fileCount == 1)
+            {
+                fileName = SectionFileName(sectionName);
+            }
+            
+
+            SaveSection(sectionName, section, fileName);
+            configWatcher.EnableRaisingEvents = true;
+            
+            
+        }
+
+        public bool CanUpdateConfig()
+        {
+            return true;
+        }
+
+        private void RemoveSectionFromFiles(string sectionName)
+        {
+            Directory.EnumerateFiles(AdapterConfiguration.ConfigPath, "*.json").ForEach(fn =>
+            {
+                try
+                {
+                    var configData = File.ReadAllText(fn);
+                    var jData = JObject.Parse(configData);
+                    var section = jData.GetValueIC(sectionName);
+                    if (section != null)
+                    { 
+                        section.Parent?.Remove();
+                        File.WriteAllText(fn, jData.ToIndentedJson());
+                    }
+                    
+                }
+                catch (Exception)
+                {
+                    //
+                }
+            });
+
+        }
+
+        private int SectionInFiles(string sectionName)
+        {
+            var files = 0;
+            Directory.EnumerateFiles(AdapterConfiguration.ConfigPath, "*.json").ForEach(fn =>
+            {
+                try
+                {
+                    var configData = File.ReadAllText(fn);
+                    var jData = JToken.Parse(configData);
+                    var section = jData.GetValueIC(sectionName);
+                    if (section != null)
+                    {
+                        files++;
+                    }
+                }
+                catch (Exception)
+                {
+                    //
+                }
+            });
+            return files;
+        }
+
+        private string SectionFileName(string sectionName)
+        {
+            var filename = "";
+            Directory.EnumerateFiles(AdapterConfiguration.ConfigPath, "*.json").ForEach(fn =>
+            {
+                try
+                {
+                    var configData = File.ReadAllText(fn);
+                    var jData = JToken.Parse(configData);
+                    var section = jData.GetValueIC(sectionName);
+                    if (section != null)
+                    {
+                        filename = fn;
+                    }
+                }
+                catch (Exception)
+                {
+                    //
+                }
+            });
+            return filename;
+        }
+
+        private void SaveSection(string sectionName, JToken sectionData, string filename)
+        {          
+            var fileName = Path.Combine(AdapterConfiguration.ConfigPath, sectionName + ".json");
+            if (!string.IsNullOrEmpty(filename))
+                fileName = filename;
+            var fileData = new JObject();
+            if (File.Exists(fileName))
+            {
+                try
+                {
+                    var configData = File.ReadAllText(fileName);
+                    fileData = JObject.Parse(configData);
+                    var section = fileData.GetValueIC(sectionName);
+                    if (section != null)
+                    {
+                        section.Parent?.Remove();
+                    }
+                }
+                catch (Exception)
+                {
+                    fileData = new JObject();
+                }
+            }
+            fileData.Add(sectionName, sectionData);
+            File.WriteAllText(fileName, fileData.ToIndentedJson());
+        }
+        
     }
 }
