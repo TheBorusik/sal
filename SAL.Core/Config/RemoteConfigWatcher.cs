@@ -72,9 +72,6 @@ namespace SAL.Core.Config
             var busHost = Environment.GetEnvironmentVariable("ConfBus") ?? "configurationBus";
             Console.WriteLine($"Connect to configurationBus ({busHost})...");
 
-           
-            
-
             var options = new ConfigurationOptions
             {
                 EndPoints =
@@ -104,8 +101,9 @@ namespace SAL.Core.Config
             baseServiceSection.RootStorePath = "";
 
 
-            Console.WriteLine("Geting Adapter configuration");
+            Console.WriteLine($"Geting Adapter configuration for {AdapterConfiguration.AdapterType}.{baseServiceSection.AdapterName}");
             configurationRoot = GetConfigFromBus();
+            Console.WriteLine($"Config Received");
         }
 
         private JObject GetConfigFromBus()
@@ -116,14 +114,14 @@ namespace SAL.Core.Config
             if (!value.HasValue) throw new ConfigurationErrorException("Config not found");
             db.KeyDelete(key);
             var config = JObject.Parse(value);
-            config.Merge(baseServiceSection, mergeSettings);
+            config.AddOrUpdate(ConfigurationSectionNames.Service, baseServiceSection);
             return config.Clone();
         }
 
         private void RedisHandler(ChannelMessage msg)
         {
             var configMessage = msg.Message.ToString().ConvertValue<ConfigMessage>();
-            if(configMessage.Source == AdapterConfiguration.AdapterType)
+            if(configMessage.Source == AdapterConfiguration.AdapterFullName)
                 return;
             
             var dt = DateTime.UtcNow - configMessage.Timestamp;
@@ -181,7 +179,7 @@ namespace SAL.Core.Config
 
             var message = new ConfigMessage
             {
-                Source = AdapterConfiguration.AdapterType,
+                Source = AdapterConfiguration.AdapterFullName,
                 Destination = new string [0],
                 Timestamp = DateTime.UtcNow,
                 Type = MessageTypes.GetAdapterName,

@@ -86,19 +86,6 @@ namespace SAL.Core.Service
                 }
             }
             
-            ApplyConfiguration();
-
-            ConfigWatcher.Subscribe(ConfigurationSectionNames.Nlog, NlogConfigChanged);
-        }
-
-        protected void NlogConfigChanged(object sender, ConfigurationSectionChangedEventArgs args)
-        {
-            if (!args.SectionName.Equals(ConfigurationSectionNames.Nlog, StringComparison.InvariantCultureIgnoreCase)) return;
-            nLogFactory.Reload(ConfigWatcher.GetSection(ConfigurationSectionNames.Nlog));
-        }
-
-        protected virtual void ApplyConfiguration()
-        {
             var service = ConfigWatcher.GetSection(ConfigurationSectionNames.Service)?.ConvertValue<Config.Service>();
             if (service == null)
                 throw new ConfigurationErrorException($"Не найдена секция {ConfigurationSectionNames.Service}");
@@ -126,7 +113,7 @@ namespace SAL.Core.Service
                 service.RootStorePath = "store";
 
             AdapterConfiguration.DiskStorePath = !Path.IsPathRooted(service.RootStorePath)
-                ? Path.Combine(AdapterConfiguration.RootPath, service.RootStorePath, $"{AdapterConfiguration.AdapterType}.{AdapterConfiguration.AdapterName}")
+                ? Path.Combine(AdapterConfiguration.RootPath, service.RootStorePath, AdapterConfiguration.AdapterType)
                 : service.RootStorePath;
 
             if (!Directory.Exists(AdapterConfiguration.DiskStorePath))
@@ -146,17 +133,31 @@ namespace SAL.Core.Service
             {
                 throw new ConfigurationErrorException($"DiskStore - Ошибка конфигурации. Проверте  доступность \"{AdapterConfiguration.DiskStorePath}\".");
             }
+            
+            
+            
+            ApplyConfiguration();
 
+            ConfigWatcher.Subscribe(ConfigurationSectionNames.Nlog, NlogConfigChanged);
+        }
+
+        protected void NlogConfigChanged(object sender, ConfigurationSectionChangedEventArgs args)
+        {
+            if (!args.SectionName.Equals(ConfigurationSectionNames.Nlog, StringComparison.InvariantCultureIgnoreCase)) return;
+            nLogFactory.Reload(ConfigWatcher.GetSection(ConfigurationSectionNames.Nlog));
+        }
+
+        protected virtual void ApplyConfiguration()
+        {
+            AdapterConfiguration.Contour = "BACK";
+            
             var messageBus = ConfigWatcher.GetSection(ConfigurationSectionNames.MessageBus)?.ConvertValue<RabbitConfig>();
             if (messageBus == null)
             {
                 throw new ConfigurationErrorException("Не найдена секция MessageBus");
             }
-
-            AdapterConfiguration.Contour = "BACK";
+            
             AdapterConfiguration.ContourName = messageBus.VirtualHost.ToUpperInvariant();
-
-
         }
 
         protected virtual void InitNLog()
