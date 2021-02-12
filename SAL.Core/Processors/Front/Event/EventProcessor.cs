@@ -217,7 +217,8 @@ namespace SAL.Core.Processors
                 HandlerContext.Name = "FrontEventProcessor";
                 var transportMessage = ExtractMessage(rabbitMessage);
                 var eventPayload = ExtractEventPayload(transportMessage);
-                SessionManager.StartAdapterSession(transportMessage.Session);
+                //SessionManager.StartAdapterSession(transportMessage.Session);
+                SessionManager.Restore(transportMessage.Session);
                 salLogger.LogIncoming(eventPayload);
                 await Processing(transportMessage, eventPayload);
                 ack();
