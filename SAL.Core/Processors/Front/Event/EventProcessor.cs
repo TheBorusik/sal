@@ -218,7 +218,7 @@ namespace SAL.Core.Processors
                 var transportMessage = ExtractMessage(rabbitMessage);
                 var eventPayload = ExtractEventPayload(transportMessage);
                 //SessionManager.StartAdapterSession(transportMessage.Session);
-                SessionManager.UpdateCurrent(transportMessage.Session);
+                SessionManager.Restore(transportMessage.Session);
                 salLogger.LogIncoming(eventPayload);
                 await Processing(transportMessage, eventPayload);
                 ack();

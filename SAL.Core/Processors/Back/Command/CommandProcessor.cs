@@ -298,8 +298,7 @@ namespace SAL.Core.Processors
 
                 var transportMessage = ExtractMessage(rabbitMessage);
                 var commandPayload = ExtractCommandPayload(transportMessage);
-                //SessionManager.StartAdapterSession(transportMessage.Session);
-                SessionManager.UpdateCurrent(transportMessage.Session);
+                SessionManager.Restore(transportMessage.Session);
                 salLogger.LogIncoming(commandPayload);
                 if (commandPayload.Descriptor.CommandName == "WFM.Result")
                     await ProcessingWfmResult(transportMessage, commandPayload);

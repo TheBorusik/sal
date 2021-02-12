@@ -62,15 +62,14 @@ namespace SAL.API
         public static void IncOperationId()
         {
             var session = Current;
+            if(session == null)
+                return;
             var operationId = session.GetSafeValue(SessionNames.OperationId, 0L);
             session.AddOrUpdate(SessionNames.OperationId, ++operationId);
         }
 
         public static void Restore(JObject session)
         {
-            if (session == null)
-                return;
-            
             SetSession(session.Clone());
         }
 
