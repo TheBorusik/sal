@@ -275,7 +275,7 @@ namespace SAL.Core.Processors
                 var transportMessage = ExtractMessage(rabbitMessage);
                 var commandPayload = ExtractCommandPayload(transportMessage);
                 //SessionManager.StartAdapterSession(transportMessage.Session);
-                SessionManager.Restore(transportMessage.Session);
+                SessionManager.UpdateCurrent(transportMessage.Session);
                 salLogger.LogIncoming(commandPayload);
                 await Processing(transportMessage, commandPayload);
                 ack();
