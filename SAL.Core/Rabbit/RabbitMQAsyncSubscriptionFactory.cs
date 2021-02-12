@@ -295,7 +295,7 @@ namespace SAL.Core.Rabbit
               string queueName;
               queues.ForEach(q =>
             {
-                queueName = "Ext." + q.Path.ToLower();
+                queueName = "ExtPath#" + q.Path.ToLower();
                 queueList.Add(new QueueInfo
                 {
                     QueueName = queueName,

@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Autofac;
 using Newtonsoft.Json.Linq;
 using SAL.API;
+using SAL.API.FrontCommand;
 using SAL.Core.DTO.Transport;
 using SAL.Core.Helpers;
 using SAL.Core.Processors;
@@ -284,9 +285,7 @@ namespace SAL.Core.Client
 
 
             var correlationId = Guid.NewGuid().ToString("N");
-
-            var completionSource = new TaskCompletionSource<SimpleCommandResult>();
-
+            
             var routingKey = "";
             if (string.IsNullOrWhiteSpace(handlerAdapterType) && string.IsNullOrWhiteSpace(handlerAdapterName))
                 routingKey = commandName;
@@ -316,30 +315,82 @@ namespace SAL.Core.Client
                 Descriptor = commandDescriptor,
                 Payload = JObject.FromObject(commandBody, SalSerializer.Create())
             };
-            salLogger.LogOutgoing(commandPayload);
 
+            return await ExecuteCommandAsync(commandPayload, routingKey);
+            
+        }
+
+        public async Task<CommonCommandResult> ExecuteExternalHttp(
+            ExternalHttpRequest request,
+            TimeSpan ttl,
+            string handlerAdapterType,
+            string handlerAdapterName)
+        {
+            
+            var correlationId = Guid.NewGuid().ToString("N");
+            
+            var routingKey = request.Path;
+
+
+
+            var commandDescriptor = new CommandDescriptor
+            {
+                CorrelationId = correlationId,
+                CommandName = "ExternalHttp",
+                Priority = CommandPriority.Normal,
+                DestinationAdapterType = handlerAdapterType,
+                DestinationAdapterName = handlerAdapterName,
+                SourceAdapterType = AdapterConfiguration.AdapterType,
+                SourceAdapterName = AdapterConfiguration.AdapterName,
+                ResultAdapterType = AdapterConfiguration.AdapterType,
+                ResultAdapterName = AdapterConfiguration.AdapterName,
+                PublishTimeStamp = DateTime.UtcNow,
+                TTL = ttl,
+                IsSync = true,
+                Contour = ContourName
+            };
+
+            var commandPayload = new CommandPayload
+            {
+                Descriptor = commandDescriptor,
+                Payload = JObject.FromObject(request, SalSerializer.Create())
+            };
+
+            return await ExecuteCommandAsync(commandPayload, routingKey);
+        }
+        
+        
+        public async Task<CommonCommandResult> ExecuteCommandAsync(CommandPayload commandPayload, string routingKey)
+        {
+
+            commandPayload.Descriptor.TTL ??= TimeSpan.FromMinutes(1);
+            
+            salLogger.LogOutgoing(commandPayload);
+            
             var transportMessage = new Message
             {
                 Type = MessageTypes.Command,
                 Payload = JObject.FromObject(commandPayload, SalSerializer.Create()),
-                Source = $"{commandDescriptor.SourceAdapterType}.{commandDescriptor.SourceAdapterName}",
-                Priority = (byte) commandDescriptor.Priority,
-                TimeStamp = commandDescriptor.PublishTimeStamp,
+                Source = $"{commandPayload.Descriptor.SourceAdapterType}.{commandPayload.Descriptor.SourceAdapterName}",
+                Priority = (byte) commandPayload.Descriptor.Priority,
+                TimeStamp = commandPayload.Descriptor.PublishTimeStamp,
                 Destination = routingKey,
-                TTL = commandDescriptor.TTL,
-                CorrelationId = commandDescriptor.CorrelationId,
+                TTL = commandPayload.Descriptor.TTL,
+                CorrelationId = commandPayload.Descriptor.CorrelationId,
                 Session = SessionManager.Current
             };
-
-            commandResultProcessor.RegisterSimpleCommandResultHandler(correlationId, completionSource, ttl);
+            
+            var completionSource = new TaskCompletionSource<SimpleCommandResult>();
+            
+            commandResultProcessor.RegisterSimpleCommandResultHandler(commandPayload.Descriptor.CorrelationId, completionSource,
+                commandPayload.Descriptor.TTL.Value);
 
             publisher.PublishCommand(Pack(transportMessage));
 
             var result = await completionSource.Task;
 
             SessionManager.Merge(result.CommandResultContext.Session);
-
-
+            
             return result.CommandResult;
         }
 

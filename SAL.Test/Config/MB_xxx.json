@@ -2,14 +2,13 @@
   "MessageBus": {
     "Host": "10.10.33.27",
     "VirtualHost": "back.v3",
-    // "VirtualHost": "test.v3",
     "Username": "v3",
     "Password": "v3"
   },
   
   "FrontMessageBus": {
     "Host": "10.10.33.27",
-    "VirtualHost": "front.v3",
+    "VirtualHost": "test.v3",
     "Username": "v3",
     "Password": "v3"
   },

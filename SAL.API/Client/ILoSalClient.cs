@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
+using SAL.API.FrontCommand;
 
 namespace SAL.API
 {
@@ -25,6 +26,12 @@ namespace SAL.API
             string handlerAdapterType,
             string handlerAdapterName
         );
+        
+        Task<CommonCommandResult> ExecuteExternalHttp(
+            ExternalHttpRequest request,
+            TimeSpan ttl,
+            string handlerAdapterType,
+            string handlerAdapterName);
 
 
         Task PublishResultAsync(
@@ -54,4 +61,5 @@ namespace SAL.API
 
         Task PublishEventAsync(EventDescriptor eventDescriptor, JObject eventBody);
     }
+    
 }

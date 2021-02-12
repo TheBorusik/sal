@@ -21,10 +21,10 @@ namespace SAL.Test
         public void Configure(ContainerBuilder builder, IConfigWatcher config)
         {
             //   builder.RegisterSalHandler<TestEventAdapter>();
-       //     builder.RegisterSalHandler<TestExternal>();
+            builder.RegisterSalHandler<TestExternal>();
             //   builder.RegisterProcessor<TestFront>();
             
-            builder.RegisterSalHandler<GetPermissionTreeHandler>();
+          //  builder.RegisterSalHandler<GetPermissionTreeHandler>();
         }
     }
 
@@ -55,7 +55,7 @@ namespace SAL.Test
         }
     }
 
-    [SalExternalHttpPath("/api/ehtest")]
+    [SalExternalHttpPath("/ehtest")]
     public class TestExternal : FrontExternalHttpMethod
     {
         public override  async Task Handle(ExternalHttpRequest request)
