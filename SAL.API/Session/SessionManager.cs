@@ -71,7 +71,7 @@ namespace SAL.API
             if (session == null)
                 return;
             
-            SetSession(session);
+            SetSession(session.Clone());
         }
 
         public static void UpdateCurrent(JObject session)

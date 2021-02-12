@@ -77,6 +77,8 @@ namespace SAL.Test
 </body>
 </html>
 ";
+
+            SessionManager.Current.AddOrUpdate("Test", "Test");
             await PublishResult(new ExternalHttpResponse
             {
                 ContentType = "text/html;charset=UTF-8",
