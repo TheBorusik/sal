@@ -22,5 +22,7 @@ namespace SAL.API
         public static string Contour { get; internal set; }
         public static string ContourName { get; internal set; }
         public static string BackContourName { get; internal set; }
+
+        public static bool InDocker { get; internal set; }
     }
 }

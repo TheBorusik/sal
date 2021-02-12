@@ -33,6 +33,8 @@ namespace SAL.Core.Service
             AdapterConfiguration.RootPath = AppDomain.CurrentDomain.BaseDirectory;
             AdapterConfiguration.ConfigPath = Path.Combine(AdapterConfiguration.RootPath, "config");
             AdapterConfiguration.AdapterType = Environment.GetEnvironmentVariable("AdapterType");
+
+            AdapterConfiguration.InDocker = Environment.GetEnvironmentVariable("DOTNET_RUNNING_IN_CONTAINER") == "true";
             
             if(string.IsNullOrWhiteSpace(AdapterConfiguration.AdapterType))
                 throw new ConfigurationErrorException("Не заданно значение AdapterType в переменных окружения");

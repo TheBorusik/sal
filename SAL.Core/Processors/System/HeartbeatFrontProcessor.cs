@@ -30,6 +30,7 @@ namespace SAL.Core.Processors.System
                     SalVersion = AdapterConfiguration.SalVersion,
                     AdapterHostName = AdapterConfiguration.AdapterHostName,
                     AdapterHostIp = AdapterConfiguration.AdapterHostIp,
+                    InDocker = AdapterConfiguration.InDocker,
                     Timestamp = DateTime.UtcNow
                 }, SystemEventTimes.BaseTTL);
             }

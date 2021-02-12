@@ -10,7 +10,7 @@ namespace SAL.Core.Service
             var sb = new StringBuilder();
             sb.AppendLine()
                 .AppendLine("-------------------------------------------------------------")
-                .AppendLine($"RunnerType      : {GetType().Name}")
+                .AppendLine($"InDocker        : {AdapterConfiguration.InDocker}")
                 .AppendLine($"Contour         : {AdapterConfiguration.Contour}")
                 .AppendLine($"AdapterType     : {AdapterConfiguration.AdapterType}")
                 .AppendLine($"AdapterName     : {AdapterConfiguration.AdapterName}")

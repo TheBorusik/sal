@@ -55,7 +55,7 @@ namespace SAL.Test
         }
     }
 
-    [SalExternalHttpPath("/ehtest")]
+    [SalExternalHttpPath("/api/ehtest")]
     public class TestExternal : FrontExternalHttpMethod
     {
         public override  async Task Handle(ExternalHttpRequest request)
