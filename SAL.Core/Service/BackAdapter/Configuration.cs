@@ -97,9 +97,9 @@ namespace SAL.Core.Service
                 throw new ConfigurationErrorException($"Не заданно значение {ConfigurationSectionNames.Service}.AdapterName");
             }
 
-            if (!Regex.IsMatch(service.AdapterName, "^[A-z0-9-]+$"))
+            if (!Regex.IsMatch(service.AdapterName, "^[A-z0-9-_#]+$"))
             {
-                throw new ConfigurationErrorException($"AdapterName должен содержать только буквы или цифры (^[A-z0-9-]+$)");
+                throw new ConfigurationErrorException($"AdapterName должен соответствовать регулярке '^[A-z0-9-_#]+$'");
             }
 
             AdapterConfiguration.AdapterName = service.AdapterName;
