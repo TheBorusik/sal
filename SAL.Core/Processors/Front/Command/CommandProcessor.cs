@@ -89,12 +89,16 @@ namespace SAL.Core.Processors
                 }
 
                 commandProcessorConfig = baseJsonConfig.ToObject<CommandProcessorConfig>();
-
-                var configStr = commandProcessorConfig.ToIndentedJson();
-                File.WriteAllText(Path.Combine(AdapterConfiguration.ConfigPath, $"{ConfigurationSectionNames.FrontCommandProcessor}.txt"), configStr);
-
-                logger.Info($"Command processing config \n{configStr}");
-
+                
+                if (!AdapterConfiguration.InDocker)
+                {
+                    var tmp = new JObject();
+                    tmp.AddOrUpdate(ConfigurationSectionNames.FrontCommandProcessor, commandProcessorConfig);
+                    var configStr = tmp.ToIndentedJson();
+                    File.WriteAllText(Path.Combine(AdapterConfiguration.ConfigPath, $"{ConfigurationSectionNames.FrontCommandProcessor}.txt"), configStr);
+                    logger.Info($"Front Command processing config \n{configStr}");
+                }
+                
                 var transport = container.ResolveNamed<ITransport>("front");
 
                 var subscriptionFactory = transport.CreateMessageSubscription();

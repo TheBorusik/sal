@@ -32,6 +32,8 @@ namespace SAL.Core.Service
             
             AdapterConfiguration.RootPath = AppDomain.CurrentDomain.BaseDirectory;
             AdapterConfiguration.ConfigPath = Path.Combine(AdapterConfiguration.RootPath, "config");
+            if (!Directory.Exists(AdapterConfiguration.ConfigPath))
+                Directory.CreateDirectory(AdapterConfiguration.ConfigPath);
             AdapterConfiguration.AdapterType = Environment.GetEnvironmentVariable("AdapterType");
 
             AdapterConfiguration.InDocker = Environment.GetEnvironmentVariable("DOTNET_RUNNING_IN_CONTAINER") == "true";
