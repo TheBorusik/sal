@@ -255,8 +255,10 @@ namespace SAL.Test
                 <GetCommandTestCasesCommand, GetCommandTestCasesResult>(
                     new GetCommandTestCasesCommand
                     {
-                        CommandName = "WFM.GetCompletedProcessDetail",
-                    }, CommandPriority.Normal, TimeSpan.FromSeconds(15), "WFMFront", "app10").Result;
+                        //Configuration.RunSyncProcess
+                        //Configuration.RunSyncProcess
+                        CommandName = "Configuration.RunSyncProcess",
+                    }, CommandPriority.Normal, TimeSpan.FromSeconds(15), AdapterConfiguration.AdapterType, AdapterConfiguration.AdapterName).Result;
 
 
             

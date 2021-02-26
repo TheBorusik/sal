@@ -13,12 +13,20 @@ namespace SAL.API
         {
             get
             {
-                if (!(CallContext.GetData(sessionName) is JObject session))
+                JObject session = null;
+                var obj = CallContext.GetData(sessionName);
+                
+                if (obj != null)
+                {
+                    session = obj as JObject;
+                }
+
+                if (session == null)
                 {
                     session = SetNewSession();
                     SetSession(session);
                 }
-
+                
                 return session;
             }
         }
@@ -62,8 +70,12 @@ namespace SAL.API
         public static void IncOperationId()
         {
             var session = Current;
-            if(session == null)
-                return;
+            if (session == null)
+            {
+                session = CreateNewSession();
+                SetSession(session);
+            }
+
             var operationId = session.GetSafeValue(SessionNames.OperationId, 0L);
             session.AddOrUpdate(SessionNames.OperationId, ++operationId);
         }
