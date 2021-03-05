@@ -2,18 +2,9 @@
 using System.Threading.Tasks;
 using Autofac;
 using Newtonsoft.Json.Linq;
-using SAL.Infrastructure;
 
 namespace SAL.API
 {
-    
-    public class NotifyEvent : IEvent
-    {
-        public string EventName { get; set; }
-        public JObject Payload { get; set; }
-        public DateTime? TimeStamp { get; set; }
-    }
-    
     public class BaseAuthServerEventConvertor : ICommonEventHandler
     {
         private ILoSalClient frontClient;
