@@ -250,6 +250,13 @@ namespace SAL.Test
         public void Start()
         {
 
+            redisStore.Add("test", new TestData
+            {
+                A = "test",
+                B = 100,
+                C = true
+            }, TimeSpan.FromMinutes(1));
+
             //  logger.LogInformation("Тестовое сообщение", new {MercId = 10});
 
             //   throw new Exception("test");

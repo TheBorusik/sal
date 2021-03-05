@@ -75,7 +75,7 @@ namespace SAL.Core.Configuration
                     { busHost, 6379}
                 },
                 Ssl = false,
-                DefaultDatabase = 1
+                DefaultDatabase = 0
             };
             ///
             try
