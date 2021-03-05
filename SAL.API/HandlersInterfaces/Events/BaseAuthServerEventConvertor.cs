@@ -2,11 +2,12 @@
 using System.Threading.Tasks;
 using Autofac;
 using Newtonsoft.Json.Linq;
+using SAL.Infrastructure;
 
 namespace SAL.API
 {
     
-    public class NotifyEvent
+    public class NotifyEvent : IEvent
     {
         public string EventName { get; set; }
         public JObject Payload { get; set; }
