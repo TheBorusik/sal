@@ -11,17 +11,13 @@ using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using SAL.API;
-using SAL.API.Command;
-using SAL.API.FrontCommand;
-using SAL.API.Monad;
-using SAL.Core.Config;
 using SAL.Core.DTO.Transport;
 using SAL.Core.Helpers;
 using SAL.Core.Rabbit;
 using SAL.Core.Rabbit.Interfaces;
 using SAL.Core.Service;
 using SAL.Core.Validators;
-using SAL.Infrastructure.FrontAttributes;
+using SAL.Infrastructure;
 using SessionManager = SAL.API.SessionManager;
 
 namespace SAL.Core.Processors

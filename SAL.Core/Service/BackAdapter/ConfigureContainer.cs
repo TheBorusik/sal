@@ -1,8 +1,10 @@
 ﻿using Autofac;
 using SAL.API;
 using SAL.Core.Client;
+using SAL.Core.Configuration.Redis;
 using SAL.Core.DB;
 using SAL.Core.DB.LocalStore;
+using SAL.Core.DB.RedisStore;
 using SAL.Core.Processors;
 using SAL.Core.Processors.System;
 using SAL.Core.Rabbit;
@@ -71,6 +73,15 @@ namespace SAL.Core.Service
                 .As<ILocalStore>()
                 .SingleInstance();
 
+            
+            
+            var redisConfig = ConfigWatcher.GetSection(ConfigurationSectionNames.RedisStore).ConvertValue<RedisStoreConfig>();
+            if (redisConfig.Enable)
+            {
+                builder.RegisterType<RedisStore>()
+                    .As<IRedisStore>()
+                    .SingleInstance();
+            }
 
             AdapterConfigureContainer(builder);
 

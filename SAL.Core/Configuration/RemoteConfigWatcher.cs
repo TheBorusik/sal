@@ -1,20 +1,16 @@
 ﻿using System;
 using System.Collections.Concurrent;
-using System.Data;
 using System.Threading;
 using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
 using SAL.API;
-using SAL.API.Events;
-using SAL.Core.Config.Messages;
-using SAL.Core.DTO.Transport;
+using SAL.Core.Configuration.Messages;
 using SAL.Core.Exceptions;
 using SAL.Core.Helpers;
-using SAL.Core.Processors;
 using StackExchange.Redis;
-using MessageTypes = SAL.Core.Config.Messages.MessageTypes;
+using MessageTypes = SAL.Core.Configuration.Messages.MessageTypes;
 
-namespace SAL.Core.Config
+namespace SAL.Core.Configuration
 {
     public class RemoteConfigWatcher : IConfigWatcher
         //,IEventHandler<>
@@ -74,11 +70,12 @@ namespace SAL.Core.Config
 
             var options = new ConfigurationOptions
             {
-                EndPoints =
+                EndPoints = 
                 {
-                    {busHost, 6379}
+                    { busHost, 6379}
                 },
                 Ssl = false,
+                DefaultDatabase = 1
             };
             ///
             try

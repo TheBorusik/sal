@@ -9,7 +9,7 @@ namespace SAL.API
     {
         public JsonSerializerSettings SerializerSettings { get; }
 
-        public JsonLoadSettings LoadSettings { get; set; }
+        public JsonLoadSettings LoadSettings { get; }
 
         public SalJsonSerializerSettings()
         {

@@ -2,7 +2,6 @@
 using System.Threading.Tasks;
 using Autofac;
 using SAL.API;
-using SAL.API.Monad;
 
 namespace SAL.Core.Service
 {

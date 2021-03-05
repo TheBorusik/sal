@@ -10,7 +10,6 @@ using NLog.Config;
 using NLog.Targets;
 using NLog.Targets.Wrappers;
 using SAL.API;
-using SAL.API.Monad;
 
 namespace SAL.Core.NLogEx.Adapter
 {

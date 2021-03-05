@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using SAL.API;
-using SAL.API.Monad;
 using SAL.Core.Rabbit.Consts;
 using SAL.Core.Rabbit.Interfaces;
 using SAL.Core.Rabbit.Subscription;

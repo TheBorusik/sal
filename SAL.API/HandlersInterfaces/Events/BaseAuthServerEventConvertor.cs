@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 using Autofac;
 using Newtonsoft.Json.Linq;
 
-namespace SAL.API.Events
+namespace SAL.API
 {
     
     public class NotifyEvent

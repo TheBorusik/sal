@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Concurrent;
-using SAL.API.Monad;
+using SAL.API;
 
 namespace SAL.Core.NLogEx.LayoutRenderer
 {

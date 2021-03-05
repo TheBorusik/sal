@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace SAL.Infrastructure.EventAttributes
+namespace SAL.Infrastructure
 {
     [AttributeUsage(AttributeTargets.Class)]
     public class SalSystemEventAttribute : Attribute

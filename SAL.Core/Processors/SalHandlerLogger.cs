@@ -5,7 +5,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using Microsoft.Extensions.Logging;
 using SAL.API;
-using SAL.Core.Config.Logging;
+using SAL.Core.Configuration.Logging;
 using SAL.Core.DTO.Transport;
 
 namespace SAL.Core.Processors

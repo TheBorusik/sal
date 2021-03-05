@@ -6,7 +6,6 @@ using Newtonsoft.Json.Serialization;
 using NLog;
 using NLog.Layouts;
 using SAL.API;
-using SAL.API.Monad;
 
 namespace SAL.Core.NLogEx.Layout
 {

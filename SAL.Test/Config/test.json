@@ -1,3 +1,13 @@
 ﻿{
-
+  "RedisStore": {
+    "Enable": true,
+    "Redis": {
+      "Endpoints": [
+        {
+          "Host": "10.10.33.27"
+        }
+      ],
+      "DefaultDatabase": 1
+    }
+  }
 }

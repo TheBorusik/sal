@@ -15,8 +15,7 @@ namespace SAL.API
     {
         private static string handlerName = "sal#handlername";
         private static string handlerType = "sal#handlertype";
-        private static string callTraceName = "sal#calltracename";
-
+        
         public static string Name
         {
             get
@@ -36,18 +35,6 @@ namespace SAL.API
             }
             internal set => CallContext.SetData(handlerType, value);
         }
-
-        private static string CallTrace
-        {
-            get
-            {
-                var val = CallContext.GetData(callTraceName) as string;
-                return string.IsNullOrWhiteSpace(val) ? AdapterConfiguration.AdapterName : val;
-            }
-            set => CallContext.SetData(callTraceName, value);
-        }
-
-
-
+        
     }
 }

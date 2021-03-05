@@ -4,7 +4,6 @@ using System.Threading.Tasks;
 using Autofac;
 using Newtonsoft.Json.Linq;
 using SAL.API;
-using SAL.API.FrontCommand;
 using SAL.Core.DTO.Transport;
 using SAL.Core.Helpers;
 using SAL.Core.Processors;
@@ -377,7 +376,7 @@ namespace SAL.Core.Client
                 Destination = routingKey,
                 TTL = commandPayload.Descriptor.TTL,
                 CorrelationId = commandPayload.Descriptor.CorrelationId,
-                Session = SessionManager.Current
+                Session = SessionManager.Current.Clone()
             };
             
             var completionSource = new TaskCompletionSource<SimpleCommandResult>();
@@ -421,7 +420,7 @@ namespace SAL.Core.Client
                 Destination = routingKey,
                 TTL = commandDescriptor.TTL,
                 CorrelationId = commandDescriptor.CorrelationId,
-                Session = SessionManager.Current
+                Session = SessionManager.Current.Clone()
             };
             publisher.PublishCommand(Pack(transportMessage)); 
             return Task.CompletedTask;
@@ -482,7 +481,7 @@ namespace SAL.Core.Client
                     Destination = routingKey,
                     TTL = ttl,
                     CorrelationId = commandResultDescriptor.CorrelationId,
-                    Session = SessionManager.Current
+                    Session = SessionManager.Current.Clone()
                 };
 
                 publisher.PublishCommandResult(Pack(transportMessage));
@@ -558,7 +557,7 @@ namespace SAL.Core.Client
                 Destination = routingKey,
                 TTL = eventDescriptor.TTL,
                 CorrelationId = eventDescriptor.CorrelationId,
-                Session = SessionManager.Current
+                Session = SessionManager.Current.Clone()
             };
 
             publisher.PublishEvent(Pack(transportMessage));

@@ -1,4 +1,4 @@
-﻿namespace SAL.Core.Config
+﻿namespace SAL.API
 {
     public static class ConfigurationSectionNames
     {
@@ -21,6 +21,7 @@
         public const string FrontEventProcessor = "FrontEventProcessor";
 
         public const string CommandTestData = "CommandTestData";
+        public const string RedisStore = "RedisStore";
         public const string EventTestData = "EventTestData";
     }
 }

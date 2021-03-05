@@ -1,6 +1,4 @@
-﻿using System.Net;
-
-namespace SAL.API.FrontCommand
+﻿namespace SAL.API
 {
     public class ConnectionInfo
     {

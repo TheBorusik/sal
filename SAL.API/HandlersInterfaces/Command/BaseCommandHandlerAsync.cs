@@ -5,7 +5,7 @@ using Autofac;
 using Microsoft.Extensions.Logging;
 using SAL.Infrastructure;
 
-namespace SAL.API.Command
+namespace SAL.API
 {
     public abstract class BaseCommandHandlerAsync<TCommand, TCommandResult> :
         ICommandHandlerAsync<TCommand, TCommandResult>,

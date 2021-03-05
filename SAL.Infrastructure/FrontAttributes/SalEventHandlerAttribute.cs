@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace SAL.Infrastructure.FrontAttributes
+namespace SAL.Infrastructure
 {
     [AttributeUsage(AttributeTargets.Class)]
     public class SalExternalMethodAttribute : Attribute

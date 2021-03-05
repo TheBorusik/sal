@@ -1,4 +1,4 @@
-﻿namespace SAL.Core.Config.Logging
+﻿namespace SAL.Core.Configuration.Logging
 {
     public class LoggingItem
     {

@@ -3,10 +3,8 @@ using System.Linq;
 using System.Threading.Tasks;
 using Autofac;
 using Microsoft.Extensions.Logging;
-using SAL.API.Command;
-using SAL.Infrastructure;
 
-namespace SAL.API.FrontCommand
+namespace SAL.API
 {
     public abstract class BaseFrontCommandHandlerAsync<TCommand, TCommandResult> : 
         IFrontCommandHandlerAsync<TCommand,TCommandResult>,

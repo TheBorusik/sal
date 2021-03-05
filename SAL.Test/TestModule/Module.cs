@@ -7,13 +7,7 @@ using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
 using NLog;
 using SAL.API;
-using SAL.API.Command;
-using SAL.API.CommandResult;
-using SAL.API.Events;
-using SAL.API.FrontCommand;
-using SAL.API.SystemCommand;
 using SAL.Infrastructure;
-using SAL.Infrastructure.FrontAttributes;
 
 
 
@@ -25,9 +19,9 @@ namespace SAL.Test
         public void Configure(ContainerBuilder builder, IConfigWatcher config)
         {
          //   builder.RegisterSalHandler<TestCommandHandler>();
-            builder.RegisterSalHandler<CommonCommandHandler>();
-            builder.RegisterSalHandler<CommonCommandResultHandler>();
-            builder.RegisterSalHandler<EventHandler>();
+     //       builder.RegisterSalHandler<CommonCommandHandler>();
+     //       builder.RegisterSalHandler<CommonCommandResultHandler>();
+      //      builder.RegisterSalHandler<EventHandler>();
 
             builder.RegisterProcessor<TestProcessor>();
         }
@@ -224,12 +218,20 @@ namespace SAL.Test
         }
     }
 
+    public class TestData
+    {
+        public string A { get; set; }
+        public int B { get; set; }
+        public bool? C { get; set; }
+    }
+    
     public class
         TestProcessor : IProcessor
     {
         private readonly ILogger<TestProcessor> logger;
         private readonly ILifetimeScope scope;
         private readonly ISalClient client;
+        private readonly IRedisStore redisStore;
 
 
         public TestProcessor(ILogger<TestProcessor> logger, ILifetimeScope scope)
@@ -238,19 +240,25 @@ namespace SAL.Test
             this.scope = scope;
             // this.client = scope.ResolveNamed<ISalClient>("front");
             this.client = scope.Resolve<ISalClient>();
+
+            redisStore = scope.Resolve<IRedisStore>();
         }
 
         
+        
+        
         public void Start()
         {
-            logger.LogInformation("Тестовое сообщение", new {MercId = 10});
 
-         //   throw new Exception("test");
+            //  logger.LogInformation("Тестовое сообщение", new {MercId = 10});
+
+            //   throw new Exception("test");
         }
 
 
         public void Online()
         {
+            /*
             var res = client.ExecuteCommandAsync
                 <GetCommandTestCasesCommand, GetCommandTestCasesResult>(
                     new GetCommandTestCasesCommand
@@ -260,7 +268,7 @@ namespace SAL.Test
                         CommandName = "Configuration.RunSyncProcess",
                     }, CommandPriority.Normal, TimeSpan.FromSeconds(15), AdapterConfiguration.AdapterType, AdapterConfiguration.AdapterName).Result;
 
-
+*/
             
         }
 

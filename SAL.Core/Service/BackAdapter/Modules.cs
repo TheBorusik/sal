@@ -2,8 +2,6 @@
 using System.Collections.Generic;
 using Autofac;
 using SAL.API;
-using SAL.API.Monad;
-using SAL.Core.Config;
 
 namespace SAL.Core.Service
 {

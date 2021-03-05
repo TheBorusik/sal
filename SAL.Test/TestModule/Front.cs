@@ -5,11 +5,7 @@ using System.Threading.Tasks;
 using Autofac;
 using Newtonsoft.Json.Linq;
 using SAL.API;
-using SAL.API.Events;
-using SAL.API.FrontCommand;
 using SAL.Infrastructure;
-using SAL.Infrastructure.EventAttributes;
-using SAL.Infrastructure.FrontAttributes;
 
 [assembly: SalServiceType("SalTest")]
 

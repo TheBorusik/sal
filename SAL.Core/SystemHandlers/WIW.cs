@@ -1,6 +1,5 @@
 ﻿using System.Threading.Tasks;
 using SAL.API;
-using SAL.API.Events;
 using SAL.Core.Service;
 
 namespace SAL.Core.SystemHandlers

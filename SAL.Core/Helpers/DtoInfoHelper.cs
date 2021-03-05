@@ -5,7 +5,7 @@ using System.Reflection;
 using Autofac;
 using Newtonsoft.Json.Linq;
 using SAL.API;
-using SAL.Infrastructure.ValidationAttribute;
+using SAL.Infrastructure;
 using FieldInfo = SAL.API.FieldInfo;
 
 namespace SAL.Core.Helpers
@@ -237,6 +237,8 @@ namespace SAL.Core.Helpers
 */
         private static FieldType GetFieldType(Type t)
         {
+            t = Nullable.GetUnderlyingType(t) ?? t;
+            
             if (t == typeof(byte[]))
                 return FieldType.Bytes;
 
@@ -259,6 +261,10 @@ namespace SAL.Core.Helpers
                 return FieldType.Boolean;
 
 
+            if (t == typeof(short))
+                return FieldType.Integer;
+            if (t == typeof(ushort))
+                return FieldType.Integer;
             if (t == typeof(int))
                 return FieldType.Integer;
             if (t == typeof(uint))

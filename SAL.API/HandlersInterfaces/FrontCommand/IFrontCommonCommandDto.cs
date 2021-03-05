@@ -1,4 +1,4 @@
-﻿namespace SAL.API.FrontCommand
+﻿namespace SAL.API
 {
     public interface IFrontCommonCommandDto 
     {

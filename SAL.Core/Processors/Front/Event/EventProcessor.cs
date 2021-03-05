@@ -10,14 +10,11 @@ using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using SAL.API;
-using SAL.API.Events;
-using SAL.API.Monad;
-using SAL.Core.Config;
 using SAL.Core.DTO.Transport;
 using SAL.Core.Helpers;
 using SAL.Core.Rabbit.Interfaces;
 using SAL.Core.Service;
-using SAL.Infrastructure.EventAttributes;
+using SAL.Infrastructure;
 
 // ReSharper disable once CheckNamespace
 namespace SAL.Core.Processors

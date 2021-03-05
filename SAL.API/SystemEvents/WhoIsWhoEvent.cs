@@ -1,5 +1,4 @@
 ﻿using SAL.Infrastructure;
-using SAL.Infrastructure.EventAttributes;
 
 namespace SAL.API
 {

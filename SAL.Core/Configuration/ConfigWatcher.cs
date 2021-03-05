@@ -1,12 +1,10 @@
 ﻿using System;
-using System.Globalization;
 using System.IO;
 using Newtonsoft.Json.Linq;
 using SAL.API;
-using SAL.API.Monad;
 using SAL.Core.Helpers;
 
-namespace SAL.Core.Config
+namespace SAL.Core.Configuration
 {
     public class ConfigWatcher : IConfigWatcher
     {

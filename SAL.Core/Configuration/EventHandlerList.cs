@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace SAL.Core.Config
+namespace SAL.Core.Configuration
 {
     internal class EventHandlerList<TKey, TEventArgs>
     {

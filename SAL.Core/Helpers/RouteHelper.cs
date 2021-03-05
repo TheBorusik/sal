@@ -5,7 +5,6 @@ using System.Reflection;
 using System.Text.RegularExpressions;
 using Autofac;
 using SAL.Infrastructure;
-using SAL.Infrastructure.EventAttributes;
 
 namespace SAL.Core.Helpers
 {

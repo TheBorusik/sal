@@ -8,7 +8,6 @@ using Newtonsoft.Json.Linq;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using SAL.API;
-using SAL.API.Monad;
 using SAL.Core.Rabbit.Helpers;
 using SAL.Core.Rabbit.Interfaces;
 

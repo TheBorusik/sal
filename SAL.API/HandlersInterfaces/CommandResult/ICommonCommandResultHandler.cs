@@ -1,6 +1,6 @@
 ﻿using System.Threading.Tasks;
 
-namespace SAL.API.CommandResult
+namespace SAL.API
 {
     public interface ICommonCommandResultHandler : ICommandResultHandler
     {

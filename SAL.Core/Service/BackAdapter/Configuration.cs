@@ -8,8 +8,8 @@ using NLog;
 using NLog.LayoutRenderers;
 using NLog.Layouts;
 using SAL.API;
-using SAL.Core.Config;
-using SAL.Core.Config.Rabbit;
+using SAL.Core.Configuration;
+using SAL.Core.Configuration.Rabbit;
 using SAL.Core.Exceptions;
 using SAL.Core.Helpers;
 using SAL.Core.NLogEx.Adapter;
@@ -90,7 +90,7 @@ namespace SAL.Core.Service
                 }
             }
             
-            var service = ConfigWatcher.GetSection(ConfigurationSectionNames.Service)?.ConvertValue<Config.Service>();
+            var service = ConfigWatcher.GetSection(ConfigurationSectionNames.Service)?.ConvertValue<Configuration.Service>();
             if (service == null)
                 throw new ConfigurationErrorException($"Не найдена секция {ConfigurationSectionNames.Service}");
 

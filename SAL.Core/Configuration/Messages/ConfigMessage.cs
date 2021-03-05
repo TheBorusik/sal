@@ -1,7 +1,7 @@
 ﻿using System;
 using Newtonsoft.Json.Linq;
 
-namespace SAL.Core.Config.Messages
+namespace SAL.Core.Configuration.Messages
 {
     public class ConfigMessage
     {

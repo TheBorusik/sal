@@ -1,4 +1,4 @@
-namespace SAL.Core.Config
+namespace SAL.Core.Configuration
 {
     public class Service
     {

@@ -4,7 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
 using SAL.API;
-using SAL.Infrastructure.ValidationAttribute;
+using SAL.Infrastructure;
 
 namespace SAL.Core.Validators
 {

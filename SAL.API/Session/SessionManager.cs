@@ -14,13 +14,8 @@ namespace SAL.API
             get
             {
                 JObject session = null;
-                var obj = CallContext.GetData(sessionName);
+                session = CallContext<JObject>.GetData(sessionName);
                 
-                if (obj != null)
-                {
-                    session = obj as JObject;
-                }
-
                 if (session == null)
                 {
                     session = SetNewSession();
@@ -33,7 +28,7 @@ namespace SAL.API
 
         private static void SetSession(JObject session)
         {
-            CallContext.SetData(sessionName, session);
+            CallContext<JObject>.SetData(sessionName, session);
         }
 
         private static JObject CreateNewSession(string sessionId = null)

@@ -1,6 +1,6 @@
 ﻿using Newtonsoft.Json.Linq;
 
-namespace SAL.API.FrontCommand
+namespace SAL.API
 {
     public class ExternalHttpRequest
     {

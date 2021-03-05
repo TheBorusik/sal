@@ -1,7 +1,7 @@
 ﻿using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
 
-namespace SAL.API.Command
+namespace SAL.API
 {
     public interface ICommonCommandHandler : ICommandHandler
     {

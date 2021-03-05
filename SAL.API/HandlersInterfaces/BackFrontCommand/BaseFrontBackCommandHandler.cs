@@ -3,8 +3,6 @@ using System.Linq;
 using System.Threading.Tasks;
 using Autofac;
 using Microsoft.Extensions.Logging;
-using SAL.API.Command;
-using SAL.API.FrontCommand;
 using SAL.Infrastructure;
 
 namespace SAL.API

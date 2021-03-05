@@ -1,4 +1,4 @@
-﻿namespace SAL.Core.Config.Rabbit
+﻿namespace SAL.Core.Configuration.Rabbit
 {
     public class RabbitConfig
     {

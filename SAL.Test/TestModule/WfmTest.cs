@@ -3,11 +3,7 @@ using System.Threading.Tasks;
 using Autofac;
 using Microsoft.Extensions.Logging;
 using SAL.API;
-using SAL.API.Command;
-using SAL.API.CommandResult;
-using SAL.API.SystemCommand;
 using SAL.Infrastructure;
-using SAL.Infrastructure.ValidationAttribute;
 
 // ReSharper disable once CheckNamespace
 namespace SAL.Test

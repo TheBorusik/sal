@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace SAL.API.Monad
+namespace SAL.API
 {
     public static class MonadExtension
     {

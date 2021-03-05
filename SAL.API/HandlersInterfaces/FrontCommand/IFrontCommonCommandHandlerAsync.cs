@@ -1,7 +1,7 @@
 ﻿using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
 
-namespace SAL.API.FrontCommand
+namespace SAL.API
 {
     public interface IFrontCommonCommandHandlerAsync : IFrontCommandHandler
     {

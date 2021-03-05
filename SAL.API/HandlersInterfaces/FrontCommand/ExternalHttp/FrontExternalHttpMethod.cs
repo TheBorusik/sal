@@ -1,8 +1,7 @@
 ﻿using System.Threading.Tasks;
-using Autofac;
 using Microsoft.Extensions.Logging;
 
-namespace SAL.API.FrontCommand
+namespace SAL.API
 {
     public abstract class FrontExternalHttpMethod : IFrontExternalHttpMethod
     {

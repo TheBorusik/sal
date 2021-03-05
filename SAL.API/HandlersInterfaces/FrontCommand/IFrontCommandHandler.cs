@@ -1,7 +1,6 @@
 ﻿using System.Threading.Tasks;
-using SAL.Infrastructure;
 
-namespace SAL.API.FrontCommand
+namespace SAL.API
 {
 
 

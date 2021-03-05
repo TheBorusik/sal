@@ -1,10 +1,9 @@
 ﻿using System;
-using System.ComponentModel.Design;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using SAL.Infrastructure;
 
-namespace SAL.API.FrontCommand
+namespace SAL.API
 {
     public abstract class FrontBaseExecuteHandler<TExternalCommand, TExternalCommandResult, TInternalCommand, TInternalCommandResult> 
         : IFrontCommandHandlerAsync<TExternalCommand,TExternalCommandResult>

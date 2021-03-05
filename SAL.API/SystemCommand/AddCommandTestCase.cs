@@ -1,7 +1,6 @@
 ﻿using SAL.Infrastructure;
-using SAL.Infrastructure.ValidationAttribute;
 
-namespace SAL.API.SystemCommand
+namespace SAL.API
 {
     [SalServiceType("System")]
     [SalCommandName("AddCommandTestCase")]

@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace SAL.Core.Config
+namespace SAL.Core.Configuration
 {
     internal class EventHandlerLstItem<TKey, TEventArgs>
     {

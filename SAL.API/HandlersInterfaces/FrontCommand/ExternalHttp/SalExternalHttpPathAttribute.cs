@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace SAL.API.FrontCommand
+namespace SAL.API
 {
     [AttributeUsage(AttributeTargets.Class)]
     public class SalExternalHttpPathAttribute : Attribute

@@ -3,7 +3,6 @@ using System.Linq;
 using Autofac;
 using Microsoft.Extensions.Logging;
 using SAL.API;
-using SAL.API.Monad;
 using SAL.Core.Service;
 
 namespace SAL.Core.WatchDog

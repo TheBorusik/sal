@@ -4,10 +4,10 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
-using SAL.Core.Config.Rabbit;
 using SAL.Core.Exceptions.Rabbit;
 using SAL.Core.Rabbit.EventArgs;
 using SAL.API;
+using SAL.Core.Configuration.Rabbit;
 
 namespace SAL.Core.Rabbit
 {

@@ -1,7 +1,7 @@
 ﻿using Newtonsoft.Json.Linq;
 using SAL.Infrastructure;
 
-namespace SAL.API.SystemCommand
+namespace SAL.API
 {
     [SalServiceType("System")]
     [SalCommandName("GetCommandTestCases")]

@@ -1,8 +1,8 @@
 ﻿using System.Threading;
 using System.Threading.Tasks;
-using SAL.Core.Config.Messages;
+using SAL.Core.Configuration.Messages;
 
-namespace SAL.Core.Config
+namespace SAL.Core.Configuration
 {
     public class ConfigExecuteHandlerInfo
     {

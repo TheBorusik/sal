@@ -15,6 +15,7 @@ namespace SAL.Core.DB.LocalStore
     }
 
 
+    [Obsolete]
     public class LiteDbLocalStore : ILocalStore, IDisposable
     {
         private LiteDatabase db;

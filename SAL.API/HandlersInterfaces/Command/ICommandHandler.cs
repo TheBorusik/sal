@@ -2,7 +2,7 @@
 using System.Threading.Tasks;
 using SAL.Infrastructure;
 
-namespace SAL.API.Command
+namespace SAL.API
 {
     public interface ICommandHandler
     {
