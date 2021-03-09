@@ -75,8 +75,8 @@ namespace SAL.Core.Service
 
             
             
-            var redisConfig = ConfigWatcher.GetSection(ConfigurationSectionNames.RedisStore).ConvertValue<RedisStoreConfig>();
-            if (redisConfig.Enable)
+            var redisConfig = ConfigWatcher.GetSection(ConfigurationSectionNames.RedisStore)?.ConvertValue<RedisStoreConfig>();
+            if (redisConfig?.Enable == true)
             {
                 builder.RegisterType<RedisStore>()
                     .As<IRedisStore>()
