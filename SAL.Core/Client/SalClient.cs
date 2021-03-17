@@ -388,7 +388,7 @@ namespace SAL.Core.Client
 
             var result = await completionSource.Task;
 
-            SessionManager.UpdateCurrent(result.CommandResultContext.Session);
+            SessionManager.Set(result.CommandResultContext.Session);
             
             return result.CommandResult;
         }

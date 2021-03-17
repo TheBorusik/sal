@@ -1,5 +1,7 @@
 ﻿
 
+using System.Threading;
+
 namespace SAL.API
 {
 
@@ -13,27 +15,27 @@ namespace SAL.API
 
     public static class HandlerContext
     {
-        private static string handlerName = "sal#handlername";
-        private static string handlerType = "sal#handlertype";
+        private static readonly AsyncLocal<string> handlerName = new();
+        private static readonly AsyncLocal<string> handlerType = new();
         
         public static string Name
         {
             get
             {
-                var name  = CallContext.GetData(handlerName) as string;
+                var name  = handlerName.Value;
                 return string.IsNullOrWhiteSpace(name) ? "sal" : name;
             }
-            internal set => CallContext.SetData(handlerName, value);
+            internal set => handlerName.Value = value;
         }
 
         public static string Type
         {
             get
             {
-                var name = CallContext.GetData(handlerType) as string;
+                var name = handlerType.Value;
                 return string.IsNullOrWhiteSpace(name) ? "unknown" : name;
             }
-            internal set => CallContext.SetData(handlerType, value);
+            internal set => handlerType.Value = value;
         }
         
     }

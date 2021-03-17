@@ -250,8 +250,7 @@ namespace SAL.Core.Processors
                 HandlerContext.Name = "CommandResultProcessor";
                 var transportMessage =  ExtractMessage(rabbitMessage);
                 var commandResultPayload = ExtractCommandResultPayload(transportMessage);
-                //SessionManager.StartAdapterSession(transportMessage.Session);
-                SessionManager.Restore(transportMessage.Session);
+                SessionManager.Set(transportMessage.Session);
                 salLogger.LogIncoming(commandResultPayload);
                 await Processing(transportMessage, commandResultPayload);
                 ack();
@@ -318,8 +317,7 @@ namespace SAL.Core.Processors
             {
                 var transportMessage =  ExtractMessage(rabbitMessage);
                 var commandResultPayload =  ExtractCommandResultPayload(transportMessage);
-                //SessionManager.StartAdapterSession(transportMessage.Session);
-                SessionManager.UpdateCurrent(transportMessage.Session);
+                SessionManager.Set(transportMessage.Session);
                 salLogger.LogIncoming(commandResultPayload);
                 await SyncProcessing(transportMessage, commandResultPayload);
                 ack();

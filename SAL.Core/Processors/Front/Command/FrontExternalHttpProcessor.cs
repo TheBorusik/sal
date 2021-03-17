@@ -63,7 +63,7 @@ namespace SAL.Core.Processors
 
                 var baseJsonConfig = new ExternalHttpProcessorConfig
                 {
-                    GlobalPrefetchCount = 1,
+                    GlobalPrefetchCount = 25,
                     ExternalHttpSettings = processingPath.ToDictionary(kv => kv.Key, kv => new CommandProcessingSettings
                     {
                         PrefetchCount = 0
@@ -81,11 +81,15 @@ namespace SAL.Core.Processors
 
                 processorConfig = baseJsonConfig.ToObject<ExternalHttpProcessorConfig>();
 
-                var configStr = processorConfig.ToIndentedJson();
-                File.WriteAllText(Path.Combine(AdapterConfiguration.ConfigPath, $"{ConfigurationSectionNames.FrontExternalHttpProcessor}.txt"), configStr);
-
-                logger.Info($"Command processing config \n{configStr}");
-
+                if (!AdapterConfiguration.InDocker)
+                {
+                    var tmp = new JObject();
+                    tmp.AddOrUpdate(ConfigurationSectionNames.FrontExternalHttpProcessor, processorConfig);
+                    var configStr = tmp.ToIndentedJson();
+                    File.WriteAllText(Path.Combine(AdapterConfiguration.ConfigPath, $"{ConfigurationSectionNames.FrontExternalHttpProcessor}.txt"), configStr);
+                    logger.Info($"Front External Http processing config \n{configStr}");
+                }
+                
                 var transport = container.ResolveNamed<ITransport>("front");
 
                 var subscriptionFactory = transport.CreateMessageSubscription();
@@ -153,8 +157,7 @@ namespace SAL.Core.Processors
             {
                 var transportMessage = ExtractMessage(rabbitMessage);
                 var commandPayload = ExtractCommandPayload(transportMessage);
-                //SessionManager.StartAdapterSession(transportMessage.Session);
-                SessionManager.Restore(transportMessage.Session);
+                SessionManager.Set(transportMessage.Session);
                 salLogger.LogIncoming(commandPayload);
                 await Processing(transportMessage, commandPayload);
                 ack();
