@@ -53,6 +53,10 @@ namespace SAL.API
         long StringDecrement(string key, long value = 1);
         Task<long> StringDecrementAsync(string key, long value = 1);
 
+        string GetString(string key);
+        Task<string> GetStringAsync(string key);
+
+
     }
     
     public enum When

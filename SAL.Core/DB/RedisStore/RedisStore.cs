@@ -102,7 +102,16 @@ namespace SAL.Core.DB.RedisStore
             if (redisVal.IsNullOrEmpty)
                 return Task.FromResult(false);
 
-            return Task.FromResult(db.KeyDelete(key));
+            try
+            {
+                value = Convert<T>(redisVal);
+                return Task.FromResult(db.KeyDelete(key));
+            }
+            catch (Exception)
+            {
+                return Task.FromResult(false);
+            }
+            
         }
 
         public Task<bool> TryPeekRaw(string key, out string value)
@@ -346,7 +355,20 @@ namespace SAL.Core.DB.RedisStore
             return db.StringDecrementAsync(key, value);
         }
 
-        
+        public string GetString(string key)
+        {
+            var db = GetDB();
+            return db.StringGet(key);
+        }
+
+        public async Task<string> GetStringAsync(string key)
+        {
+            var db = GetDB();
+            var redisValue =  await db.StringGetAsync(key);
+            return redisValue;
+        }
+
+
         private StackExchange.Redis.When ToRedis(When @when)
         {
             return @when switch
