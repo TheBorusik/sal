@@ -76,7 +76,6 @@ namespace SAL.Core.DB.RedisStore
             value = default;
 
             var db = GetDB();
-            ;
             var redisVal = db.StringGet(key);
 
             if (redisVal.IsNullOrEmpty)
