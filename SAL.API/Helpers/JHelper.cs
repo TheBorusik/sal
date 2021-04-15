@@ -220,7 +220,7 @@ namespace SAL.API
             return jObj.GetValueIC(propertyName) != null;
         }
 
-        public static JToken RemoveEmptyChildren(JToken token)
+        public static JToken RemoveEmptyChildren(this JToken token)
         {
             if (token.Type == JTokenType.Object)
             {
@@ -232,7 +232,7 @@ namespace SAL.API
                     {
                         child = RemoveEmptyChildren(child);
                     }
-                    if (!IsEmpty(child))
+                    if (!child.IsEmpty())
                     {
                         copy.Add(prop.Name, child);
                     }
@@ -250,7 +250,7 @@ namespace SAL.API
                     {
                         child = RemoveEmptyChildren(child);
                     }
-                    if (!IsEmpty(child))
+                    if (!child.IsEmpty())
                     {
                         copy.Add(child);
                     }
@@ -261,7 +261,7 @@ namespace SAL.API
             return token;
         }
 
-        public static bool IsEmpty(JToken token)
+        public static bool IsEmpty(this JToken token)
         {
             return (token.Type == JTokenType.Null) ||
                    (token.Type == JTokenType.Array && !token.HasValues) ||
