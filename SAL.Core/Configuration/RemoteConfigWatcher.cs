@@ -110,7 +110,10 @@ namespace SAL.Core.Configuration
             var value = db.StringGet(key);
             if (!value.HasValue) throw new ConfigurationErrorException("Config not found");
             db.KeyDelete(key);
-            var config = JObject.Parse(value);
+            var config = JToken.Parse(value).RemoveEmptyChildren() as JObject;
+            if (config == null) 
+                throw new ConfigurationErrorException("Config is null");
+            
             config.AddOrUpdate(ConfigurationSectionNames.Service, baseServiceSection);
             return config.Clone();
         }
