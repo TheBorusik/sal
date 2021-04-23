@@ -9,6 +9,7 @@ using SAL.Core.Processors;
 using SAL.Core.Processors.System;
 using SAL.Core.Rabbit;
 using SAL.Core.Rabbit.Interfaces;
+using SAL.Core.S3;
 using SAL.Core.SystemHandlers;
 using SAL.Core.Validators;
 using SAL.Core.WatchDog;
@@ -82,6 +83,9 @@ namespace SAL.Core.Service
                     .As<IRedisStore>()
                     .SingleInstance();
             }
+
+            builder.RegisterType<S3Store>()
+                .As<IS3Store>();
 
             AdapterConfigureContainer(builder);
 

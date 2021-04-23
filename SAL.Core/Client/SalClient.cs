@@ -227,6 +227,17 @@ namespace SAL.Core.Client
             };
         }
 
+        public async Task<string> PublishCommandAsync(string commandName, object commandBody)
+        {
+            var correlationId = Guid.NewGuid().ToString("N");
+            await PublishCommandAsync(commandName, commandBody, correlationId, 
+                CommandPriority.Normal, null,
+                null, null, 
+                AdapterConfiguration.AdapterType,  AdapterConfiguration.AdapterName);
+
+            return correlationId;
+        }
+
         public Task PublishCommandAsync(
             string commandName,
             object commandBody,

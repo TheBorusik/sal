@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Autofac;
 using Newtonsoft.Json.Linq;
 using SAL.API;
+using SAL.Core.S3;
 using SAL.Infrastructure;
 
 [assembly: SalServiceType("SalTest")]
@@ -18,19 +19,19 @@ namespace SAL.Test
         {
             //   builder.RegisterSalHandler<TestEventAdapter>();
             builder.RegisterSalHandler<TestExternal>();
-            //   builder.RegisterProcessor<TestFront>();
-            
-          //  builder.RegisterSalHandler<GetPermissionTreeHandler>();
+            builder.RegisterProcessor<TestFront>();
+
+            //  builder.RegisterSalHandler<GetPermissionTreeHandler>();
         }
     }
 
     public class TestFront : IProcessor
     {
-        private ILifetimeScope scope;
+        private ILifetimeScope lifetimeScope;
 
-        public TestFront(ILifetimeScope scope)
+        public TestFront(ILifetimeScope lifetimeScope)
         {
-            this.scope = scope;
+            this.lifetimeScope = lifetimeScope;
         }
 
 
@@ -40,6 +41,18 @@ namespace SAL.Test
 
         public void Online()
         {
+            using var scope = lifetimeScope.BeginLifetimeScope();
+            var s3Store = scope.Resolve<IS3Store>();
+            try
+            {
+                s3Store.UploadFileAsync(@"G:\Downloads\aida64extreme632.zip", "tmp", "aida64extreme632.zip").Wait();
+            //    s3Store.DownloadFileAsync("tmp", "aida64extreme632.zip",@"G:\aida64.zip").Wait();
+
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+            }
         }
 
         public void Offline()
@@ -54,7 +67,7 @@ namespace SAL.Test
     [SalExternalHttpPath("/api/ehtest")]
     public class TestExternal : FrontExternalHttpMethod
     {
-        public override  async Task Handle(ExternalHttpRequest request)
+        public override async Task Handle(ExternalHttpRequest request)
         {
             var t = request.FormData.GetSafeValue("TermUrl", "");
             var returnHtml = $@"
@@ -79,18 +92,15 @@ namespace SAL.Test
             {
                 ContentType = "text/html;charset=UTF-8",
                 Body = Encoding.UTF8.GetBytes(returnHtml),
-                StatusCode = 200 
+                StatusCode = 200
             });
         }
     }
-    
-    
-    
-    [SalExternalMethod("SalTest.GetPermissionTree")] 
-    public class GetPermissionTreeHandler : BaseFrontBackCommandHandlerAsync<GetPermissionTreeCommand , GetPermissionTreeResult>
+
+
+    [SalExternalMethod("SalTest.GetPermissionTree")]
+    public class GetPermissionTreeHandler : BaseFrontBackCommandHandlerAsync<GetPermissionTreeCommand, GetPermissionTreeResult>
     {
-
-
         public GetPermissionTreeHandler()
         {
         }
@@ -102,20 +112,19 @@ namespace SAL.Test
             });
         }
     }
-    
-    
+
+
     [SalServiceType("SalTest")]
     [SalCommandName("Permissions.GetPermissionTree")]
     public class GetPermissionTreeCommand : IHaveResult<GetPermissionTreeResult>
     {
-        
     }
 
     public class GetPermissionTreeResult : ICommandResult
     {
         public PermissionTreeItem[] PermissionTree { get; set; }
     }
-    
+
     public class PermissionTreeItem
     {
         public PermissionTreeItemType Type { get; set; }
@@ -128,7 +137,7 @@ namespace SAL.Test
         public JObject PermissionSettings { get; set; }
         public List<PermissionTreeItem> PermissionTree { get; set; }
     }
-    
+
     public enum PermissionTreeItemType
     {
         Unknown,

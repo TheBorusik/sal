@@ -6,6 +6,11 @@ namespace SAL.API
 {
     public interface ILoSalClient
     {
+
+        public Task<string> PublishCommandAsync(
+            string commandName,
+            object commandBody);
+        
         Task PublishCommandAsync(
             string commandName,
             object commandBody,
