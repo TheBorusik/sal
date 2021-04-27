@@ -64,7 +64,7 @@ namespace SAL.Core.S3
             if (!string.IsNullOrWhiteSpace(config.Region))
             {
                 var region = RegionEndpoint.GetBySystemName(config.Region);
-                return new AmazonS3Client(config.AccessKey, config.AccessKey, region);
+                return new AmazonS3Client(config.AccessKey, config.SecretKey, region);
             }
 
             if (!string.IsNullOrEmpty(config.ServiceUrl))
