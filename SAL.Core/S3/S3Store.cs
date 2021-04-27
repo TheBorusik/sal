@@ -26,6 +26,8 @@ namespace SAL.Core.S3
         {
             if (config == null)
                 throw new SalNotConfiguredException(sectionName);
+            
+            bucketName = bucketName.ToLower();
 
             var s3Client = CreateClient();
 
@@ -47,6 +49,8 @@ namespace SAL.Core.S3
         {
             if (config == null)
                 throw new SalNotConfiguredException(sectionName);
+            
+            bucketName = bucketName.ToLower();
 
             var s3Client = CreateClient();
 
