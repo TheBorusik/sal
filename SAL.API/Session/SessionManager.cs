@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using Newtonsoft.Json.Linq;
@@ -66,7 +67,17 @@ namespace SAL.API
 
         public static void Set(JObject session)
         {
-            context.Value = session.Clone();
+            if(context.Value == null)
+                context.Value = session.Clone();
+            else
+            {
+                context.Value.Merge(session, new JsonMergeSettings
+                {
+                    MergeNullValueHandling = MergeNullValueHandling.Merge,
+                    MergeArrayHandling = MergeArrayHandling.Replace,
+                    PropertyNameComparison = StringComparison.InvariantCultureIgnoreCase
+                });
+            }
         }
     }
 }

@@ -17,8 +17,9 @@ namespace SAL.Test
     {
         public void Configure(ContainerBuilder builder, IConfigWatcher config)
         {
-            //   builder.RegisterSalHandler<TestEventAdapter>();
+            //builder.RegisterSalHandler<TestEventAdapter>();
             builder.RegisterSalHandler<TestExternal>();
+            builder.RegisterSalHandler<GetPermissionTreeHandler>(); 
             builder.RegisterProcessor<TestFront>();
 
             //  builder.RegisterSalHandler<GetPermissionTreeHandler>();
@@ -41,6 +42,7 @@ namespace SAL.Test
 
         public void Online()
         {
+         /*
             using var scope = lifetimeScope.BeginLifetimeScope();
             var s3Store = scope.Resolve<IS3Store>();
             try
@@ -53,6 +55,18 @@ namespace SAL.Test
             {
                 Console.WriteLine(e);
             }
+            */
+         
+         using var scope = lifetimeScope.BeginLifetimeScope();
+
+         var cl = scope.ResolveNamed<ISalClient>("front");
+
+         var sesPre = SessionManager.Current.Clone();
+         
+         var res = cl.ExecuteCommandAsync<GetPermissionTreeCommand, GetPermissionTreeResult>(new GetPermissionTreeCommand { }).Result;
+
+         var sesPost = SessionManager.Current.Clone();
+         
         }
 
         public void Offline()
@@ -98,31 +112,35 @@ namespace SAL.Test
     }
 
 
-    [SalExternalMethod("SalTest.GetPermissionTree")]
+    [SalExternalMethod("SalTest.TestCommand")]
     public class GetPermissionTreeHandler : BaseFrontBackCommandHandlerAsync<GetPermissionTreeCommand, GetPermissionTreeResult>
     {
+        private static int index = 0;
         public GetPermissionTreeHandler()
         {
         }
 
         public override async Task Handle(GetPermissionTreeCommand command)
         {
+            SessionManager.Current.AddOrUpdate("Test1", $"Value_{index++}");
             await PublishResult(new GetPermissionTreeResult
             {
+                Session = SessionManager.Current
             });
+            SessionManager.Current.AddOrUpdate("Test2", $"Value_{index++}");
         }
     }
 
 
     [SalServiceType("SalTest")]
-    [SalCommandName("Permissions.GetPermissionTree")]
+    [SalCommandName("TestCommand")]
     public class GetPermissionTreeCommand : IHaveResult<GetPermissionTreeResult>
     {
     }
 
     public class GetPermissionTreeResult : ICommandResult
     {
-        public PermissionTreeItem[] PermissionTree { get; set; }
+        public JObject Session { get; set; } 
     }
 
     public class PermissionTreeItem

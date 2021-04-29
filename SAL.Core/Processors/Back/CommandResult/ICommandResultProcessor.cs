@@ -4,13 +4,7 @@ using SAL.API;
 
 namespace SAL.Core.Processors
 {
-    public class SimpleCommandResult
-    {
-        public CommonCommandResult CommandResult;
-        public CommandResultContext CommandResultContext;
-    }
-
-
+    
     public interface ICommandResultProcessor
     {
         void RegisterSimpleCommandResultHandler(string correlationId, 

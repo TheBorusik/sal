@@ -105,7 +105,9 @@ namespace SAL.Core.Client
                 handlerServiceName
             );
 
-            return new CommandResult<TCommandResult>(result);
+            SessionManager.Set(result.CommandResultContext.Session);
+            
+            return new CommandResult<TCommandResult>(result.CommandResult);
         }
 
 
@@ -282,7 +284,7 @@ namespace SAL.Core.Client
             return PublishCommandAsync(commandDescriptor, JObject.FromObject(commandBody, SalSerializer.Create()));
         }
 
-        public async Task<CommonCommandResult> ExecuteCommandAsync(
+        public async Task<SimpleCommandResult> ExecuteCommandAsync(
             string commandName,
             object commandBody,
             CommandPriority priority,
@@ -330,7 +332,7 @@ namespace SAL.Core.Client
             
         }
 
-        public async Task<CommonCommandResult> ExecuteExternalHttp(
+        public async Task<SimpleCommandResult> ExecuteExternalHttp(
             ExternalHttpRequest request,
             TimeSpan ttl,
             string handlerAdapterType,
@@ -370,7 +372,7 @@ namespace SAL.Core.Client
         }
         
         
-        public async Task<CommonCommandResult> ExecuteCommandAsync(CommandPayload commandPayload, string routingKey)
+        public async Task<SimpleCommandResult> ExecuteCommandAsync(CommandPayload commandPayload, string routingKey)
         {
 
             commandPayload.Descriptor.TTL ??= TimeSpan.FromMinutes(1);
@@ -397,11 +399,7 @@ namespace SAL.Core.Client
 
             publisher.PublishCommand(Pack(transportMessage));
 
-            var result = await completionSource.Task;
-
-            SessionManager.Set(result.CommandResultContext.Session);
-            
-            return result.CommandResult;
+           return await completionSource.Task;
         }
 
         public Task PublishCommandAsync(CommandDescriptor commandDescriptor, JObject commandBody)

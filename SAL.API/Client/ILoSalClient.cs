@@ -22,7 +22,7 @@ namespace SAL.API
             string resultAdapterType,
             string resultAdapterName);
 
-        Task<CommonCommandResult> ExecuteCommandAsync(
+        Task<SimpleCommandResult> ExecuteCommandAsync(
             string commandName,
             object commandBody,
             CommandPriority priority,
@@ -31,7 +31,7 @@ namespace SAL.API
             string handlerAdapterName
         );
         
-        Task<CommonCommandResult> ExecuteExternalHttp(
+        Task<SimpleCommandResult> ExecuteExternalHttp(
             ExternalHttpRequest request,
             TimeSpan ttl,
             string handlerAdapterType,
