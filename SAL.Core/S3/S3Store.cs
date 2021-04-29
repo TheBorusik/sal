@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Threading.Tasks;
+using Amazon;
+using Amazon.Internal;
 using Amazon.S3;
 using Amazon.S3.Model;
 using Amazon.S3.Transfer;
@@ -14,26 +16,19 @@ namespace SAL.Core.S3
         private ILogger logger;
         public S3StoreConfig config = null;
         private const string sectionName = "S3Store";
-        
+
         public S3Store(ILoggerProvider loggerProvider, IConfigWatcher configWatcher)
         {
             config = configWatcher.GetSection(sectionName)?.ConvertValue<S3StoreConfig>();
         }
 
-        public async Task UploadFileAsync(string filePath,string bucketName, string fileId)
+        public async Task UploadFileAsync(string filePath, string bucketName, string fileId)
         {
             if (config == null)
                 throw new SalNotConfiguredException(sectionName);
-
-            var AccessKey = "PhfsAezGqm4cgdypTkuQ";
-            var SecretKey = "RzVjpTqvxFhS3AerUmiG8NK9y6dMBD7fXwuZbk2C";
-            var s3ClientConfig = new AmazonS3Config()
-            {
-                ServiceURL = "http://10.10.33.27:9000",
-                ForcePathStyle = true,
-                            
-            };
             
+            bucketName = bucketName.ToLower();
+
             var s3Client = CreateClient();
 
             var listBuckets = await s3Client.ListBucketsAsync();
@@ -44,20 +39,21 @@ namespace SAL.Core.S3
                     BucketName = bucketName
                 });
             }
-            
+
             var fileTransferUtility = new TransferUtility(s3Client);
 
             await fileTransferUtility.UploadAsync(filePath, bucketName, fileId);
-            
         }
 
-        public async Task DownloadFileAsync(string bucketName, string fileId, string filePath )
+        public async Task DownloadFileAsync(string bucketName, string fileId, string filePath)
         {
             if (config == null)
                 throw new SalNotConfiguredException(sectionName);
             
+            bucketName = bucketName.ToLower();
+
             var s3Client = CreateClient();
-            
+
             var fileTransferUtility = new TransferUtility(s3Client);
 
             await fileTransferUtility.DownloadAsync(filePath, bucketName, fileId);
@@ -65,15 +61,25 @@ namespace SAL.Core.S3
 
         private AmazonS3Client CreateClient()
         {
-            var s3ClientConfig = new AmazonS3Config()
+            if (!string.IsNullOrWhiteSpace(config.Region))
             {
-                ServiceURL = config.ServiceUrl,
-                ForcePathStyle = config.ForcePathStyle,
-            };
-            
-           return new AmazonS3Client(config.AccessKey, config.SecretKey, s3ClientConfig);
+                var region = RegionEndpoint.GetBySystemName(config.Region);
+                return new AmazonS3Client(config.AccessKey, config.SecretKey, region);
+            }
+
+            if (!string.IsNullOrEmpty(config.ServiceUrl))
+            {
+                var s3ClientConfig = new AmazonS3Config()
+                {
+                    ServiceURL = config.ServiceUrl,
+                    ForcePathStyle = config.ForcePathStyle,
+                };
+
+                return new AmazonS3Client(config.AccessKey, config.SecretKey, s3ClientConfig);
+            }
+
+            throw new SalNotConfiguredException("S3");
         }
-        
     }
 
     public interface IS3Store

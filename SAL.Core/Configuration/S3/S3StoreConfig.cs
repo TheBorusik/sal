@@ -6,5 +6,6 @@
         public string SecretKey { get; set; }
         public string ServiceUrl { get; set; }
         public bool ForcePathStyle { get; set; }
+        public string Region { get; set; }
     }
 }

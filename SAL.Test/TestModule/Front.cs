@@ -47,7 +47,7 @@ namespace SAL.Test
             var s3Store = scope.Resolve<IS3Store>();
             try
             {
-                s3Store.UploadFileAsync(@"G:\Downloads\aida64extreme632.zip", "tmp", "aida64extreme632.zip").Wait();
+                s3Store.UploadFileAsync(@"C:\Program Files\Far Manager\Far.exe", "tmp", "aida64extreme632.zip").Wait();
             //    s3Store.DownloadFileAsync("tmp", "aida64extreme632.zip",@"G:\aida64.zip").Wait();
 
             }
