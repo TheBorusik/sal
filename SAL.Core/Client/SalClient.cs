@@ -105,7 +105,7 @@ namespace SAL.Core.Client
                 handlerServiceName
             );
 
-            SessionManager.Set(result.CommandResultContext.Session);
+            SessionManager.Merge(result.CommandResultContext.Session);
             
             return new CommandResult<TCommandResult>(result.CommandResult);
         }

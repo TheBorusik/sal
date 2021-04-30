@@ -67,6 +67,11 @@ namespace SAL.API
 
         public static void Set(JObject session)
         {
+            context.Value = session.Clone();
+        }
+        
+        public static void Merge(JObject session)
+        {
             if(context.Value == null)
                 context.Value = session.Clone();
             else

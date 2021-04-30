@@ -70,11 +70,6 @@ namespace SAL.Core.Service
             builder.RegisterSalHandler<AddCommandTestCaseHandler>();
             builder.RegisterSalHandler<GetAdapterConfigurationHandler>();
             
-            builder.RegisterType<LiteDbLocalStore>()
-                .As<ILocalStore>()
-                .SingleInstance();
-
-            
             
             var redisConfig = ConfigWatcher.GetSection(ConfigurationSectionNames.RedisStore)?.ConvertValue<RedisStoreConfig>();
             if (redisConfig?.Enable == true)

@@ -20,6 +20,7 @@ namespace SAL.Core.S3
         public S3Store(ILoggerProvider loggerProvider, IConfigWatcher configWatcher)
         {
             config = configWatcher.GetSection(sectionName)?.ConvertValue<S3StoreConfig>();
+            logger = loggerProvider.CreateLogger("S3Store");
         }
 
         public async Task UploadFileAsync(string filePath, string bucketName, string fileId)
@@ -34,14 +35,15 @@ namespace SAL.Core.S3
             var listBuckets = await s3Client.ListBucketsAsync();
             if (!listBuckets.Buckets.Exists(m => m.BucketName == bucketName))
             {
-                s3Client.PutBucketAsync(new PutBucketRequest
+                logger.Debug($"Create Bucket {bucketName}");
+                await s3Client.PutBucketAsync(new PutBucketRequest
                 {
                     BucketName = bucketName
                 });
             }
 
             var fileTransferUtility = new TransferUtility(s3Client);
-
+            logger.Debug($"Upload file {fileId} in {bucketName}");
             await fileTransferUtility.UploadAsync(filePath, bucketName, fileId);
         }
 
@@ -55,7 +57,7 @@ namespace SAL.Core.S3
             var s3Client = CreateClient();
 
             var fileTransferUtility = new TransferUtility(s3Client);
-
+            logger.Debug($"Download file {fileId} in {bucketName}");
             await fileTransferUtility.DownloadAsync(filePath, bucketName, fileId);
         }
 
