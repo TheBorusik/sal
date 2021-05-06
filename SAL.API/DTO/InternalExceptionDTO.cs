@@ -3,7 +3,6 @@
     public class InternalExceptionDTO : ExceptionDTO
     {
         public string StackTrace { get; set; }
-        public string CallTrace { get; set; }
         public string AdapterName { get; set; }
         public string HandlerName { get; set; }
         public string ExceptionType { get; set; }
@@ -19,9 +18,11 @@
                 TimeStamp = TimeStamp,
                 Message = Message,
                 Properties = Properties.Clone(),
-                Sid = Sid,
+                SessionId = SessionId,
+                CorrelationId = CorrelationId,
+                ProcessId = ProcessId,
+                AuthId = AuthId,
                 StackTrace = StackTrace,
-                CallTrace = CallTrace,
                 AdapterName = AdapterName,
                 HandlerName = HandlerName,
                 InnerException = InnerException?.Clone()
@@ -31,7 +32,6 @@
         public InternalExceptionDTO ClearTrace()
         {
             StackTrace = null;
-            CallTrace = null;
             return this;
         }
     }

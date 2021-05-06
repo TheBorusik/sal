@@ -38,27 +38,28 @@ namespace SAL.API
         
         public abstract Task Handle(TCommand command);
 
-
-        public Task PublishSuccess(TCommandResult result)
+        public Task PublishResult(TCommandResult result)
         {
             return frontClient?.PublishResultAsync(result, ResultCodes.Success, commandContext.Descriptor);
         }
-        
+
         public Task PublishResult(object result, string code)
         {
             return frontClient?.PublishResultAsync(result, code, commandContext.Descriptor);
         }
-        public Task PublishError(InternalExceptionDTO error)
+        
+        public Task PublishResult(InternalExceptionDTO error)
         {
             return frontClient?.PublishResultAsync(error, commandContext.Descriptor);
         }
-
+        
+        
         public Task PublishError(string code,
             string message = null,
             object properties = null,
             System.Exception innerException = null)
         {
-            return PublishError(SalError.CreateDto(code, message, properties, innerException));
+            return PublishResult(SalError.CreateDto(code, message, properties, innerException));
         }
         
     }

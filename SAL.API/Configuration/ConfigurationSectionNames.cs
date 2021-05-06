@@ -22,6 +22,7 @@
 
         public const string CommandTestData = "CommandTestData";
         public const string RedisStore = "RedisStore";
-        public const string EventTestData = "EventTestData";
+
+        
     }
 }

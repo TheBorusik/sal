@@ -10,7 +10,6 @@ using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using SAL.API;
-using SAL.Core.DTO.Transport;
 using SAL.Core.Helpers;
 using SAL.Core.Rabbit.Interfaces;
 using SAL.Core.Service;
@@ -232,11 +231,10 @@ namespace SAL.Core.Processors
         {
             try
             {
-                HandlerContext.Type = HandlerTypes.Processor;
-                HandlerContext.Name = "EventProcessor";
+                HandlerContext.Set(HandlerTypes.Processor, "EventProcessor", rabbitMessage.CorrelationId);
                 var transportMessage = ExtractMessage(rabbitMessage);
                 var eventPayload = ExtractEventPayload(transportMessage);
-                SessionManager.Set(transportMessage.Session);
+                HandlerContext.Update(transportMessage);
                 salLogger.LogIncoming(eventPayload);
                 await Processing(transportMessage, eventPayload);
                 ack();
@@ -297,9 +295,9 @@ namespace SAL.Core.Processors
             }
         }
 
-        protected Message ExtractMessage(RabbitMessage rabbitMessage)
+        protected TransportMessage ExtractMessage(RabbitMessage rabbitMessage)
         {
-            var transportMessage = SalSerializer.BinaryDeserialize<Message>(rabbitMessage.Payload);
+            var transportMessage = SalSerializer.BinaryDeserialize<TransportMessage>(rabbitMessage.Payload);
             if (transportMessage == null)
                 throw new Exception($"Неудалось десерилизовать сообщение | CorrelationId:{rabbitMessage.CorrelationId}");
             if (transportMessage.Type != MessageTypes.Event)
@@ -314,23 +312,23 @@ namespace SAL.Core.Processors
             return transportMessage;
         }
 
-        protected EventPayload ExtractEventPayload(Message transportMessage)
+        protected EventPayload ExtractEventPayload(TransportMessage transportTransportMessage)
         {
-            var eventPayload = transportMessage.Payload.ConvertValue<EventPayload>();
+            var eventPayload = transportTransportMessage.Payload.ConvertValue<EventPayload>();
 
             if (eventPayload.Descriptor == null)
-                throw new Exception($"Отсутствует eventPayload.Descriptor | CorrelationId:{transportMessage.CorrelationId}");
+                throw new Exception($"Отсутствует eventPayload.Descriptor | CorrelationId:{transportTransportMessage.CorrelationId}");
 
             if (string.IsNullOrWhiteSpace(eventPayload.Descriptor.EventName))
-                throw new Exception($"Пустой eventPayload.Descriptor.EventName | CorrelationId:{transportMessage.CorrelationId}");
+                throw new Exception($"Пустой eventPayload.Descriptor.EventName | CorrelationId:{transportTransportMessage.CorrelationId}");
 
             if (eventPayload.Payload == null)
-                throw new Exception($"Отсутствует eventPayload.Payload | CorrelationId:{transportMessage.CorrelationId}");
+                throw new Exception($"Отсутствует eventPayload.Payload | CorrelationId:{transportTransportMessage.CorrelationId}");
 
             return eventPayload;
         }
 
-        private async Task Processing(Message message, EventPayload eventPayload)
+        private async Task Processing(TransportMessage transportMessage, EventPayload eventPayload)
         {
 
             var eventLogger = salLogger.GetLogger(eventPayload);
@@ -359,15 +357,14 @@ namespace SAL.Core.Processors
 
             var eventName = eventPayload.Descriptor.EventName;
 
-            HandlerContext.Type = HandlerTypes.EventHandler;
-            HandlerContext.Name = eventName;
-
+            HandlerContext.Update(HandlerTypes.EventHandler, eventName);
+            
             var handlerTasks = new List<Task>();
 
             foreach (var eventHandlerInfo in anyEventHandlers)
             {
                 salLogger.LogHandler(eventPayload, eventHandlerInfo.HandlerType.Name);
-                handlerTasks.Add(ExecuteEventHandlerAsync(eventHandlerInfo, message, eventPayload, eventLogger));
+                handlerTasks.Add(ExecuteEventHandlerAsync(eventHandlerInfo, transportMessage, eventPayload, eventLogger));
             }
 
             if (eventHandlers.TryGetValue(eventName, out var eventHandlerInfos))
@@ -375,7 +372,7 @@ namespace SAL.Core.Processors
                 foreach (var eventHandlerInfo in eventHandlerInfos)
                 {
                     salLogger.LogHandler(eventPayload, eventHandlerInfo.HandlerType.Name);
-                    handlerTasks.Add(ExecuteEventHandlerAsync(eventHandlerInfo, message, eventPayload, eventLogger));
+                    handlerTasks.Add(ExecuteEventHandlerAsync(eventHandlerInfo, transportMessage, eventPayload, eventLogger));
                 }
             }
 
@@ -390,7 +387,7 @@ namespace SAL.Core.Processors
             }
         }
 
-        public Task ExecuteEventHandlerAsync(EventHandlerInfo ehi, Message message, EventPayload eventPayload, ILogger eventLogger)
+        public Task ExecuteEventHandlerAsync(EventHandlerInfo ehi, TransportMessage transportMessage, EventPayload eventPayload, ILogger eventLogger)
         {
             using var scope = container.BeginLifetimeScope();
 
@@ -405,7 +402,9 @@ namespace SAL.Core.Processors
             var context = new EventContext()
             {
                 Descriptor = eventPayload.Descriptor,
-                Session = message.Session.DeepClone() as JObject
+                SessionId = HandlerContext.SessionId,
+                AuthId = HandlerContext.AuthId,
+                ProcessId = HandlerContext.ProcessId
             };
 
 

@@ -23,6 +23,11 @@ namespace SAL.Core.NLogEx.Layout
         public string HandlerType { get; set; }
         public string HandlerName { get; set; }
         public string SessionId { get; set; }
+        
+        public string CorrelationId { get; set; } 
+        
+        public long? AuthId { get; set; }
+        public long? ProcessId { get; set; }
         public string Level { get; set; }
         public string Logger { get; set; }
         public string Message { get; set; }
@@ -89,8 +94,12 @@ namespace SAL.Core.NLogEx.Layout
                 Contour = AdapterConfiguration.Contour,
                 AdapterHostIp = AdapterConfiguration.AdapterHostIp,
                 AdapterHostName = AdapterConfiguration.AdapterHostName,
-                HandlerType = HandlerContext.Type,
-                HandlerName = HandlerContext.Name,
+                HandlerType = HandlerContext.HandlerType.ToString(),
+                HandlerName = HandlerContext.HandlerName,
+                SessionId = HandlerContext.SessionId,
+                CorrelationId = HandlerContext.CorrelationId,
+                AuthId = HandlerContext.AuthId,
+                ProcessId = HandlerContext.ProcessId,
                 Level = logEvent.Level.Name,
                 Logger = logEvent.LoggerName,
                 Message = logEvent.FormattedMessage,
@@ -99,11 +108,7 @@ namespace SAL.Core.NLogEx.Layout
             if (logEvent.Exception != null)
                 salLogEvent.Exception = logEvent.Exception.ToDto();
 
-            if (SessionManager.Current != null)
-            {
-                salLogEvent.SessionId = SessionManager.Current.GetSafeValue(SessionNames.SessionId, "");
-            }
-
+            
             jObject.Merge(JObject.FromObject(salLogEvent, JSerializer));
 
 

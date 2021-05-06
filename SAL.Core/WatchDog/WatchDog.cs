@@ -33,8 +33,8 @@ namespace SAL.Core.WatchDog
         {
             OnOnline = onOnline;
             OnOffline = onOffline;
-            SessionManager.SetNewSession("WD");
-
+            HandlerContext.Set(HandlerTypes.WatchDog, "Init");
+            
             monitors.ForEach(m =>
             {
                 m.Init();

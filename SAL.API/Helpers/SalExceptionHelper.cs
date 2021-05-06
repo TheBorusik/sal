@@ -29,10 +29,12 @@ namespace SAL.API
                 Message = message,
                 Properties = properties != null ? JObject.FromObject(properties) : new JObject(),
                 AdapterName = $"{AdapterConfiguration.AdapterType}.{AdapterConfiguration.AdapterName}",
-                Sid = SessionManager.Current.GetSID(),
                 StackTrace = innerException != null ? Environment.StackTrace : null,
-                // CallTrace = HandlerContext.CallTrace,
-                HandlerName = $"{HandlerContext.Type}.{HandlerContext.Name}",
+                HandlerName = $"{HandlerContext.HandlerType}.{HandlerContext.HandlerName}",
+                SessionId = HandlerContext.SessionId,
+                CorrelationId = HandlerContext.CorrelationId,
+                AuthId = HandlerContext.AuthId,
+                ProcessId = HandlerContext.ProcessId,
                 InnerException = innerException.ToDto(),
             };
 
@@ -70,10 +72,12 @@ namespace SAL.API
                 ExceptionType = ex.GetType().Name,
                 Properties = properties != null ? JObject.FromObject(properties) : new JObject(),
                 AdapterName = $"{AdapterConfiguration.AdapterType}.{AdapterConfiguration.AdapterName}",
-                Sid = SessionManager.Current.GetSID(),
                 StackTrace = ex.StackTrace,
-                // CallTrace = HandlerContext.CallTrace,
-                HandlerName = $"{HandlerContext.Type}.{HandlerContext.Name}",
+                HandlerName = $"{HandlerContext.HandlerType}.{HandlerContext.HandlerName}",
+                SessionId = HandlerContext.SessionId,
+                CorrelationId = HandlerContext.CorrelationId,
+                AuthId = HandlerContext.AuthId,
+                ProcessId = HandlerContext.ProcessId,
                 InnerException = ex.InnerException.ToDto(SalErrorCodes.Fatal)
             };
 
@@ -133,8 +137,11 @@ namespace SAL.API
                 TimeStamp = DateTime.UtcNow,
                 Properties = JObject.FromObject(new { ValidationErrors  = validationErrors }) ,
                 AdapterName = $"{AdapterConfiguration.AdapterType}.{AdapterConfiguration.AdapterName}",
-                Sid = SessionManager.Current.GetSID(),
-                HandlerName = $"{HandlerContext.Type}.{HandlerContext.Name}",
+                HandlerName = $"{HandlerContext.HandlerType}.{HandlerContext.HandlerName}",
+                SessionId = HandlerContext.SessionId,
+                CorrelationId = HandlerContext.CorrelationId,
+                AuthId = HandlerContext.AuthId,
+                ProcessId = HandlerContext.ProcessId
             };
 
             return dto;

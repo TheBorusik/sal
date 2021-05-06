@@ -5,38 +5,85 @@ using System.Threading;
 namespace SAL.API
 {
 
-    public static class HandlerTypes
+    public enum HandlerTypes
     {
-        public const string Processor = "Processor";
-        public const string CommandHandler = "CommandHandler";
-        public const string CommandResultHandler = "CommandResultHandler";
-        public const string EventHandler = "EventHandler";
+        Unknown,
+        System,
+        WatchDog,
+        Processor,
+        CommandHandler,
+        CommandResultHandler,
+        EventHandler,
+        FrontCommandHandler,
+        FrontCommandResultHandler,
+        FrontEventHandler,
+        FrontExternalHttp,
+    }
+
+    public class HandlerData
+    {
+        public HandlerTypes HandlerType;
+        public string HandlerName;
+        public string CorrelationId;
+        
+        public string SessionId;
+
+        public long? ProcessId;
+        public long? AuthId;
+
     }
 
     public static class HandlerContext
     {
-        private static readonly AsyncLocal<string> handlerName = new();
-        private static readonly AsyncLocal<string> handlerType = new();
-        
-        public static string Name
+        private static readonly AsyncLocal<HandlerData> data = new();
+
+        public static void Set(HandlerTypes handlerType, string handlerName, string correlationId = "")
         {
-            get
+            data.Value = new HandlerData
             {
-                var name  = handlerName.Value;
-                return string.IsNullOrWhiteSpace(name) ? "sal" : name;
-            }
-            internal set => handlerName.Value = value;
+                CorrelationId = correlationId,
+                HandlerType = handlerType,
+                HandlerName = handlerName
+            };
         }
 
-        public static string Type
+        public static void UpdateCorrelationId(string correlationId)
         {
-            get
-            {
-                var name = handlerType.Value;
-                return string.IsNullOrWhiteSpace(name) ? "unknown" : name;
-            }
-            internal set => handlerType.Value = value;
+            if(data.Value == null)
+                return;
+            data.Value.CorrelationId = correlationId;
         }
+        
+        public static void Update(TransportMessage msg)
+        {
+            if(data.Value == null)
+                return;
+            if(msg.SessionInfo == null)
+                return;
+
+            data.Value.SessionId = msg.SessionInfo.SessionId;
+            data.Value.AuthId = msg.SessionInfo.AuthId;
+            data.Value.ProcessId = msg.SessionInfo.ProcessId;
+
+        }
+        
+        public static void Update(HandlerTypes handlerType = HandlerTypes.Unknown , string handlerName = "")
+        {
+            if(data.Value == null)
+                return;
+            if (handlerType != HandlerTypes.Unknown)
+                data.Value.HandlerType = handlerType;
+            if (!string.IsNullOrWhiteSpace(handlerName))
+                data.Value.HandlerName = handlerName;
+        }
+        
+        
+        public static string HandlerName => data.Value.HandlerName;
+        public static HandlerTypes HandlerType => data.Value.HandlerType;
+        public static string SessionId => data.Value.SessionId;
+        public static string CorrelationId => data.Value.CorrelationId;
+        public static long? ProcessId => data.Value.ProcessId;
+        public static long? AuthId => data.Value.AuthId;
         
     }
 }

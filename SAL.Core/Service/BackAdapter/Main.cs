@@ -25,7 +25,7 @@ namespace SAL.Core.Service
 
         public virtual void Initialization()
         {
-            SessionManager.SetNewSession($"{AdapterConfiguration.AdapterType}.{AdapterConfiguration.AdapterName}#Init#");
+            HandlerContext.Set(HandlerTypes.System, "Initialization");
             logger.Trace("Инициализация...");
             ConfigureLimits();
             InitUnhandledExceptionHandler();
@@ -39,7 +39,7 @@ namespace SAL.Core.Service
 
         public void Start()
         {
-            SessionManager.SetNewSession($"{AdapterConfiguration.AdapterType}.{AdapterConfiguration.AdapterName}#Start#");
+            HandlerContext.Set(HandlerTypes.System, "Start");
             logger.Trace("Запуск...");
             StartWatchDog();
             StartProcessors();
@@ -52,7 +52,7 @@ namespace SAL.Core.Service
 
         public void Stop()
         {
-            SessionManager.SetNewSession($"{AdapterConfiguration.AdapterType}.{AdapterConfiguration.AdapterName}#Stop#");
+            HandlerContext.Set(HandlerTypes.System, "Stop");
             logger.Trace("Остановка...");
             stoping = true;
             StopWatchDog();

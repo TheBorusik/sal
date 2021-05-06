@@ -11,10 +11,12 @@ namespace SAL.API
         public DateTime TimeStamp => Dto.TimeStamp;
         public JObject Properties => Dto.Properties;
         public new string StackTrace => Dto.StackTrace;
-        public string CallTrace => Dto.CallTrace;
         public string AdapterName => Dto.AdapterName;
         public string HandlerName => Dto.HandlerName;
-        public string Sid => Dto.Sid;
+        public string Sid => Dto.SessionId;
+        public string Cid => Dto.CorrelationId;
+        public long? AuthId => Dto.AuthId;
+        public long? ProcessId => Dto.ProcessId;
 
 
         internal SalException(InternalExceptionDTO data) : base(data.Message)

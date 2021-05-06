@@ -135,9 +135,9 @@ namespace SAL.Test
 
         public async Task Handle(WFMTestCommand command)
         {
-            executingContext.Logger.Debug(SessionManager.Current.ToIndentedJson());
-            var operationId = SessionManager.Current.GetSafeValue(SessionNames.OperationId, 0L);
-            if(operationId < 5)
+         //   executingContext.Logger.Debug(SessionManager.Current.ToIndentedJson());
+         //   var operationId = SessionManager.Current.GetSafeValue(SessionNames.OperationId, 0L);
+           // if(operationId < 5)
                 await executingContext.SalClient.ExecuteCommandAsync<WFMTestCommand, WFMTestCommandResult>(new WFMTestCommand
                 {
                     TestString = "test"
@@ -162,7 +162,7 @@ namespace SAL.Test
         private ExecutingContext executingContext;
         public async Task<bool> ResultHandle(CommandResult<WFMTestCommandResult> result)
         {
-            executingContext.Logger.Trace(SessionManager.Current.ToIndentedJson());
+    //        executingContext.Logger.Trace(SessionManager.Current.ToIndentedJson());
             
             return true;
         }

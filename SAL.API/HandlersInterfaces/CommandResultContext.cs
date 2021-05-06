@@ -11,13 +11,15 @@ namespace SAL.API
         public CommandResultContext(CommandResultContext src)
         {
             Descriptor = new CommandResultDescriptor(src.Descriptor);
-            Session = Session.Clone();
-            CallTrace = CallTrace.Clone();
+            SessionId = src.SessionId;
+            AuthId = src.AuthId;
+            ProcessId = src.ProcessId;
         }
 
         public CommandResultDescriptor Descriptor { get; set; }
-        public JObject Session { get; set; }
-        public JObject CallTrace { get; set; }
 
+        public string SessionId { get; set; }
+        public long? AuthId { get; set; }
+        public long? ProcessId { get; set; }
     }
 }

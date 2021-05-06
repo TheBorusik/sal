@@ -12,14 +12,13 @@ using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using SAL.API;
-using SAL.Core.DTO.Transport;
 using SAL.Core.Helpers;
 using SAL.Core.Rabbit;
 using SAL.Core.Rabbit.Interfaces;
 using SAL.Core.Service;
 using SAL.Core.Validators;
 using SAL.Infrastructure;
-using SessionManager = SAL.API.SessionManager;
+using SessionManager = SAL.Core.Session.SessionManager;
 
 namespace SAL.Core.Processors
 {
@@ -296,12 +295,10 @@ namespace SAL.Core.Processors
         {
             try
             {
-                HandlerContext.Type = HandlerTypes.Processor;
-                HandlerContext.Name = "CommandProcessor";
-
+                HandlerContext.Set(HandlerTypes.Processor, "CommandProcessor", rabbitMessage.CorrelationId);
                 var transportMessage = ExtractMessage(rabbitMessage);
                 var commandPayload = ExtractCommandPayload(transportMessage);
-                SessionManager.Set(transportMessage.Session);
+                HandlerContext.Update(transportMessage);
                 salLogger.LogIncoming(commandPayload);
                 if (commandPayload.Descriptor.CommandName == "WFM.Result")
                     await ProcessingWfmResult(transportMessage, commandPayload);
@@ -364,9 +361,9 @@ namespace SAL.Core.Processors
             }
         }
 
-        protected Message ExtractMessage(RabbitMessage rabbitMessage)
+        protected TransportMessage ExtractMessage(RabbitMessage rabbitMessage)
         {
-            var transportMessage = SalSerializer.BinaryDeserialize<Message>(rabbitMessage.Payload);
+            var transportMessage = SalSerializer.BinaryDeserialize<TransportMessage>(rabbitMessage.Payload);
             if (transportMessage == null)
                 throw new Exception($"Неудалось десерилизовать сообщение | CorrelationId:{rabbitMessage.CorrelationId}");
             if (transportMessage.Type != MessageTypes.Command)
@@ -382,27 +379,27 @@ namespace SAL.Core.Processors
             return transportMessage;
         }
 
-        protected CommandPayload ExtractCommandPayload(Message transportMessage)
+        protected CommandPayload ExtractCommandPayload(TransportMessage transportTransportMessage)
         {
-            var commandPayload = transportMessage.Payload.ConvertValue<CommandPayload>();
+            var commandPayload = transportTransportMessage.Payload.ConvertValue<CommandPayload>();
 
             if (commandPayload.Descriptor == null)
-                throw new Exception($"Отсутствует commandPayload.Descriptor | CorrelationId:{transportMessage.CorrelationId}");
+                throw new Exception($"Отсутствует commandPayload.Descriptor | CorrelationId:{transportTransportMessage.CorrelationId}");
 
             if (string.IsNullOrWhiteSpace(commandPayload.Descriptor.CommandName))
-                throw new Exception($"Пустой commandPayload.Descriptor.CommandName | CorrelationId:{transportMessage.CorrelationId}");
+                throw new Exception($"Пустой commandPayload.Descriptor.CommandName | CorrelationId:{transportTransportMessage.CorrelationId}");
 
             if (commandPayload.Payload == null)
-                throw new Exception($"Отсутствует commandPayload.Payload | CorrelationId:{transportMessage.CorrelationId}");
+                throw new Exception($"Отсутствует commandPayload.Payload | CorrelationId:{transportTransportMessage.CorrelationId}");
 
 
             if (!string.IsNullOrWhiteSpace(commandPayload.Descriptor.DestinationAdapterType)
                 && commandPayload.Descriptor.DestinationAdapterType != AdapterConfiguration.AdapterType)
-                throw new Exception($"Не соответствие Descriptor.DestinationAdapterType и AdapterType для команды CorrelationId:{transportMessage.CorrelationId}");
+                throw new Exception($"Не соответствие Descriptor.DestinationAdapterType и AdapterType для команды CorrelationId:{transportTransportMessage.CorrelationId}");
 
             if (!string.IsNullOrWhiteSpace(commandPayload.Descriptor.DestinationAdapterName)
                 && commandPayload.Descriptor.DestinationAdapterName != AdapterConfiguration.AdapterName)
-                throw new Exception($"Не соответствие Descriptor.DestinationAdapterType и AdapterType для команды CorrelationId:{transportMessage.CorrelationId}");
+                throw new Exception($"Не соответствие Descriptor.DestinationAdapterType и AdapterType для команды CorrelationId:{transportTransportMessage.CorrelationId}");
 
 
             commandPayload.Descriptor.HandlerTimeStamp = DateTime.UtcNow;
@@ -410,7 +407,7 @@ namespace SAL.Core.Processors
             return commandPayload;
         }
 
-        protected virtual async Task Processing(Message message, CommandPayload commandPayload)
+        protected virtual async Task Processing(TransportMessage transportMessage, CommandPayload commandPayload)
         {
             var commandLogger = salLogger.GetLogger(commandPayload);
 
@@ -421,15 +418,15 @@ namespace SAL.Core.Processors
                 return;
             }
 
+            HandlerContext.Update(HandlerTypes.CommandHandler, commandPayload.Descriptor.CommandName);
 
-            HandlerContext.Type = HandlerTypes.CommandHandler;
-            HandlerContext.Name = commandPayload.Descriptor.CommandName;
-
+            
             if (commandHandlers.TryGetValue(commandPayload.Descriptor.CommandName, out var commandHandlerInfo))
             {
-                HandlerContext.Name = commandHandlerInfo.HandlerType.Name;
+                var handlerName = commandHandlerInfo.HandlerType.Name;
 
-                salLogger.LogHandler(commandPayload, HandlerContext.Name);
+
+                salLogger.LogHandler(commandPayload, handlerName);
 
                 using var scope = container.BeginLifetimeScope();
                 var handler = (ICommandHandler) scope.Resolve(commandHandlerInfo.HandlerType);
@@ -443,7 +440,9 @@ namespace SAL.Core.Processors
                 var commandContext = new CommandContext
                 {
                     Descriptor = commandPayload.Descriptor,
-                    Session = message.Session.DeepClone() as JObject,
+                    SessionId = HandlerContext.SessionId,
+                    AuthId = HandlerContext.AuthId,
+                    ProcessId = HandlerContext.ProcessId
                 };
 
                 handler.SetContexts(commandContext, executingContext);
@@ -475,7 +474,7 @@ namespace SAL.Core.Processors
             }
         }
 
-        protected virtual async Task ProcessingWfmResult(Message message, CommandPayload commandPayload)
+        protected virtual async Task ProcessingWfmResult(TransportMessage transportMessage, CommandPayload commandPayload)
         {
             var commandLogger = salLogger.GetLogger(commandPayload);
 
@@ -487,9 +486,8 @@ namespace SAL.Core.Processors
             }
 
 
-            HandlerContext.Type = HandlerTypes.CommandHandler;
-            HandlerContext.Name = commandPayload.Descriptor.CommandName;
-
+            HandlerContext.Update(HandlerTypes.CommandHandler, commandPayload.Descriptor.CommandName);
+            
             var wfmProcessResultCommand = commandPayload.Payload.ConvertValue<WfmProcessResultCommand>();
 
             var wfmResultHandlerName = "default";
@@ -502,8 +500,8 @@ namespace SAL.Core.Processors
 
             if (wfmResultHandler.TryGetValue(wfmResultHandlerName, out var wfmResultHandlerInfo))
             {
-                HandlerContext.Name = wfmResultHandlerInfo.HandlerName;
-                salLogger.LogHandler(commandPayload, HandlerContext.Name);
+                HandlerContext.Update(handlerName:wfmResultHandlerInfo.HandlerName);
+                salLogger.LogHandler(commandPayload, wfmResultHandlerInfo.HandlerName);
 
                 using var scope = container.BeginLifetimeScope();
                 var handler = (IWfmResultHandler) scope.Resolve(wfmResultHandlerInfo.HandlerType);

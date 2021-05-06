@@ -9,12 +9,16 @@ namespace SAL.API
         public EventContext(EventContext src)
         {
             Descriptor = new EventDescriptor(src.Descriptor);
-            Session = src.Session.Clone();
+            SessionId = src.SessionId;
+            AuthId = src.AuthId;
+            ProcessId = src.ProcessId;
         }
 
 
         public EventDescriptor Descriptor { get; set; }
-        public JObject Session { get; set; }
+        public string SessionId { get; set; }
+        public long? AuthId { get; set; }
+        public long? ProcessId { get; set; }
 
     }
 }

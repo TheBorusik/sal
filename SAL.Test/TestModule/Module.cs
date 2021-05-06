@@ -136,8 +136,8 @@ namespace SAL.Test
         public async Task Handle(TestCommand command)
         {
             var a = aa.Get();
-            SessionManager.Current.AddOrUpdate(SessionNames.OrderId ,a + 100000);
-            SessionManager.Current.AddOrUpdate(SessionNames.WfmProcessId ,a + 500);
+          //  SessionManager.Current.AddOrUpdate(SessionNames.OrderId ,a + 100000);
+          //  SessionManager.Current.AddOrUpdate(SessionNames.WfmProcessId ,a + 500);
 
             
       //      if(a >= 10)

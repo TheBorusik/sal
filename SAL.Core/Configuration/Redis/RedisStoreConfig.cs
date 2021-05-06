@@ -4,8 +4,8 @@ namespace SAL.Core.Configuration.Redis
 {
     public class RedisStoreConfig
     {
-        public bool Enable { get; set; }
         public RedisConfig Redis { get; set; }
+        public int? SessionDatabase { get; set; }
     }
 
     public class RedisConfig

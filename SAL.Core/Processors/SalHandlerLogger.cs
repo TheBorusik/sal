@@ -6,7 +6,6 @@ using System.Text.RegularExpressions;
 using Microsoft.Extensions.Logging;
 using SAL.API;
 using SAL.Core.Configuration.Logging;
-using SAL.Core.DTO.Transport;
 
 namespace SAL.Core.Processors
 {
@@ -37,7 +36,6 @@ namespace SAL.Core.Processors
             var sb = new StringBuilder();
             sb.Append("[CP  <- BUS] ");
             sb.Append($"({pt.TotalSeconds:F3} c) ");
-            sb.Append($"| CID:{commandPayload.Descriptor.CorrelationId} ");
             sb.Append($"| P:{commandPayload.Descriptor.Priority} ");
             sb.Append($"| PTS:{commandPayload.Descriptor.PublishTimeStamp:O} ");
             sb.Append($"| IS:{commandPayload.Descriptor.IsSync} ");
@@ -71,7 +69,6 @@ namespace SAL.Core.Processors
             var sb = new StringBuilder();
             sb.Append("[CRP <- BUS] ");
             sb.Append($"({pt.TotalSeconds:F3} c) ");
-            sb.Append($"| CID:{commandResultPayload.Descriptor.CorrelationId} ");
             sb.Append($"| P:{commandResultPayload.Descriptor.Priority} ");
             sb.Append($"| PTS:{commandResultPayload.Descriptor.PublishTimeStamp:O} ");
             sb.Append($"| HTS:{commandResultPayload.Descriptor.HandlerTimeStamp:O} ");
@@ -103,7 +100,6 @@ namespace SAL.Core.Processors
             var sb = new StringBuilder();
             sb.Append("[EP  <- BUS] ");
             sb.Append($"({pt.TotalSeconds:F3} c) ");
-            sb.Append($"| CID:{eventPayload.Descriptor.CorrelationId} ");
 
             if (loggerSettings.CropSize == 0)
             {
@@ -131,7 +127,6 @@ namespace SAL.Core.Processors
 
             var sb = new StringBuilder();
             sb.Append("[CMD -> BUS] ");
-            sb.Append($"| CID:{commandPayload.Descriptor.CorrelationId} ");
             sb.Append($"| P:{commandPayload.Descriptor.Priority} ");
             sb.Append($"| PTS:{commandPayload.Descriptor.PublishTimeStamp:O} ");
             sb.Append($"| IS:{commandPayload.Descriptor.IsSync} ");
@@ -155,7 +150,11 @@ namespace SAL.Core.Processors
             {
                 sb.Append(body.Substring(0, loggerSettings.CropSize));
             }
+
+            var old = HandlerContext.CorrelationId;
+            HandlerContext.UpdateCorrelationId(commandPayload.Descriptor.CorrelationId);
             loggerSettings.logger.LogInformation(sb.ToString());
+            HandlerContext.UpdateCorrelationId(old);
         }
         public void LogOutgoing(CommandResultPayload commandResultPayload)
         {
@@ -170,8 +169,7 @@ namespace SAL.Core.Processors
                 var pt = DateTime.UtcNow - commandResultPayload.Descriptor.HandlerTimeStamp.Value;
                 sb.Append($"({pt.TotalSeconds:F3} c) ");
             }
-
-            sb.Append($"| CID:{commandResultPayload.Descriptor.CorrelationId} ");
+            
             sb.Append($"| P:{commandResultPayload.Descriptor.Priority} ");
             sb.Append($"| PTS:{commandResultPayload.Descriptor.PublishTimeStamp:O} ");
             sb.Append($"| IS:{commandResultPayload.Descriptor.IsSync} ");
@@ -191,7 +189,12 @@ namespace SAL.Core.Processors
             {
                 sb.Append(body.Substring(0, loggerSettings.CropSize));
             }
+            
+            var old = HandlerContext.CorrelationId;
+            HandlerContext.UpdateCorrelationId(commandResultPayload.Descriptor.CorrelationId);
             loggerSettings.logger.LogInformation(sb.ToString());
+            HandlerContext.UpdateCorrelationId(old);
+            
         }
 
         public void LogNullOutgoing(CommandDescriptor commandDescriptor)
@@ -202,13 +205,15 @@ namespace SAL.Core.Processors
 
             var sb = new StringBuilder();
             sb.Append("[RES -> NUL] ");
-            sb.Append($"| CID:{commandDescriptor.CorrelationId} ");
             sb.Append($"| P:{commandDescriptor.Priority} ");
             sb.Append($"| PTS:{commandDescriptor.PublishTimeStamp:O} ");
             sb.Append($"| HTS:{commandDescriptor.HandlerTimeStamp:O} ");
             sb.Append($"| IS:{commandDescriptor.IsSync} ");
 
+            var old = HandlerContext.CorrelationId;
+            HandlerContext.UpdateCorrelationId(commandDescriptor.CorrelationId);
             loggerSettings.logger.LogInformation(sb.ToString());
+            HandlerContext.UpdateCorrelationId(old);
         }
 
         public void LogNullHandler(CommandResultPayload commandResultPayload)
@@ -221,13 +226,15 @@ namespace SAL.Core.Processors
             var sb = new StringBuilder();
             sb.Append("[CRP -> NUL] ");
             sb.Append($"({pt.TotalSeconds:F3} c) ");
-            sb.Append($"| CID:{commandResultPayload.Descriptor.CorrelationId} ");
             sb.Append($"| P:{commandResultPayload.Descriptor.Priority} ");
             sb.Append($"| PTS:{commandResultPayload.Descriptor.PublishTimeStamp:O} ");
             sb.Append($"| HTS:{commandResultPayload.Descriptor.HandlerTimeStamp:O} ");
             sb.Append($"| IS:{commandResultPayload.Descriptor.IsSync} ");
 
+            var old = HandlerContext.CorrelationId;
+            HandlerContext.UpdateCorrelationId(commandResultPayload.Descriptor.CorrelationId);
             loggerSettings.logger.LogInformation(sb.ToString());
+            HandlerContext.UpdateCorrelationId(old);
         }
 
         public void LogHandler(CommandResultPayload commandResultPayload, string handlerName, bool handled)
@@ -241,7 +248,7 @@ namespace SAL.Core.Processors
             sb.Append($"[CRP -> {handlerName}] ");
             sb.Append($"({pt.TotalSeconds:F3} c) ");
             sb.Append($" = {handled} ");
-            sb.Append($"| CID:{commandResultPayload.Descriptor.CorrelationId} ");
+
 
             loggerSettings.logger.LogInformation(sb.ToString());
 
@@ -257,7 +264,7 @@ namespace SAL.Core.Processors
             var sb = new StringBuilder();
             sb.Append($"[CP  -> {handlerName}] ");
             sb.Append($"({pt.TotalSeconds:F3} c) ");
-            sb.Append($"| CID:{commandPayload.Descriptor.CorrelationId} ");
+
 
             loggerSettings.logger.LogInformation(sb.ToString());
 
@@ -272,7 +279,6 @@ namespace SAL.Core.Processors
             var sb = new StringBuilder();
             sb.Append($"[EP  -> {handlerName}] ");
             sb.Append($"({pt.TotalSeconds:F3} c) ");
-            sb.Append($"| CID:{eventPayload.Descriptor.CorrelationId} ");
 
             loggerSettings.logger.LogInformation(sb.ToString());
         }
@@ -285,9 +291,7 @@ namespace SAL.Core.Processors
 
             var sb = new StringBuilder();
             sb.Append("[EVN -> BUS] ");
-            sb.Append($"| CID:{eventPayload.Descriptor.CorrelationId} ");
-
-
+            
             if (loggerSettings.CropSize == 0)
             {
                 loggerSettings.logger.LogInformation(sb.ToString());

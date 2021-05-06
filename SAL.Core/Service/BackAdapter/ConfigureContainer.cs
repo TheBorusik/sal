@@ -10,6 +10,7 @@ using SAL.Core.Processors.System;
 using SAL.Core.Rabbit;
 using SAL.Core.Rabbit.Interfaces;
 using SAL.Core.S3;
+using SAL.Core.Session;
 using SAL.Core.SystemHandlers;
 using SAL.Core.Validators;
 using SAL.Core.WatchDog;
@@ -66,16 +67,21 @@ namespace SAL.Core.Service
                 .As<IWatchDogMonitor>()
                 .SingleInstance();
 
+            /*
             builder.RegisterSalHandler<GetCommandTestCasesHandler>();
             builder.RegisterSalHandler<AddCommandTestCaseHandler>();
             builder.RegisterSalHandler<GetAdapterConfigurationHandler>();
-            
+            */
             
             var redisConfig = ConfigWatcher.GetSection(ConfigurationSectionNames.RedisStore)?.ConvertValue<RedisStoreConfig>();
-            if (redisConfig?.Enable == true)
+            if (redisConfig != null)
             {
                 builder.RegisterType<RedisStore>()
                     .As<IRedisStore>()
+                    .SingleInstance();
+
+                builder.RegisterType<SessionManager>()
+                    .As<ISessionManager>()
                     .SingleInstance();
             }
 

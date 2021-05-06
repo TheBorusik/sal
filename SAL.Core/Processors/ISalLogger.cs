@@ -1,6 +1,5 @@
 ﻿using Microsoft.Extensions.Logging;
 using SAL.API;
-using SAL.Core.DTO.Transport;
 
 namespace SAL.Core.Processors
 {

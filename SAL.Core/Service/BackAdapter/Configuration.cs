@@ -15,7 +15,9 @@ using SAL.Core.Helpers;
 using SAL.Core.NLogEx.Adapter;
 using SAL.Core.NLogEx.Layout;
 using SAL.Core.NLogEx.LayoutRenderer;
-using SAL.Infrastructure;
+using SAL.Core.NLogEx.LayoutRenderer.HandlerContextRenderer;
+
+
 
 namespace SAL.Core.Service
 {
@@ -167,9 +169,11 @@ namespace SAL.Core.Service
         protected virtual void InitNLog()
         {
             Layout.Register<SalJsonLayout>("SalJsonLayout");
-            LayoutRenderer.Register<SidLayoutRenderer>("sid");
+            LayoutRenderer.Register<SessionIdLayoutRenderer>("sid");
+            LayoutRenderer.Register<CorrelationIdLayoutRenderer>("cid");
+            LayoutRenderer.Register<WfmProcessIdLayoutRenderer>("pid");
+            LayoutRenderer.Register<AuthIdLayoutRenderer>("aid");
             LayoutRenderer.Register<SalMessageLayoutRenderer>("message");
-            LayoutRenderer.Register<PidLayoutRenderer>("pid");
             SalLayoutRenderRegistrar.Register(LayoutRenderer.Register);
             nLogFactory = new NLogFactoryAdapter(ConfigWatcher.GetSection(ConfigurationSectionNames.Nlog));
             logger = nLogFactory.GetLogger(nameof(BackAdapter));

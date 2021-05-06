@@ -17,12 +17,9 @@ namespace SAL.Core.Service
 
         protected void StartProcessors()
         {
-            HandlerContext.Type = HandlerTypes.Processor;
-            
             var onlineTasks = processors.Select(p => Task.Run(() =>
             {
-                HandlerContext.Type = HandlerTypes.Processor;
-                HandlerContext.Name = p.GetType().Name;
+                HandlerContext.Set(HandlerTypes.Processor, p.GetType().Name);
                 p.Start();
             })).ToArray();
 
@@ -34,8 +31,7 @@ namespace SAL.Core.Service
         {
             var onlineTasks = processors.Select(p => Task.Run(() =>
             {
-                HandlerContext.Type = HandlerTypes.Processor;
-                HandlerContext.Name = p.GetType().Name;
+                HandlerContext.Set(HandlerTypes.Processor, p.GetType().Name);
                 p.Stop();
             })).ToArray();
 
@@ -46,8 +42,7 @@ namespace SAL.Core.Service
         {
             var onlineTasks = processors.Select(p => Task.Run(() =>
             {
-                HandlerContext.Type = HandlerTypes.Processor;
-                HandlerContext.Name = p.GetType().Name;
+                HandlerContext.Set(HandlerTypes.Processor, p.GetType().Name);
                 p.Online();
             })).ToArray();
 
@@ -60,8 +55,7 @@ namespace SAL.Core.Service
         {
             var offlineTasks = processors.Select(p => Task.Run(() =>
             {
-                HandlerContext.Type = HandlerTypes.Processor;
-                HandlerContext.Name = p.GetType().Name;
+                HandlerContext.Set(HandlerTypes.Processor, p.GetType().Name);
                 p.Offline();
             })).ToArray();
             

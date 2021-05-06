@@ -61,11 +61,11 @@ namespace SAL.Test
 
          var cl = scope.ResolveNamed<ISalClient>("front");
 
-         var sesPre = SessionManager.Current.Clone();
+       //  var sesPre = SessionManager.Current.Clone();
          
          var res = cl.ExecuteCommandAsync<GetPermissionTreeCommand, GetPermissionTreeResult>(new GetPermissionTreeCommand { }).Result;
 
-         var sesPost = SessionManager.Current.Clone();
+        // var sesPost = SessionManager.Current.Clone();
          
         }
 
@@ -101,7 +101,7 @@ namespace SAL.Test
 </html>
 ";
 
-            SessionManager.Current.AddOrUpdate("Test", "Test");
+       //     SessionManager.Current.AddOrUpdate("Test", "Test");
             await PublishResult(new ExternalHttpResponse
             {
                 ContentType = "text/html;charset=UTF-8",
@@ -122,12 +122,12 @@ namespace SAL.Test
 
         public override async Task Handle(GetPermissionTreeCommand command)
         {
-            SessionManager.Current.AddOrUpdate("Test1", $"Value_{index++}");
+           // SessionManager.Current.AddOrUpdate("Test1", $"Value_{index++}");
             await PublishResult(new GetPermissionTreeResult
             {
-                Session = SessionManager.Current
+            //    Session = SessionManager.Current
             });
-            SessionManager.Current.AddOrUpdate("Test2", $"Value_{index++}");
+     //       SessionManager.Current.AddOrUpdate("Test2", $"Value_{index++}");
         }
     }
 

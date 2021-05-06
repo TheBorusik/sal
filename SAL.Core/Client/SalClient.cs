@@ -4,7 +4,6 @@ using System.Threading.Tasks;
 using Autofac;
 using Newtonsoft.Json.Linq;
 using SAL.API;
-using SAL.Core.DTO.Transport;
 using SAL.Core.Helpers;
 using SAL.Core.Processors;
 using SAL.Core.Rabbit.Interfaces;
@@ -66,8 +65,7 @@ namespace SAL.Core.Client
 
             if (string.IsNullOrWhiteSpace(resultServiceName) && !commandType.IsResultTypeHandler())
                 resultServiceName = AdapterConfiguration.AdapterName;
-
-            SessionManager.IncOperationId();
+            
 
             await PublishCommandAsync(
                 commandType.GetRouteKey(),
@@ -95,7 +93,6 @@ namespace SAL.Core.Client
             ttl ??= TimeSpan.FromSeconds(60);
 
             var commandType = command.GetType();
-            SessionManager.IncOperationId();
             var result = await ExecuteCommandAsync(
                 commandType.GetRouteKey(),
                 command,
@@ -104,8 +101,6 @@ namespace SAL.Core.Client
                 handlerServiceType,
                 handlerServiceName
             );
-
-            SessionManager.Merge(result.CommandResultContext.Session);
             
             return new CommandResult<TCommandResult>(result.CommandResult);
         }
@@ -113,8 +108,6 @@ namespace SAL.Core.Client
 
         public Task PublishResultAsync(ICommandResult result, CommandDescriptor commandDescriptor)
         {
-            SessionManager.IncOperationId();
-
             return PublishResultAsync(new CommonCommandResult
             {
                 Error = null,
@@ -125,7 +118,6 @@ namespace SAL.Core.Client
 
         public Task PublishResultAsync(object result, string code, CommandDescriptor commandDescriptor)
         {
-            SessionManager.IncOperationId();
             return PublishResultAsync(new CommonCommandResult
             {
                 Error = null,
@@ -136,7 +128,6 @@ namespace SAL.Core.Client
 
         public Task PublishResultAsync(InternalExceptionDTO exceptionDTO, CommandDescriptor commandDescriptor)
         {
-            SessionManager.IncOperationId();
             return PublishResultAsync(new CommonCommandResult
             {
                 Error = exceptionDTO,
@@ -147,7 +138,6 @@ namespace SAL.Core.Client
 
         public Task PublishResultAsync(IList<FieldError> validationErrors, CommandDescriptor commandDescriptor)
         {
-            SessionManager.IncOperationId();
             return PublishResultAsync(new CommonCommandResult
             {
                 Error = SalError.CreateValidationDto(validationErrors),
@@ -161,7 +151,6 @@ namespace SAL.Core.Client
             if (typeof(TCommandResult) == typeof(None))
                 return Task.CompletedTask;
 
-            SessionManager.IncOperationId();
             return PublishResultAsync(new CommonCommandResult
             {
                 Error = result.Error,
@@ -175,7 +164,6 @@ namespace SAL.Core.Client
         {
             if (evnt == null)
                 return Task.CompletedTask;
-            SessionManager.IncOperationId();
             
             return PublishEventAsync(
                 evnt.GetType().GetRouteKey(),
@@ -191,7 +179,6 @@ namespace SAL.Core.Client
 
         public Task RaiseExceptionDetectEvent(string cid, InternalExceptionDTO exceptionDTO)
         {
-            SessionManager.IncOperationId();
             return PublishEventAsync(new ExceptionDetectedEvent
             {
                 CorrelationId = cid,
@@ -204,7 +191,6 @@ namespace SAL.Core.Client
 
         public Task RaiseExceptionDetectEvent(string cid, Exception ex)
         {
-            SessionManager.IncOperationId();
             return PublishEventAsync(new ExceptionDetectedEvent
             {
                 CorrelationId = cid,
@@ -217,15 +203,15 @@ namespace SAL.Core.Client
 
         //lo
 
-        private RabbitMessage Pack(Message transportMessage)
+        private RabbitMessage Pack(TransportMessage transportTransportMessage)
         {
             return new RabbitMessage
             {
-                Priority = transportMessage.Priority,
-                Payload = SalSerializer.BinarySerialize(transportMessage),
-                CorrelationId = transportMessage.CorrelationId,
-                TimeStamp = transportMessage.TimeStamp,
-                RoutingKey = transportMessage.Destination
+                Priority = transportTransportMessage.Priority,
+                Payload = SalSerializer.BinarySerialize(transportTransportMessage),
+                CorrelationId = transportTransportMessage.CorrelationId,
+                TimeStamp = transportTransportMessage.TimeStamp,
+                RoutingKey = transportTransportMessage.Destination
             };
         }
 
@@ -379,7 +365,7 @@ namespace SAL.Core.Client
             
             salLogger.LogOutgoing(commandPayload);
             
-            var transportMessage = new Message
+            var transportMessage = new TransportMessage
             {
                 Type = MessageTypes.Command,
                 Payload = JObject.FromObject(commandPayload, SalSerializer.Create()),
@@ -389,7 +375,12 @@ namespace SAL.Core.Client
                 Destination = routingKey,
                 TTL = commandPayload.Descriptor.TTL,
                 CorrelationId = commandPayload.Descriptor.CorrelationId,
-                Session = SessionManager.Current.Clone()
+                SessionInfo = new SessionInfo
+                {
+                    SessionId = HandlerContext.SessionId,
+                    AuthId = HandlerContext.AuthId,
+                    ProcessId = HandlerContext.ProcessId
+                }
             };
             
             var completionSource = new TaskCompletionSource<SimpleCommandResult>();
@@ -417,9 +408,10 @@ namespace SAL.Core.Client
                 Descriptor = commandDescriptor,
                 Payload = commandBody.Clone()
             };
+
             salLogger.LogOutgoing(commandPayload);
 
-            var transportMessage = new Message
+            var transportMessage = new TransportMessage
             {
                 Type = MessageTypes.Command,
                 Payload = JObject.FromObject(commandPayload, SalSerializer.Create()),
@@ -429,7 +421,12 @@ namespace SAL.Core.Client
                 Destination = routingKey,
                 TTL = commandDescriptor.TTL,
                 CorrelationId = commandDescriptor.CorrelationId,
-                Session = SessionManager.Current.Clone()
+                SessionInfo = new SessionInfo
+                {
+                    SessionId = HandlerContext.SessionId,
+                    AuthId = HandlerContext.AuthId,
+                    ProcessId = HandlerContext.ProcessId
+                }
             };
             publisher.PublishCommand(Pack(transportMessage)); 
             return Task.CompletedTask;
@@ -480,7 +477,7 @@ namespace SAL.Core.Client
 
                 salLogger.LogOutgoing(commandResultPayload);
 
-                var transportMessage = new Message
+                var transportMessage = new TransportMessage
                 {
                     Type = MessageTypes.CommandResult,
                     Payload = JObject.FromObject(commandResultPayload, SalSerializer.Create()),
@@ -490,7 +487,12 @@ namespace SAL.Core.Client
                     Destination = routingKey,
                     TTL = ttl,
                     CorrelationId = commandResultDescriptor.CorrelationId,
-                    Session = SessionManager.Current.Clone()
+                    SessionInfo = new SessionInfo
+                    {
+                        SessionId = HandlerContext.SessionId,
+                        AuthId = HandlerContext.AuthId,
+                        ProcessId = HandlerContext.ProcessId
+                    }
                 };
 
                 publisher.PublishCommandResult(Pack(transportMessage));
@@ -556,7 +558,7 @@ namespace SAL.Core.Client
             
 
             
-            var transportMessage = new Message
+            var transportMessage = new TransportMessage
             {
                 Type = MessageTypes.Event,
                 Payload = JObject.FromObject(eventPayload, SalSerializer.Create()),
@@ -566,7 +568,12 @@ namespace SAL.Core.Client
                 Destination = routingKey,
                 TTL = eventDescriptor.TTL,
                 CorrelationId = eventDescriptor.CorrelationId,
-                Session = SessionManager.Current.Clone()
+                SessionInfo = new SessionInfo
+                {
+                    SessionId = HandlerContext.SessionId,
+                    AuthId = HandlerContext.AuthId,
+                    ProcessId = HandlerContext.ProcessId
+                }
             };
 
             publisher.PublishEvent(Pack(transportMessage));
