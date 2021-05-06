@@ -10,5 +10,7 @@ namespace SAL.API
         public string EventName { get; set; }
         public JObject Payload { get; set; }
         public DateTime? TimeStamp { get; set; }
+        
+        public long[] RecipientAuthId { get; set; }
     }
 }
