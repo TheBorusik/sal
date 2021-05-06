@@ -53,6 +53,26 @@ namespace SAL.API
                 return;
             data.Value.CorrelationId = correlationId;
         }
+        public static void UpdateSessionId(string sessionId)
+        {
+            if(data.Value == null)
+                return;
+            data.Value.SessionId = sessionId;
+        }
+        
+        public static void UpdateAuthId(long authId)
+        {
+            if(data.Value == null)
+                return;
+            data.Value.AuthId = authId;
+        }
+        
+        public static void UpdateProcessId(long processId)
+        {
+            if(data.Value == null)
+                return;
+            data.Value.ProcessId = processId;
+        }
         
         public static void Update(TransportMessage msg)
         {
