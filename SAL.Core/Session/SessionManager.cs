@@ -11,8 +11,8 @@ namespace SAL.Core.Session
     public class SessionManager : ISessionManager
     {
         
-        private ILogger logger;
-        private ConnectionMultiplexer redis;
+        protected ILogger logger;
+        protected ConnectionMultiplexer redis;
         
         public SessionManager(ILoggerProvider loggerProvider, IConfigWatcher configWatcher)
         {
@@ -50,7 +50,7 @@ namespace SAL.Core.Session
             
         }
 
-        public Session GetCurrent()
+        public API.Session GetCurrent()
         {
             var sessionId = HandlerContext.SessionId;
             if (!string.IsNullOrWhiteSpace(sessionId))
@@ -62,7 +62,7 @@ namespace SAL.Core.Session
                     try
                     {
                         var sessioinData = JObject.Parse(sessionData);
-                        return new Session(this)
+                        return new API.Session(this)
                         {
                             SessionId = sessionId,
                             AuthId = HandlerContext.AuthId,
@@ -81,7 +81,7 @@ namespace SAL.Core.Session
             }
             
 
-            return new Session(this)
+            return new API.Session(this)
             {
                 AuthId = HandlerContext.AuthId,
                 ProcessId = HandlerContext.ProcessId,
@@ -92,7 +92,7 @@ namespace SAL.Core.Session
         }
         
         
-        public void Update(Session session)
+        public void Update(API.Session session)
         {
             if(session.IsLocal)
                 return;
@@ -105,7 +105,7 @@ namespace SAL.Core.Session
             }
         }
 
-        public void Refresh(Session session)
+        public void Refresh(API.Session session)
         {
             if(session.IsLocal)
                 return;
@@ -128,73 +128,5 @@ namespace SAL.Core.Session
         }
     }
 
-    public class Session 
-    {
-        public bool IsLocal { get; internal set; }
-        public bool IsChanged { get; internal set; }
-        
-        public string SessionId { get; set; }
-        public long? AuthId { get; set; }
-        public long? ProcessId { get; set; }
 
-        internal JObject data;
-        private SessionManager manager;
-
-        internal Session(SessionManager manager)
-        {
-            this.manager = manager;
-        }
-
-
-        public JObject GetRawData()
-        {
-            return data.Clone();
-        }
-
-        public void AddOrUpdate(string key, object value)
-        {
-            data.AddOrUpdate(key, value);
-            IsChanged = true;
-        }
-
-        public void Remove(string key)
-        {            
-            if(data.Remove(key))
-                IsChanged = true;
-        }
-
-        public T GetValue<T>(string key)
-        {
-            return data.GetValue<T>(key);
-        }
-        
-        public bool TryGetValue<T>(string key, out T value)
-        {
-            return data.TryGetValue(key, out value);
-        }
-        
-        public T GetSafeValue<T>(string key, T defaultValue = default)
-        {
-            return data.GetSafeValue(key, defaultValue);
-        }
-
-        public void Update()
-        {
-            if (IsChanged)
-            {
-                manager.Update(this);
-            }
-        }
-
-        public void Refresh()
-        {
-            manager.Refresh(this);
-
-        }
-
-
-
-
-
-    }
 }
