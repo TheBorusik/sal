@@ -18,6 +18,8 @@ namespace SAL.API
         FrontCommandResultHandler,
         FrontEventHandler,
         FrontExternalHttp,
+        WorkflowMachine,
+        EmbeddedWfm
     }
 
     public class HandlerData

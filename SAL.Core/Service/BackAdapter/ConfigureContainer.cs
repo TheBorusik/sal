@@ -80,10 +80,12 @@ namespace SAL.Core.Service
                     .As<IRedisStore>()
                     .SingleInstance();
 
-                builder.RegisterType<SessionManager>()
-                    .As<ISessionManager>()
-                    .SingleInstance();
+
             }
+            
+            builder.RegisterType<SessionManager>()
+                .As<ISessionManager>()
+                .SingleInstance();
 
             builder.RegisterType<S3Store>()
                 .As<IS3Store>();

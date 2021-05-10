@@ -17,9 +17,14 @@ namespace SAL.Core.Session
         public SessionManager(ILoggerProvider loggerProvider, IConfigWatcher configWatcher)
         {
             logger = loggerProvider.CreateLogger("SessionManager");
-            var redisConfig = configWatcher.GetSection(ConfigurationSectionNames.RedisStore).ConvertValue<RedisStoreConfig>();
-            
-            
+            var redisConfig = configWatcher.GetSection(ConfigurationSectionNames.RedisStore)?.ConvertValue<RedisStoreConfig>();
+
+            if (redisConfig == null)
+            {
+                redis = null;
+                return;
+            }
+
             var options = new ConfigurationOptions
             {
                 AbortOnConnectFail = redisConfig.Redis.AbortOnConnectFail,
@@ -45,13 +50,33 @@ namespace SAL.Core.Session
             {
                 options.EndPoints.TryAdd(new DnsEndPoint(redisEndpoint.Host, redisEndpoint.Port));
             }
-            
-            redis = ConnectionMultiplexer.Connect(options);
+
+            try
+            {
+                redis = ConnectionMultiplexer.Connect(options);
+            }
+            catch (Exception e)
+            {
+                logger.Fatal("нет соединения с редисом", e);
+                redis = null;
+            }
+
             
         }
 
         public API.Session GetCurrent()
         {
+            if (redis == null)
+            {
+                return new API.Session(this)
+                {
+                    AuthId = HandlerContext.AuthId,
+                    ProcessId = HandlerContext.ProcessId,
+                    IsLocal = true,
+                    data = new JObject()
+                };
+            }
+            
             var sessionId = HandlerContext.SessionId;
             if (!string.IsNullOrWhiteSpace(sessionId))
             {

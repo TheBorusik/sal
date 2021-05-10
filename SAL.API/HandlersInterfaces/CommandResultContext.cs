@@ -15,6 +15,11 @@ namespace SAL.API
             AuthId = src.AuthId;
             ProcessId = src.ProcessId;
         }
+        
+        public CommandResultContext Clone()
+        {
+            return new CommandResultContext(this);
+        }
 
         public CommandResultDescriptor Descriptor { get; set; }
 
