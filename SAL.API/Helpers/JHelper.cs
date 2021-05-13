@@ -408,7 +408,11 @@ namespace SAL.API
 
         public static JObject ToJObjectSafe(this object obj)
         {
-            return obj == null ? new JObject() : JObject.FromObject(obj);
+            if (obj == null)
+                return new JObject();
+            if (obj.GetType() == typeof(JObject))
+                return (JObject) obj;
+            return JObject.FromObject(obj);
         }
 
         //clone

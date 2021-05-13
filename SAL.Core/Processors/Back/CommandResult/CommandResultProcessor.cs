@@ -268,7 +268,7 @@ namespace SAL.Core.Processors
             catch (SalException ex)
             {
                 nack();
-                logger.Error("При обработке результата команды произошла ошибка", ex);
+                logger.Error($"При обработке результата команды произошла ошибка ({ex.Code})", ex);
                 await salClient.RaiseExceptionDetectEvent(rabbitMessage.CorrelationId, ex.ToDto());
             }
             catch (TargetInvocationException ex)
@@ -276,8 +276,8 @@ namespace SAL.Core.Processors
                 nack();
                 if (ex.InnerException is SalException sex)
                 {
-                    logger.Error("При обработке результата команды произошла ошибка", ex);
-                    await salClient.RaiseExceptionDetectEvent(rabbitMessage.CorrelationId, ex.ToDto());
+                    logger.Error($"При обработке результата команды произошла ошибка ({sex.Code})", sex);
+                    await salClient.RaiseExceptionDetectEvent(rabbitMessage.CorrelationId, sex.ToDto());
                 }
                 else
                 {

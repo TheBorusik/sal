@@ -17,8 +17,6 @@ namespace SAL.Test
             builder.RegisterSalHandler<WfmResultHandler2>();
             
             builder.RegisterSalHandler<WFMTestCommandHandler>();
-            builder.RegisterSalHandler<WFMTestResulHandler>();
-
             
             builder.RegisterProcessor<WfmTestProcessor>();
 
@@ -49,50 +47,20 @@ namespace SAL.Test
 
         public void Online()
         {
-
             var backClient = scope.Resolve<ISalClient>();
-
-
-            /*
+            
             backClient.PublishCommandAsync(new StartProcessCommand
             {
-                ProcessName = "Дебит WoF Finish",
-                ResultHandlerType = AdapterConfiguration.AdapterType,
+                ProcessName = "WFM\\Tests\\SimpleTest",
+                ResultAdapterType = AdapterConfiguration.AdapterType,
                 ProcessCorrelationId = Guid.NewGuid().ToString("N"),
                 InitialData = new
                 {
-                    Order = new 
-                    {
-                        OrderId = 100010,
-
-                    },
-                    Terminal = new
-                    { 
-                        MercId = 1,
-                        Mps = "VISA",
-                        Channel = "1",
-                        Is3Ds = true,
-                        TerminalId = "12",
-                        MerchantId = "123123",
-                        Mcc = "123",
-                        Name = "test1",
-                        MerchantUrl = "https://yandex.ru",
-                        Currency = "RUB",
-                        Gate = "TCB",
-                        OperType = "Test"
-
-                    },
-                    AcsInfo = new 
-                    {
-                        PaRes = "dsaasdasd",
-                        Md = "1234"
-                    }
+                    Str = "test"
                 }
                 
             });
-            */
-
-
+            
         }
 
         public void Offline()
@@ -127,51 +95,19 @@ namespace SAL.Test
     }
 
 
-    public class WFMTestCommandHandler : ICommandHandlerAsync<WFMTestCommand, WFMTestCommandResult>
+    public class WFMTestCommandHandler : BaseCommandHandlerAsync<WFMTestCommand, WFMTestCommandResult>
     {
-        private CommandContext commandContext;
-        private ExecutingContext executingContext;
-
-
-        public async Task Handle(WFMTestCommand command)
+        
+        public override async Task Handle(WFMTestCommand command)
         {
-         //   executingContext.Logger.Debug(SessionManager.Current.ToIndentedJson());
-         //   var operationId = SessionManager.Current.GetSafeValue(SessionNames.OperationId, 0L);
-           // if(operationId < 5)
-                await executingContext.SalClient.ExecuteCommandAsync<WFMTestCommand, WFMTestCommandResult>(new WFMTestCommand
-                {
-                    TestString = "test"
-                });
-                
-            await executingContext.SalClient.PublishResultAsync(new WFMTestCommandResult
-            {
+            await PublishResult(new WFMTestCommandResult {
                 RetStr = command.TestString.ToUpper()
-            }, commandContext.Descriptor);
+            });
         }
 
-        public void SetContexts(CommandContext commandContext, ExecutingContext executingContext)
-        {
-            this.commandContext = commandContext;
-            this.executingContext = executingContext;
-        }
+
     }
 
-
-    public class WFMTestResulHandler : ICommandResultHandlerAsync<WFMTestCommand, WFMTestCommandResult>
-    {
-        private ExecutingContext executingContext;
-        public async Task<bool> ResultHandle(CommandResult<WFMTestCommandResult> result)
-        {
-    //        executingContext.Logger.Trace(SessionManager.Current.ToIndentedJson());
-            
-            return true;
-        }
-
-        public void SetContexts(CommandResultContext commandContext, ExecutingContext executingContext)
-        {
-            this.executingContext = executingContext;
-        }
-    }
     
     //dtos
 
@@ -189,6 +125,33 @@ namespace SAL.Test
 
     }
 
+  // extCommand
   
+  [SalServiceType("WFM")]
+  [SalCommandName("Start")]
+  public class StartProcessCommand : IHaveResult<StartProcessCommandResult>
+  {
+      [Required]
+      public string ProcessName { get; set; }
+      public string Version { get; set; }
+      [Required] public object InitialData { get; set; }
+
+      public string ResultAdapterType { get; set; }
+      public string ResultAdapterName { get; set; }
+      public string ResultHandlerName { get; set; }
+      public string ProcessCorrelationId { get; set; }
+
+
+      public int? Priority { get; set; }
+  }
+
+  public class StartProcessCommandResult : ICommandResult
+  {
+      public long ProcessId { get; set; }
+      public string ProcessName { get; set; }
+      public string Version { get; set; }
+      public int Priority { get; set; }
+
+  }
 
 }
