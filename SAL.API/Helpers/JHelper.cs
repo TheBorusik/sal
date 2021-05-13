@@ -260,6 +260,11 @@ namespace SAL.API
             
             return token;
         }
+        
+        public static JObject RemoveEmptyChildren(this JObject obj)
+        {
+            return (JObject) RemoveEmptyChildren((JToken)obj);
+        }
 
         public static bool IsEmpty(this JToken token)
         {
