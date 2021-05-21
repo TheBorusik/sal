@@ -373,7 +373,8 @@ namespace SAL.Core.Processors
                 Descriptor = eventPayload.Descriptor,
                 SessionId = HandlerContext.SessionId,
                 AuthId = HandlerContext.AuthId,
-                ProcessId = HandlerContext.ProcessId
+                ProcessId = HandlerContext.ProcessId,
+                OperationId = HandlerContext.OperationId
             };
 
 

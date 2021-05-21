@@ -24,6 +24,9 @@ namespace SAL.API
         public string SessionId { get; set; }
         public long? AuthId { get; set; }
         public long? ProcessId { get; set; }
+        
+        public string OperationId { get; set; }
+        
     }
 
     public static class MessageTypes

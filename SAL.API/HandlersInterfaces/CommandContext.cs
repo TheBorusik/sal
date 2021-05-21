@@ -15,6 +15,7 @@ namespace SAL.API
             SessionId = src.SessionId;
             AuthId = src.AuthId;
             ProcessId = src.ProcessId;
+            OperationId = src.OperationId;
 
         }
 
@@ -22,6 +23,7 @@ namespace SAL.API
         public string SessionId { get; set; }
         public long? AuthId { get; set; }
         public long? ProcessId { get; set; }
+        public string OperationId { get; set; }
 
     }
 }

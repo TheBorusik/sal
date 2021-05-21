@@ -442,7 +442,8 @@ namespace SAL.Core.Processors
                     Descriptor = commandPayload.Descriptor,
                     SessionId = HandlerContext.SessionId,
                     AuthId = HandlerContext.AuthId,
-                    ProcessId = HandlerContext.ProcessId
+                    ProcessId = HandlerContext.ProcessId,
+                    OperationId = HandlerContext.OperationId
                 };
 
                 handler.SetContexts(commandContext, executingContext);

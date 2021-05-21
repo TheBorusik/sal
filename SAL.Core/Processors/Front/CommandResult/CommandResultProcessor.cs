@@ -438,7 +438,8 @@ namespace SAL.Core.Processors
                 Descriptor = commandResultPayload.Descriptor,
                 SessionId = HandlerContext.SessionId,
                 AuthId = HandlerContext.AuthId,
-                ProcessId = HandlerContext.ProcessId
+                ProcessId = HandlerContext.ProcessId,
+                OperationId = HandlerContext.OperationId
             };
 
 
@@ -487,7 +488,8 @@ namespace SAL.Core.Processors
                     Descriptor = commandResultPayload.Descriptor,
                     SessionId = HandlerContext.SessionId,
                     AuthId = HandlerContext.AuthId,
-                    ProcessId = HandlerContext.ProcessId
+                    ProcessId = HandlerContext.ProcessId,
+                    OperationId = HandlerContext.OperationId
                 };
 
 

@@ -49,7 +49,7 @@ namespace SAL.Test
         {
             var backClient = scope.Resolve<ISalClient>();
             
-            backClient.PublishCommandAsync(new StartProcessCommand
+         /*   backClient.PublishCommandAsync(new StartProcessCommand
             {
                 ProcessName = "WFM\\Tests\\SimpleTest",
                 ResultAdapterType = AdapterConfiguration.AdapterType,
@@ -59,7 +59,7 @@ namespace SAL.Test
                     Str = "test"
                 }
                 
-            });
+            });*/
             
         }
 

@@ -133,6 +133,35 @@ namespace SAL.Core.NLogEx.LayoutRenderer.HandlerContextRenderer
         }
     }
 
+    public class OperationIdLayoutRenderer : global::NLog.LayoutRenderers.LayoutRenderer
+    {
+        [DefaultParameter] 
+        public bool Header { get; set; } = true;
+        public string Brackets { get; set; } = ""; 
+        protected override void Append(StringBuilder builder, LogEventInfo logEvent)
+        {
+            var oid = HandlerContext.OperationId;
 
+            if (!string.IsNullOrWhiteSpace(oid))
+            {
+                if (!string.IsNullOrWhiteSpace(Brackets))
+                {
+                    var b = Brackets.First();
+                    builder.Append(b); 
+                }
+                
+                if(Header)
+                    builder.Append($"OID:{oid}");
+                else
+                    builder.Append(oid);
+                
+                if (!string.IsNullOrWhiteSpace(Brackets))
+                {
+                    var b = Brackets.Last();
+                    builder.Append(b); 
+                }
+            }
+        }
+    }
 
 }

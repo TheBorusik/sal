@@ -379,7 +379,8 @@ namespace SAL.Core.Client
                 {
                     SessionId = HandlerContext.SessionId,
                     AuthId = HandlerContext.AuthId,
-                    ProcessId = HandlerContext.ProcessId
+                    ProcessId = HandlerContext.ProcessId,
+                    OperationId = HandlerContext.OperationId
                 }
             };
             
@@ -425,7 +426,9 @@ namespace SAL.Core.Client
                 {
                     SessionId = HandlerContext.SessionId,
                     AuthId = HandlerContext.AuthId,
-                    ProcessId = HandlerContext.ProcessId
+                    ProcessId = HandlerContext.ProcessId,
+                    OperationId = HandlerContext.OperationId
+                    
                 }
             };
             publisher.PublishCommand(Pack(transportMessage)); 
@@ -491,7 +494,8 @@ namespace SAL.Core.Client
                     {
                         SessionId = HandlerContext.SessionId,
                         AuthId = HandlerContext.AuthId,
-                        ProcessId = HandlerContext.ProcessId
+                        ProcessId = HandlerContext.ProcessId,
+                        OperationId = HandlerContext.OperationId
                     }
                 };
 
@@ -572,7 +576,8 @@ namespace SAL.Core.Client
                 {
                     SessionId = HandlerContext.SessionId,
                     AuthId = HandlerContext.AuthId,
-                    ProcessId = HandlerContext.ProcessId
+                    ProcessId = HandlerContext.ProcessId,
+                    OperationId = HandlerContext.OperationId
                 }
             };
 

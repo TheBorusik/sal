@@ -45,7 +45,7 @@ namespace SAL.Core.Service
             LayoutRenderer.Register<CorrelationIdLayoutRenderer>("cid");
             LayoutRenderer.Register<WfmProcessIdLayoutRenderer>("pid");
             LayoutRenderer.Register<AuthIdLayoutRenderer>("aid");
-
+            LayoutRenderer.Register<OperationIdLayoutRenderer>("oid");
             
             LayoutRenderer.Register<SalMessageLayoutRenderer>("message");
 
