@@ -325,10 +325,21 @@ namespace SAL.Core.Client
                 Contour = ContourName
             };
 
+
+            var commandContext = new ContextInfo
+            {
+                SessionId = HandlerContext.SessionId,
+                AuthId = HandlerContext.AuthId,
+                ProcessId = HandlerContext.ProcessId,
+                OperationId = HandlerContext.OperationId
+            };
+            
             var commandPayload = new CommandPayload
             {
                 Descriptor = commandDescriptor,
-                Payload = JObject.FromObject(commandBody, SalSerializer.Create())
+                Payload = JObject.FromObject(commandBody, SalSerializer.Create()),
+                ContextInfo = commandContext
+
             };
 
             return await ExecuteCommandAsync(commandPayload, routingKey);
@@ -361,11 +372,20 @@ namespace SAL.Core.Client
                 IsSync = true,
                 Contour = ContourName
             };
+            
+            var commandContext = new ContextInfo
+            {
+                SessionId = HandlerContext.SessionId,
+                AuthId = HandlerContext.AuthId,
+                ProcessId = HandlerContext.ProcessId,
+                OperationId = HandlerContext.OperationId
+            };
 
             var commandPayload = new CommandPayload
             {
                 Descriptor = commandDescriptor,
-                Payload = JObject.FromObject(request, SalSerializer.Create())
+                Payload = JObject.FromObject(request, SalSerializer.Create()),
+                ContextInfo = commandContext
             };
 
             return await ExecuteCommandAsync(commandPayload, routingKey);
