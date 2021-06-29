@@ -22,12 +22,12 @@ namespace SAL.API
         
         public Task PublishResult(ExternalHttpResponse result)
         {
-            return salClient?.PublishResultAsync(result, ResultCodes.Success, commandContext.Descriptor);
+            return salClient?.PublishResultAsync(result, ResultCodes.Success, commandContext);
         }
         
         public Task PublishError(InternalExceptionDTO error)
         {
-            return salClient?.PublishResultAsync(error, commandContext.Descriptor);
+            return salClient?.PublishResultAsync(error, commandContext);
         }
 
         public Task PublishError(string code,

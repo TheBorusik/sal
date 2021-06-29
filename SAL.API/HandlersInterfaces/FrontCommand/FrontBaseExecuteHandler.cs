@@ -29,7 +29,7 @@ namespace SAL.API
         protected virtual async Task<bool> ProcessingError(Exception ex)
         {
             executingContext.Logger.LogError(ex, $"Внутренняя ошибка");
-            await executingContext.SalClient.PublishResultAsync(ex.ToDto(SalErrorCodes.InternalError), commandContext.Descriptor);
+            await executingContext.SalClient.PublishResultAsync(ex.ToDto(SalErrorCodes.InternalError), commandContext);
             return true;
         }
         
@@ -44,7 +44,7 @@ namespace SAL.API
 
                 var externalResult = await Transform(internalResult);
 
-                await executingContext.SalClient.PublishResultAsync(externalResult, commandContext.Descriptor);
+                await executingContext.SalClient.PublishResultAsync(externalResult, commandContext);
             }
             catch (Exception ex)
             {

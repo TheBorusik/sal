@@ -19,7 +19,6 @@ namespace SAL.Test
         {
             //builder.RegisterSalHandler<TestEventAdapter>();
             builder.RegisterSalHandler<TestExternal>();
-            builder.RegisterSalHandler<GetPermissionTreeHandler>(); 
             builder.RegisterProcessor<TestFront>();
 
             //  builder.RegisterSalHandler<GetPermissionTreeHandler>();

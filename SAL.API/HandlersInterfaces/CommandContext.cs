@@ -12,18 +12,13 @@ namespace SAL.API
         public CommandContext(CommandContext src)
         {
             Descriptor = new CommandDescriptor(src.Descriptor);
-            SessionId = src.SessionId;
-            AuthId = src.AuthId;
-            ProcessId = src.ProcessId;
-            OperationId = src.OperationId;
-
+            ContextInfo = new ContextInfo(src.ContextInfo);
         }
 
         public CommandDescriptor Descriptor { get; set; }
-        public string SessionId { get; set; }
-        public long? AuthId { get; set; }
-        public long? ProcessId { get; set; }
-        public string OperationId { get; set; }
+        
+        public ContextInfo ContextInfo { get; set; }
+
 
     }
 }

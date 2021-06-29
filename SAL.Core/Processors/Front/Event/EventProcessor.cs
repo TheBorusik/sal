@@ -42,7 +42,7 @@ namespace SAL.Core.Processors
             logger = loggerProvider.CreateLogger("FrontEventProcessor");
             salService = container.Resolve<ISalService>();
         }
-        
+
         public void Start()
         {
             try
@@ -108,7 +108,7 @@ namespace SAL.Core.Processors
             var handlerInterfaces = handlerType.GetInterfaces()
                 .Where(i => i.IsAssignableTo<IEventHandler>() && i.IsGenericType).ToArray();
 
-            foreach (var handlerInterface in handlerInterfaces)
+            foreach(var handlerInterface in handlerInterfaces)
             {
                 var eventType = handlerInterface.GetGenericArguments()[0];
                 var eventName = eventType.GetRouteKey();
@@ -155,10 +155,10 @@ namespace SAL.Core.Processors
             var attrs = handlerType
                 .GetCustomAttributes(typeof(SalEventHandlerAttribute)).OfType<SalEventHandlerAttribute>().ToArray();
 
-            
+
             IEventDtoCreator dtoCreater = null;
             if (handlerType.IsAssignableTo<IEventDtoCreator>())
-                dtoCreater = (IEventDtoCreator)container.Resolve(handlerType);
+                dtoCreater = (IEventDtoCreator) container.Resolve(handlerType);
 
             attrs.ForEach(a =>
             {
@@ -197,7 +197,7 @@ namespace SAL.Core.Processors
                         eventInfo.EventDto = dtoCreater.GetEventDtoName(eventName);
                         eventInfo.Dtos = dtoCreater.GetEventDtos(eventName);
                     }
-                    
+
                     salService.AddFrontEventHandler(eventInfo);
                 }
 
@@ -212,14 +212,13 @@ namespace SAL.Core.Processors
                 HandlerContext.Set(HandlerTypes.Processor, "FrontEventProcessor", rabbitMessage.CorrelationId);
                 var transportMessage = ExtractMessage(rabbitMessage);
                 var eventPayload = ExtractEventPayload(transportMessage);
-                HandlerContext.Update(transportMessage);
+                HandlerContext.Update(eventPayload.ContextInfo);
                 salLogger.LogIncoming(eventPayload);
                 await Processing(transportMessage, eventPayload);
                 ack();
             }
             catch (JsonReaderException ex)
             {
-       
                 var dto = ex.ToDto();
                 logger.Error("При обработке команды произошла ошибка десериализации", ex);
                 var sb = new StringBuilder();
@@ -227,7 +226,7 @@ namespace SAL.Core.Processors
                 sb.AppendLine(SalEncoding.GetString(rabbitMessage.Payload));
                 logger.Info(sb.ToString());
                 nack();
-                await salClient.RaiseExceptionDetectEvent(rabbitMessage.CorrelationId, dto); 
+                await salClient.RaiseExceptionDetectEvent(rabbitMessage.CorrelationId, dto);
             }
             catch (SalException ex)
             {
@@ -332,16 +331,14 @@ namespace SAL.Core.Processors
             }
 
 
-
-
             var eventName = eventPayload.Descriptor.EventName;
             HandlerContext.Update(HandlerTypes.FrontEventHandler, eventName);
-            
+
             if (eventHandlers.TryGetValue(eventName, out var eventHandlerInfos))
             {
                 var handlerTasks = new List<Task>();
 
-                foreach (var eventHandlerInfo in eventHandlerInfos)
+                foreach(var eventHandlerInfo in eventHandlerInfos)
                 {
                     salLogger.LogHandler(eventPayload, eventHandlerInfo.HandlerType.Name);
                     handlerTasks.Add(ExecuteEventHandlerAsync(eventHandlerInfo, transportMessage, eventPayload, eventLogger));
@@ -371,10 +368,13 @@ namespace SAL.Core.Processors
             var context = new EventContext()
             {
                 Descriptor = eventPayload.Descriptor,
-                SessionId = HandlerContext.SessionId,
-                AuthId = HandlerContext.AuthId,
-                ProcessId = HandlerContext.ProcessId,
-                OperationId = HandlerContext.OperationId
+                ContextInfo = new ContextInfo
+                {
+                    SessionId = HandlerContext.SessionId,
+                    AuthId = HandlerContext.AuthId,
+                    ProcessId = HandlerContext.ProcessId,
+                    OperationId = HandlerContext.OperationId
+                }
             };
 
 

@@ -11,10 +11,14 @@ namespace SAL.API
         public CommandResultContext(CommandResultContext src)
         {
             Descriptor = new CommandResultDescriptor(src.Descriptor);
-            SessionId = src.SessionId;
-            AuthId = src.AuthId;
-            ProcessId = src.ProcessId;
-            OperationId = src.OperationId;
+            ContextInfo = new ContextInfo(src.ContextInfo);
+        }
+        
+        public CommandResultContext(CommandContext src)
+        {
+            Descriptor = new CommandResultDescriptor(src.Descriptor);
+            ContextInfo = new ContextInfo(src.ContextInfo);
+
         }
         
         public CommandResultContext Clone()
@@ -23,10 +27,7 @@ namespace SAL.API
         }
 
         public CommandResultDescriptor Descriptor { get; set; }
-
-        public string SessionId { get; set; }
-        public long? AuthId { get; set; }
-        public long? ProcessId { get; set; }
-        public string OperationId { get; set; }
+        public ContextInfo ContextInfo { get; set; }
+        
     }
 }

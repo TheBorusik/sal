@@ -40,17 +40,17 @@ namespace SAL.API
 
         public Task PublishResult(TCommandResult result)
         {
-            return frontClient?.PublishResultAsync(result, ResultCodes.Success, commandContext.Descriptor);
+            return frontClient?.PublishResultAsync(result, ResultCodes.Success, commandContext);
         }
 
         public Task PublishResult(object result, string code)
         {
-            return frontClient?.PublishResultAsync(result, code, commandContext.Descriptor);
+            return frontClient?.PublishResultAsync(result, code, commandContext);
         }
         
         public Task PublishResult(InternalExceptionDTO error)
         {
-            return frontClient?.PublishResultAsync(error, commandContext.Descriptor);
+            return frontClient?.PublishResultAsync(error, commandContext);
         }
         
         

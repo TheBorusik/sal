@@ -74,7 +74,7 @@ namespace SAL.Test
                 TestDate = DateTime.Now,
                 TestInt = 1234567,
                 TestStr = "Testtt"
-            }, commandContext.Descriptor);
+            }, commandContext);
 
             await Task.Delay(10000);
         }
@@ -143,7 +143,7 @@ namespace SAL.Test
       //      if(a >= 10)
       //          throw new Exception("test TestCommandHandler");
             
-            await executingContext.SalClient.PublishResultAsync(new Nothing(), context.Descriptor);
+            await executingContext.SalClient.PublishResultAsync(new Nothing(), context);
         }
 
         public Task Handle(Test2Command command)

@@ -13,14 +13,24 @@ namespace SAL.API
         public TimeSpan? TTL { get; set; }
         public byte Priority { get; set; }
         
-        public SessionInfo SessionInfo { get; set; }
         public string Type { get; set; }
         public JObject Payload { get; set; }
-
     }
 
-    public class SessionInfo
+    public class ContextInfo
     {
+        public ContextInfo()
+        {
+        }
+
+        public ContextInfo(ContextInfo src)
+        {
+            SessionId = src.SessionId;
+            AuthId = src.AuthId;
+            ProcessId = src.ProcessId;
+            OperationId = src.OperationId;
+        }
+
         public string SessionId { get; set; }
         public long? AuthId { get; set; }
         public long? ProcessId { get; set; }
@@ -41,6 +51,8 @@ namespace SAL.API
     {
         public EventDescriptor Descriptor { get; set; }
         public JObject Payload { get; set; }
+        
+        public ContextInfo ContextInfo { get; set; }
     }
 
 
@@ -48,11 +60,15 @@ namespace SAL.API
     {
         public CommandDescriptor Descriptor { get; set; }
         public JObject Payload { get; set; }
+        
+        public ContextInfo ContextInfo { get; set; }
     }
 
     public class CommandResultPayload
     {
         public CommandResultDescriptor Descriptor { get; set; }
         public CommonCommandResult Payload { get; set; }
+        
+        public ContextInfo ContextInfo { get; set; }
     }
 }

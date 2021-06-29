@@ -45,7 +45,10 @@ namespace SAL.Core.Processors
 
         private ExternalHttpProcessorConfig processorConfig;
 
-        public void Init() { }
+        public void Init()
+        {
+        }
+
         public void Start()
         {
             try
@@ -88,7 +91,7 @@ namespace SAL.Core.Processors
                     File.WriteAllText(Path.Combine(AdapterConfiguration.ConfigPath, $"{ConfigurationSectionNames.FrontExternalHttpProcessor}.txt"), configStr);
                     logger.Info($"Front External Http processing config \n{configStr}");
                 }
-                
+
                 var transport = container.ResolveNamed<ITransport>("front");
 
                 var subscriptionFactory = transport.CreateMessageSubscription();
@@ -119,7 +122,7 @@ namespace SAL.Core.Processors
                 throw new Exception($"Для обработчика {handlerType.Name} не заданн внешний адрес");
 
             if (handlers.ContainsKey(externalPathMethod.Uri))
-                throw new Exception($"Внешний адрес {externalPathMethod} уже имеет обработчик");
+                throw new Exception($"Внешний адрес {externalPathMethod.Uri} уже имеет обработчик ({handlerType.Name})");
 
 
             var handlerInfo = new FrontExternalHttpHandlerInfo
@@ -157,14 +160,13 @@ namespace SAL.Core.Processors
                 HandlerContext.Set(HandlerTypes.Processor, "FrontExternalHttpProcessor", rabbitMessage.CorrelationId);
                 var transportMessage = ExtractMessage(rabbitMessage);
                 var commandPayload = ExtractCommandPayload(transportMessage);
-                HandlerContext.Update(transportMessage);
+                HandlerContext.Update(commandPayload.ContextInfo);
                 salLogger.LogIncoming(commandPayload);
                 await Processing(transportMessage, commandPayload);
                 ack();
             }
             catch (JsonReaderException ex)
             {
-       
                 var dto = ex.ToDto();
                 logger.Error("При обработке команды произошла ошибка десериализации", ex);
                 var sb = new StringBuilder();
@@ -172,7 +174,7 @@ namespace SAL.Core.Processors
                 sb.AppendLine(SalEncoding.GetString(rabbitMessage.Payload));
                 logger.Info(sb.ToString());
                 nack();
-                await salClient.RaiseExceptionDetectEvent(rabbitMessage.CorrelationId, dto); 
+                await salClient.RaiseExceptionDetectEvent(rabbitMessage.CorrelationId, dto);
             }
             catch (SalException ex)
             {
@@ -275,13 +277,13 @@ namespace SAL.Core.Processors
 
 
             HandlerContext.Update(HandlerTypes.FrontExternalHttp, commandPayload.Descriptor.CommandName);
-            
-            
+
+
             var externalHttpRequest = commandPayload.Payload.ConvertValue<ExternalHttpRequest>();
 
             if (handlers.TryGetValue(externalHttpRequest.Path.ToLower(), out var commandHandlerInfo))
             {
-                HandlerContext.Update(handlerName:commandHandlerInfo.HandlerType.Name);
+                HandlerContext.Update(handlerName: commandHandlerInfo.HandlerType.Name);
                 salLogger.LogHandler(commandPayload, commandHandlerInfo.HandlerType.Name);
 
                 using var scope = container.BeginLifetimeScope();
@@ -297,10 +299,13 @@ namespace SAL.Core.Processors
                 var commandContext = new CommandContext
                 {
                     Descriptor = commandPayload.Descriptor,
-                    SessionId = HandlerContext.SessionId,
-                    AuthId = HandlerContext.AuthId,
-                    ProcessId = HandlerContext.ProcessId,
-                    OperationId = HandlerContext.OperationId
+                    ContextInfo = new ContextInfo
+                    {
+                        SessionId = HandlerContext.SessionId,
+                        AuthId = HandlerContext.AuthId,
+                        ProcessId = HandlerContext.ProcessId,
+                        OperationId = HandlerContext.OperationId
+                    }
                 };
 
 

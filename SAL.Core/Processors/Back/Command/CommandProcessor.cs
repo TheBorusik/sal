@@ -18,7 +18,6 @@ using SAL.Core.Rabbit.Interfaces;
 using SAL.Core.Service;
 using SAL.Core.Validators;
 using SAL.Infrastructure;
-using SessionManager = SAL.Core.Session.SessionManager;
 
 namespace SAL.Core.Processors
 {
@@ -49,7 +48,7 @@ namespace SAL.Core.Processors
         }
 
         private CommandProcessorConfig commandProcessorConfig;
-        
+
         public void Start()
         {
             try
@@ -103,8 +102,8 @@ namespace SAL.Core.Processors
                     File.WriteAllText(Path.Combine(AdapterConfiguration.ConfigPath, $"{ConfigurationSectionNames.CommandProcessor}.txt"), configStr);
                     logger.Info($"Command processing config \n{configStr}");
                 }
-                
-                
+
+
                 var transport = container.Resolve<ITransport>();
 
                 var subscriptionFactory = transport.CreateMessageSubscription();
@@ -199,7 +198,7 @@ namespace SAL.Core.Processors
 
             ICommandDtoCreator dtoCreater = null;
             if (handlerType.IsAssignableTo<ICommandDtoCreator>())
-                dtoCreater = (ICommandDtoCreator)container.Resolve(handlerType);
+                dtoCreater = (ICommandDtoCreator) container.Resolve(handlerType);
 
 
             handlerType.GetCustomAttributes(typeof(SalCommandHandlerAttribute))
@@ -244,7 +243,6 @@ namespace SAL.Core.Processors
                         handlerInfo.CommandDto = dtoCreater.GetCommandDtoName(commandName);
                         handlerInfo.ResultDto = dtoCreater.GetResultDtoName(commandName);
                     }
-
 
 
                     salService.AddBackCommandHandler(handlerInfo);
@@ -298,7 +296,7 @@ namespace SAL.Core.Processors
                 HandlerContext.Set(HandlerTypes.Processor, "CommandProcessor", rabbitMessage.CorrelationId);
                 var transportMessage = ExtractMessage(rabbitMessage);
                 var commandPayload = ExtractCommandPayload(transportMessage);
-                HandlerContext.Update(transportMessage);
+                HandlerContext.Update(commandPayload.ContextInfo);
                 salLogger.LogIncoming(commandPayload);
                 if (commandPayload.Descriptor.CommandName == "WFM.Result")
                     await ProcessingWfmResult(transportMessage, commandPayload);
@@ -420,7 +418,7 @@ namespace SAL.Core.Processors
 
             HandlerContext.Update(HandlerTypes.CommandHandler, commandPayload.Descriptor.CommandName);
 
-            
+
             if (commandHandlers.TryGetValue(commandPayload.Descriptor.CommandName, out var commandHandlerInfo))
             {
                 var handlerName = commandHandlerInfo.HandlerType.Name;
@@ -440,10 +438,13 @@ namespace SAL.Core.Processors
                 var commandContext = new CommandContext
                 {
                     Descriptor = commandPayload.Descriptor,
-                    SessionId = HandlerContext.SessionId,
-                    AuthId = HandlerContext.AuthId,
-                    ProcessId = HandlerContext.ProcessId,
-                    OperationId = HandlerContext.OperationId
+                    ContextInfo = new ContextInfo
+                    {
+                        SessionId = HandlerContext.SessionId,
+                        AuthId = HandlerContext.AuthId,
+                        ProcessId = HandlerContext.ProcessId,
+                        OperationId = HandlerContext.OperationId
+                    }
                 };
 
                 handler.SetContexts(commandContext, executingContext);
@@ -458,7 +459,11 @@ namespace SAL.Core.Processors
 
                     if (validationErrors.Any())
                     {
-                        await salClient.PublishResultAsync(validationErrors, commandPayload.Descriptor);
+                        await salClient.PublishResultAsync(validationErrors, new CommandContext
+                        {
+                            Descriptor = commandPayload.Descriptor,
+                            ContextInfo = commandPayload.ContextInfo
+                        });
                         return;
                     }
 
@@ -488,7 +493,7 @@ namespace SAL.Core.Processors
 
 
             HandlerContext.Update(HandlerTypes.CommandHandler, commandPayload.Descriptor.CommandName);
-            
+
             var wfmProcessResultCommand = commandPayload.Payload.ConvertValue<WfmProcessResultCommand>();
 
             var wfmResultHandlerName = "default";
@@ -501,7 +506,7 @@ namespace SAL.Core.Processors
 
             if (wfmResultHandler.TryGetValue(wfmResultHandlerName, out var wfmResultHandlerInfo))
             {
-                HandlerContext.Update(handlerName:wfmResultHandlerInfo.HandlerName);
+                HandlerContext.Update(handlerName: wfmResultHandlerInfo.HandlerName);
                 salLogger.LogHandler(commandPayload, wfmResultHandlerInfo.HandlerName);
 
                 using var scope = container.BeginLifetimeScope();

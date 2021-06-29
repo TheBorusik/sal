@@ -40,7 +40,7 @@ namespace SAL.API
 
         Task PublishResultAsync(
             CommonCommandResult result, 
-            CommandDescriptor commandDescriptor);
+            CommandContext commandContext);
 
         Task PublishEventAsync(
             string eventName, 
@@ -59,11 +59,11 @@ namespace SAL.API
             string handlerServiceType,
             string handlerServiceName);
         
-        Task PublishCommandAsync(CommandDescriptor commandDescriptor, JObject commandBody);
+        Task PublishCommandAsync(CommandContext commandContext, JObject commandBody);
 
-        Task PublishResultAsync(CommandResultDescriptor commandResultDescriptor, CommonCommandResult result);
+        Task PublishResultAsync(CommandResultContext commandResultContext, CommonCommandResult result);
 
-        Task PublishEventAsync(EventDescriptor eventDescriptor, JObject eventBody);
+        Task PublishEventAsync(EventContext eventContext, JObject eventBody);
     }
     
 }

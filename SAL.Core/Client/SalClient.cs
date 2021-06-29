@@ -4,10 +4,12 @@ using System.Threading.Tasks;
 using Autofac;
 using Newtonsoft.Json.Linq;
 using SAL.API;
+using SAL.Core.Configuration.Messages;
 using SAL.Core.Helpers;
 using SAL.Core.Processors;
 using SAL.Core.Rabbit.Interfaces;
 using SAL.Infrastructure;
+using MessageTypes = SAL.API.MessageTypes;
 
 namespace SAL.Core.Client
 {
@@ -16,7 +18,7 @@ namespace SAL.Core.Client
         private readonly IPublisher publisher;
         private readonly ICommandResultProcessor commandResultProcessor;
         private readonly ISalLogger salLogger;
-        public string Contour { get;  }
+        public string Contour { get; }
         public string ContourName { get; }
 
         public SalClient(ILifetimeScope scope, ISalLogger salLogger, string prefix)
@@ -34,7 +36,7 @@ namespace SAL.Core.Client
                 Contour = "BACK";
                 ContourName = transport.CounterName;
             }
-            
+
             this.publisher = transport.CreatePublisher();
 
             this.commandResultProcessor = !string.IsNullOrWhiteSpace(prefix) ? scope.ResolveNamed<ICommandResultProcessor>(prefix) : scope.Resolve<ICommandResultProcessor>();
@@ -65,7 +67,7 @@ namespace SAL.Core.Client
 
             if (string.IsNullOrWhiteSpace(resultServiceName) && !commandType.IsResultTypeHandler())
                 resultServiceName = AdapterConfiguration.AdapterName;
-            
+
 
             await PublishCommandAsync(
                 commandType.GetRouteKey(),
@@ -101,52 +103,57 @@ namespace SAL.Core.Client
                 handlerServiceType,
                 handlerServiceName
             );
-            
+
             return new CommandResult<TCommandResult>(result.CommandResult);
         }
 
 
-        public Task PublishResultAsync(ICommandResult result, CommandDescriptor commandDescriptor)
+        public Task PublishResultAsync(ICommandResult result, CommandContext commandContext)
         {
             return PublishResultAsync(new CommonCommandResult
             {
                 Error = null,
                 Result = JObject.FromObject(result, SalSerializer.Create()),
                 ResultCode = ResultCodes.Success
-            }, commandDescriptor);
+            }, commandContext);
         }
 
-        public Task PublishResultAsync(object result, string code, CommandDescriptor commandDescriptor)
+        public Task PublishResultAsync(object result, string resultCode, CommandContext commandContext)
         {
+            if (resultCode == ResultCodes.Error)
+            {
+                throw new Exception("ResultCode should not matter 'Error'");
+            }
+            
             return PublishResultAsync(new CommonCommandResult
             {
                 Error = null,
                 Result = JObject.FromObject(result, SalSerializer.Create()),
-                ResultCode = code
-            }, commandDescriptor);
+                ResultCode = resultCode
+            }, commandContext);
         }
 
-        public Task PublishResultAsync(InternalExceptionDTO exceptionDTO, CommandDescriptor commandDescriptor)
+        public Task PublishResultAsync(InternalExceptionDTO exceptionDTO, CommandContext commandContext)
         {
             return PublishResultAsync(new CommonCommandResult
             {
                 Error = exceptionDTO,
                 Result = null,
                 ResultCode = ResultCodes.Error
-            }, commandDescriptor);
+            }, commandContext);
         }
 
-        public Task PublishResultAsync(IList<FieldError> validationErrors, CommandDescriptor commandDescriptor)
+        public Task PublishResultAsync(IList<FieldError> validationErrors, CommandContext commandContext)
         {
             return PublishResultAsync(new CommonCommandResult
             {
                 Error = SalError.CreateValidationDto(validationErrors),
                 Result = null,
                 ResultCode = ResultCodes.Error
-            }, commandDescriptor);
+            }, commandContext);
         }
 
-        public Task PublishResultAsync<TCommandResult>(CommandResult<TCommandResult> result, CommandDescriptor commandDescriptor) where TCommandResult : class, ICommandResult, new()
+        public Task PublishResultAsync<TCommandResult>(CommandResult<TCommandResult> result, CommandContext commandContext) where TCommandResult : class, ICommandResult, new()
         {
             if (typeof(TCommandResult) == typeof(None))
                 return Task.CompletedTask;
@@ -156,7 +163,7 @@ namespace SAL.Core.Client
                 Error = result.Error,
                 Result = result.Result.Clone(),
                 ResultCode = result.ResultCode
-            }, commandDescriptor);
+            }, commandContext);
         }
 
 
@@ -164,7 +171,7 @@ namespace SAL.Core.Client
         {
             if (evnt == null)
                 return Task.CompletedTask;
-            
+
             return PublishEventAsync(
                 evnt.GetType().GetRouteKey(),
                 evnt,
@@ -176,7 +183,6 @@ namespace SAL.Core.Client
         }
 
 
-
         public Task RaiseExceptionDetectEvent(string cid, InternalExceptionDTO exceptionDTO)
         {
             return PublishEventAsync(new ExceptionDetectedEvent
@@ -185,7 +191,6 @@ namespace SAL.Core.Client
                 ExceptionDto = exceptionDTO,
                 AdapterType = AdapterConfiguration.AdapterType,
                 AdapterName = AdapterConfiguration.AdapterName
-
             });
         }
 
@@ -197,7 +202,6 @@ namespace SAL.Core.Client
                 ExceptionDto = ex.ToDto(SalErrorCodes.Fatal),
                 AdapterType = AdapterConfiguration.AdapterType,
                 AdapterName = AdapterConfiguration.AdapterName
-
             });
         }
 
@@ -218,10 +222,10 @@ namespace SAL.Core.Client
         public async Task<string> PublishCommandAsync(string commandName, object commandBody)
         {
             var correlationId = Guid.NewGuid().ToString("N");
-            await PublishCommandAsync(commandName, commandBody, correlationId, 
+            await PublishCommandAsync(commandName, commandBody, correlationId,
                 CommandPriority.Normal, null,
-                null, null, 
-                AdapterConfiguration.AdapterType,  AdapterConfiguration.AdapterName);
+                null, null,
+                AdapterConfiguration.AdapterType, AdapterConfiguration.AdapterName);
 
             return correlationId;
         }
@@ -249,25 +253,38 @@ namespace SAL.Core.Client
 
             if (commandBody == null)
                 throw new ArgumentNullException(nameof(commandBody));
-            
-            var commandDescriptor = new CommandDescriptor
+
+
+            var commandContext = new CommandContext
             {
-                CorrelationId = correlationId,
-                CommandName = commandName,
-                Priority = priority,
-                SourceAdapterType = AdapterConfiguration.AdapterType,
-                SourceAdapterName = AdapterConfiguration.AdapterName,
-                DestinationAdapterType = handlerAdapterType,
-                DestinationAdapterName = handlerAdapterName,
-                ResultAdapterType = resultAdapterType,
-                ResultAdapterName = resultAdapterName,
-                PublishTimeStamp = DateTime.UtcNow,
-                TTL = ttl,
-                IsSync = false,
-                Contour = ContourName
+                ContextInfo = new ContextInfo
+                {
+                    SessionId = HandlerContext.SessionId,
+                    AuthId = HandlerContext.AuthId,
+                    ProcessId = HandlerContext.ProcessId,
+                    OperationId = HandlerContext.OperationId
+                },
+                Descriptor = new CommandDescriptor
+                {
+                    CorrelationId = correlationId,
+                    CommandName = commandName,
+                    Priority = priority,
+                    SourceAdapterType = AdapterConfiguration.AdapterType,
+                    SourceAdapterName = AdapterConfiguration.AdapterName,
+                    DestinationAdapterType = handlerAdapterType,
+                    DestinationAdapterName = handlerAdapterName,
+                    ResultAdapterType = resultAdapterType,
+                    ResultAdapterName = resultAdapterName,
+                    PublishTimeStamp = DateTime.UtcNow,
+                    TTL = ttl,
+                    IsSync = false,
+                    Contour = ContourName
+                }
             };
             
-            return PublishCommandAsync(commandDescriptor, JObject.FromObject(commandBody, SalSerializer.Create()));
+
+
+            return PublishCommandAsync(commandContext, JObject.FromObject(commandBody, SalSerializer.Create()));
         }
 
         public async Task<SimpleCommandResult> ExecuteCommandAsync(
@@ -283,7 +300,7 @@ namespace SAL.Core.Client
 
 
             var correlationId = Guid.NewGuid().ToString("N");
-            
+
             var routingKey = "";
             if (string.IsNullOrWhiteSpace(handlerAdapterType) && string.IsNullOrWhiteSpace(handlerAdapterName))
                 routingKey = commandName;
@@ -315,7 +332,6 @@ namespace SAL.Core.Client
             };
 
             return await ExecuteCommandAsync(commandPayload, routingKey);
-            
         }
 
         public async Task<SimpleCommandResult> ExecuteExternalHttp(
@@ -324,11 +340,9 @@ namespace SAL.Core.Client
             string handlerAdapterType,
             string handlerAdapterName)
         {
-            
             var correlationId = Guid.NewGuid().ToString("N");
-            
-            var routingKey = request.Path;
 
+            var routingKey = request.Path;
 
 
             var commandDescriptor = new CommandDescriptor
@@ -356,15 +370,14 @@ namespace SAL.Core.Client
 
             return await ExecuteCommandAsync(commandPayload, routingKey);
         }
-        
-        
+
+
         public async Task<SimpleCommandResult> ExecuteCommandAsync(CommandPayload commandPayload, string routingKey)
         {
-
             commandPayload.Descriptor.TTL ??= TimeSpan.FromMinutes(1);
-            
+
             salLogger.LogOutgoing(commandPayload);
-            
+
             var transportMessage = new TransportMessage
             {
                 Type = MessageTypes.Command,
@@ -375,39 +388,33 @@ namespace SAL.Core.Client
                 Destination = routingKey,
                 TTL = commandPayload.Descriptor.TTL,
                 CorrelationId = commandPayload.Descriptor.CorrelationId,
-                SessionInfo = new SessionInfo
-                {
-                    SessionId = HandlerContext.SessionId,
-                    AuthId = HandlerContext.AuthId,
-                    ProcessId = HandlerContext.ProcessId,
-                    OperationId = HandlerContext.OperationId
-                }
             };
-            
+
             var completionSource = new TaskCompletionSource<SimpleCommandResult>();
-            
+
             commandResultProcessor.RegisterSimpleCommandResultHandler(commandPayload.Descriptor.CorrelationId, completionSource,
                 commandPayload.Descriptor.TTL.Value);
 
             publisher.PublishCommand(Pack(transportMessage));
 
-           return await completionSource.Task;
+            return await completionSource.Task;
         }
 
-        public Task PublishCommandAsync(CommandDescriptor commandDescriptor, JObject commandBody)
+        public Task PublishCommandAsync(CommandContext commandContext, JObject commandBody)
         {
             var routingKey = "";
-            if (string.IsNullOrWhiteSpace(commandDescriptor.DestinationAdapterType))
-                routingKey = commandDescriptor.CommandName;
-            else if(string.IsNullOrWhiteSpace(commandDescriptor.DestinationAdapterName))
-                routingKey = commandDescriptor.DestinationAdapterType;
+            if (string.IsNullOrWhiteSpace(commandContext.Descriptor.DestinationAdapterType))
+                routingKey = commandContext.Descriptor.CommandName;
+            else if (string.IsNullOrWhiteSpace(commandContext.Descriptor.DestinationAdapterName))
+                routingKey = commandContext.Descriptor.DestinationAdapterType;
             else
-                routingKey = $"{commandDescriptor.DestinationAdapterType}#{commandDescriptor.DestinationAdapterName}";
-            
+                routingKey = $"{commandContext.Descriptor.DestinationAdapterType}#{commandContext.Descriptor.DestinationAdapterName}";
+
             var commandPayload = new CommandPayload
             {
-                Descriptor = commandDescriptor,
-                Payload = commandBody.Clone()
+                Descriptor = commandContext.Descriptor,
+                Payload = commandBody.Clone(),
+                ContextInfo = commandContext.ContextInfo
             };
 
             salLogger.LogOutgoing(commandPayload);
@@ -416,66 +423,60 @@ namespace SAL.Core.Client
             {
                 Type = MessageTypes.Command,
                 Payload = JObject.FromObject(commandPayload, SalSerializer.Create()),
-                Source = $"{commandDescriptor.SourceAdapterType}.{commandDescriptor.SourceAdapterName}",
-                Priority = (byte) commandDescriptor.Priority,
-                TimeStamp = commandDescriptor.PublishTimeStamp,
+                Source = $"{commandContext.Descriptor.SourceAdapterType}.{commandContext.Descriptor.SourceAdapterName}",
+                Priority = (byte) commandContext.Descriptor.Priority,
+                TimeStamp = commandContext.Descriptor.PublishTimeStamp,
                 Destination = routingKey,
-                TTL = commandDescriptor.TTL,
-                CorrelationId = commandDescriptor.CorrelationId,
-                SessionInfo = new SessionInfo
-                {
-                    SessionId = HandlerContext.SessionId,
-                    AuthId = HandlerContext.AuthId,
-                    ProcessId = HandlerContext.ProcessId,
-                    OperationId = HandlerContext.OperationId
-                    
-                }
+                TTL = commandContext.Descriptor.TTL,
+                CorrelationId = commandContext.Descriptor.CorrelationId,
             };
-            publisher.PublishCommand(Pack(transportMessage)); 
+            publisher.PublishCommand(Pack(transportMessage));
             return Task.CompletedTask;
         }
 
-        public Task PublishResultAsync(CommonCommandResult result, CommandDescriptor commandDescriptor)
+        public Task PublishResultAsync(CommonCommandResult result, CommandContext commandContext)
         {
-            var commandResultDescriptor = new CommandResultDescriptor(commandDescriptor);
-            
-            commandResultDescriptor.HandlerAdapterType = AdapterConfiguration.AdapterType;
-            commandResultDescriptor.HandlerAdatpterName = AdapterConfiguration.AdapterName;
-            commandResultDescriptor.Contour = ContourName;
+            var commandResultContext = new CommandResultContext(commandContext);
 
-            return PublishResultAsync(commandResultDescriptor, result);
+            commandResultContext.Descriptor.HandlerAdapterType = AdapterConfiguration.AdapterType;
+            commandResultContext.Descriptor.HandlerAdatpterName = AdapterConfiguration.AdapterName;
+            commandResultContext.Descriptor.Contour = ContourName;
+
+            return PublishResultAsync(commandResultContext, result);
         }
 
-        public Task PublishResultAsync(CommandResultDescriptor commandResultDescriptor, CommonCommandResult result)
+        public Task PublishResultAsync(CommandResultContext commandResultContext, CommonCommandResult result)
         {
             TimeSpan? ttl = null;
 
-            if (commandResultDescriptor.TTL.HasValue && commandResultDescriptor.IsSync)
+            if (commandResultContext.Descriptor.TTL.HasValue && commandResultContext.Descriptor.IsSync)
             {
-                ttl = commandResultDescriptor.PublishTimeStamp + commandResultDescriptor.TTL.Value - DateTime.UtcNow;
+                ttl = commandResultContext.Descriptor.PublishTimeStamp + commandResultContext.Descriptor.TTL.Value - DateTime.UtcNow;
             }
 
             if (ttl == null || ttl > TimeSpan.Zero)
             {
-                if (commandResultDescriptor.HandlerTimeStamp.HasValue)
-                    commandResultDescriptor.HandlerDuration = DateTime.UtcNow - commandResultDescriptor.HandlerTimeStamp.Value;
+                if (commandResultContext.Descriptor.HandlerTimeStamp.HasValue)
+                    commandResultContext.Descriptor.HandlerDuration = DateTime.UtcNow - commandResultContext.Descriptor.HandlerTimeStamp.Value;
 
-                
+
                 var routingKey = "";
 
-                if (commandResultDescriptor.IsSync)
+                if (commandResultContext.Descriptor.IsSync)
                 {
-                    routingKey = $"{commandResultDescriptor.ResultAdapterType}#{commandResultDescriptor.ResultAdapterName}#Sync";
+                    routingKey = $"{commandResultContext.Descriptor.ResultAdapterType}#{commandResultContext.Descriptor.ResultAdapterName}#Sync";
                 }
                 else
                 {
-                    routingKey = string.IsNullOrWhiteSpace(commandResultDescriptor.ResultAdapterName) ? commandResultDescriptor.ResultAdapterType : $"{commandResultDescriptor.ResultAdapterType}#{commandResultDescriptor.ResultAdapterName}";
+                    routingKey = string.IsNullOrWhiteSpace(commandResultContext.Descriptor.ResultAdapterName) ? commandResultContext.Descriptor.ResultAdapterType : $"{commandResultContext.Descriptor.ResultAdapterType}#{commandResultContext.Descriptor.ResultAdapterName}";
                 }
 
                 var commandResultPayload = new CommandResultPayload
                 {
-                    Descriptor = commandResultDescriptor,
-                    Payload = result
+                    Descriptor = commandResultContext.Descriptor,
+                    Payload = result,
+                    ContextInfo = commandResultContext.ContextInfo
+                    
                 };
 
                 salLogger.LogOutgoing(commandResultPayload);
@@ -485,106 +486,102 @@ namespace SAL.Core.Client
                     Type = MessageTypes.CommandResult,
                     Payload = JObject.FromObject(commandResultPayload, SalSerializer.Create()),
                     Source = $"{AdapterConfiguration.AdapterType}.{AdapterConfiguration.AdapterName}",
-                    Priority = (byte) commandResultDescriptor.Priority,
-                    TimeStamp = commandResultDescriptor.PublishTimeStamp,
+                    Priority = (byte) commandResultContext.Descriptor.Priority,
+                    TimeStamp = commandResultContext.Descriptor.PublishTimeStamp,
                     Destination = routingKey,
                     TTL = ttl,
-                    CorrelationId = commandResultDescriptor.CorrelationId,
-                    SessionInfo = new SessionInfo
-                    {
-                        SessionId = HandlerContext.SessionId,
-                        AuthId = HandlerContext.AuthId,
-                        ProcessId = HandlerContext.ProcessId,
-                        OperationId = HandlerContext.OperationId
-                    }
+                    CorrelationId = commandResultContext.Descriptor.CorrelationId,
                 };
 
                 publisher.PublishCommandResult(Pack(transportMessage));
             }
             else
             {
-                salLogger.LogNullOutgoing(commandResultDescriptor);
+                salLogger.LogNullOutgoing(commandResultContext.Descriptor);
             }
 
             return Task.CompletedTask;
         }
-        
+
         public Task PublishEventAsync(string eventName, object eventBody, TimeSpan? ttl, bool isSystem, string handlerServiceType, string handlerServiceName)
         {
-            return PublishEventAsync(eventName,eventBody ,Guid.NewGuid().ToString("N"),ttl,isSystem,handlerServiceType,handlerServiceName);
-        }
-        
-        public Task PublishEventAsync(string eventName, object eventBody, string correlationId ,TimeSpan? ttl, bool isSystem, string handlerServiceType, string handlerServiceName)
-        {
-            var eventDescriptor = new EventDescriptor
-            {
-                CorrelationId = correlationId,
-                EventName = eventName,
-                DestinationAdapterType = handlerServiceType,
-                DestinationAdapterName = handlerServiceName,
-                SourceAdapterType = AdapterConfiguration.AdapterType,
-                SourceAdapterName = AdapterConfiguration.AdapterName,
-                PublishTimeStamp = DateTime.UtcNow,
-                TTL = ttl,
-                Contour = ContourName,
-                IsSystem = isSystem
-            };
-            
-            return PublishEventAsync(eventDescriptor, JObject.FromObject(eventBody, SalSerializer.Create()));
+            return PublishEventAsync(eventName, eventBody, Guid.NewGuid().ToString("N"), ttl, isSystem, handlerServiceType, handlerServiceName);
         }
 
-        public Task PublishEventAsync(EventDescriptor eventDescriptor, JObject eventBody)
+        public Task PublishEventAsync(string eventName, object eventBody, string correlationId, TimeSpan? ttl, bool isSystem, string handlerServiceType, string handlerServiceName)
+        {
+            var eventContext = new EventContext
+            {
+                ContextInfo = new ContextInfo
+                {
+                    SessionId = HandlerContext.SessionId,
+                    AuthId = HandlerContext.AuthId,
+                    ProcessId = HandlerContext.ProcessId,
+                    OperationId = HandlerContext.OperationId
+                },
+                Descriptor = new EventDescriptor
+                {
+                    CorrelationId = correlationId,
+                    EventName = eventName,
+                    DestinationAdapterType = handlerServiceType,
+                    DestinationAdapterName = handlerServiceName,
+                    SourceAdapterType = AdapterConfiguration.AdapterType,
+                    SourceAdapterName = AdapterConfiguration.AdapterName,
+                    PublishTimeStamp = DateTime.UtcNow,
+                    TTL = ttl,
+                    Contour = ContourName,
+                    IsSystem = isSystem
+                }
+            };
+
+
+            return PublishEventAsync(eventContext, JObject.FromObject(eventBody, SalSerializer.Create()));
+        }
+
+        public Task PublishEventAsync(EventContext eventContext, JObject eventBody)
         {
             var eventPayload = new EventPayload()
             {
-                Descriptor = eventDescriptor,
-                Payload = eventBody
+                Descriptor = eventContext.Descriptor,
+                Payload = eventBody,
+                ContextInfo = eventContext.ContextInfo
             };
 
             salLogger.LogOutgoing(eventPayload);
 
             string routingKey;
 
-            
-            if (string.IsNullOrWhiteSpace(eventDescriptor.DestinationAdapterType))
-                routingKey = eventDescriptor.EventName;
+
+            if (string.IsNullOrWhiteSpace(eventContext.Descriptor.DestinationAdapterType))
+                routingKey = eventContext.Descriptor.EventName;
             else
             {
-                routingKey = string.IsNullOrWhiteSpace(eventDescriptor.DestinationAdapterName) 
-                    ? eventDescriptor.DestinationAdapterType 
-                    : $"{eventDescriptor.DestinationAdapterType}#{eventDescriptor.DestinationAdapterName}";
+                routingKey = string.IsNullOrWhiteSpace(eventContext.Descriptor.DestinationAdapterName)
+                    ? eventContext.Descriptor.DestinationAdapterType
+                    : $"{eventContext.Descriptor.DestinationAdapterType}#{eventContext.Descriptor.DestinationAdapterName}";
 
-                if (eventDescriptor.IsSystem)
+                if (eventContext.Descriptor.IsSystem)
                 {
                     routingKey = $"System#{routingKey}";
                 }
             }
-            
 
-            
+
             var transportMessage = new TransportMessage
             {
                 Type = MessageTypes.Event,
                 Payload = JObject.FromObject(eventPayload, SalSerializer.Create()),
-                Source = $"{eventDescriptor.SourceAdapterType}.{eventDescriptor.SourceAdapterName}",
+                Source = $"{eventContext.Descriptor.SourceAdapterType}.{eventContext.Descriptor.SourceAdapterName}",
                 Priority = 0,
-                TimeStamp = eventDescriptor.PublishTimeStamp,
+                TimeStamp = eventContext.Descriptor.PublishTimeStamp,
                 Destination = routingKey,
-                TTL = eventDescriptor.TTL,
-                CorrelationId = eventDescriptor.CorrelationId,
-                SessionInfo = new SessionInfo
-                {
-                    SessionId = HandlerContext.SessionId,
-                    AuthId = HandlerContext.AuthId,
-                    ProcessId = HandlerContext.ProcessId,
-                    OperationId = HandlerContext.OperationId
-                }
+                TTL = eventContext.Descriptor.TTL,
+                CorrelationId = eventContext.Descriptor.CorrelationId,
             };
 
             publisher.PublishEvent(Pack(transportMessage));
 
             return Task.CompletedTask;
         }
-
     }
 }

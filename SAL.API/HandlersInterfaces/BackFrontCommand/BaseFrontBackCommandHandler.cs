@@ -37,17 +37,17 @@ namespace SAL.API
         
         public Task PublishResult(TCommandResult result)
         {
-            return salClient?.PublishResultAsync(result, commandContext.Descriptor);
+            return salClient?.PublishResultAsync(result, commandContext);
         }
 
         public Task PublishResult(object result, string code)
         {
-            return salClient?.PublishResultAsync(result, code, commandContext.Descriptor);
+            return salClient?.PublishResultAsync(result, code, commandContext);
         }
         
         public Task PublishResult(InternalExceptionDTO error)
         {
-            return salClient?.PublishResultAsync(error, commandContext.Descriptor);
+            return salClient?.PublishResultAsync(error, commandContext);
         }
 
         public Task PublishError(string code,

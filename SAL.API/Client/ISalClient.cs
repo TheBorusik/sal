@@ -35,16 +35,16 @@ namespace SAL.API
             where TCommandResult : class, ICommandResult, new();
 
 
-        Task PublishResultAsync(ICommandResult result, CommandDescriptor commandDescriptor);
-        Task PublishResultAsync(CommonCommandResult result, CommandDescriptor commandDescriptor);
+        Task PublishResultAsync(ICommandResult result, CommandContext commandContext);
+        Task PublishResultAsync(CommonCommandResult result, CommandContext commandContext);
 
-        Task PublishResultAsync(object result, string code, CommandDescriptor commandDescriptor);
+        Task PublishResultAsync(object result, string resultCode, CommandContext commandContext);
 
-        Task PublishResultAsync(InternalExceptionDTO exceptionDTO, CommandDescriptor commandDescriptor);
+        Task PublishResultAsync(InternalExceptionDTO exceptionDTO, CommandContext commandContext);
 
-        Task PublishResultAsync(IList<FieldError> validationErrors, CommandDescriptor commandDescriptor);
+        Task PublishResultAsync(IList<FieldError> validationErrors, CommandContext commandContext);
 
-        Task PublishResultAsync<TCommandResult>(CommandResult<TCommandResult> result, CommandDescriptor commandDescriptor)
+        Task PublishResultAsync<TCommandResult>(CommandResult<TCommandResult> result, CommandContext commandContext)
             where TCommandResult : class, ICommandResult, new();
 
         Task PublishEventAsync(IEvent evnt, TimeSpan? ttl = null, string handlerServiceType = null, string handlerServiceName = null);

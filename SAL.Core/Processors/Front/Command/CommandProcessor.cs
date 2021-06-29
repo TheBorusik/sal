@@ -47,7 +47,7 @@ namespace SAL.Core.Processors
         }
 
         private CommandProcessorConfig commandProcessorConfig;
-        
+
         public void Start()
         {
             try
@@ -56,12 +56,12 @@ namespace SAL.Core.Processors
                     .Where(r => r.Services.OfType<TypedService>().Any(ts => ts.ServiceType == typeof(IFrontCommandHandler)))
                     .Select(a => a.Activator.LimitType)
                     .ForEach(RegisterCommandHandler);
-                
+
                 container.ComponentRegistry.Registrations
                     .Where(r => r.Services.OfType<TypedService>().Any(ts => ts.ServiceType == typeof(IFrontCommonCommandHandlerAsync)))
                     .Select(a => a.Activator.LimitType)
                     .ForEach(RegisterCommonCommandHandler);
-                
+
                 var processingCommand = commandHandlers.ToArray();
 
                 var baseJsonConfig = new CommandProcessorConfig
@@ -84,7 +84,7 @@ namespace SAL.Core.Processors
                 }
 
                 commandProcessorConfig = baseJsonConfig.ToObject<CommandProcessorConfig>();
-                
+
                 if (!AdapterConfiguration.InDocker)
                 {
                     var tmp = new JObject();
@@ -93,7 +93,7 @@ namespace SAL.Core.Processors
                     File.WriteAllText(Path.Combine(AdapterConfiguration.ConfigPath, $"{ConfigurationSectionNames.FrontCommandProcessor}.txt"), configStr);
                     logger.Info($"Front Command processing config \n{configStr}");
                 }
-                
+
                 var transport = container.ResolveNamed<ITransport>("front");
 
                 var subscriptionFactory = transport.CreateMessageSubscription();
@@ -143,7 +143,7 @@ namespace SAL.Core.Processors
                 .OfType<SalExternalUriAttribute>().Select(a => a.Uri).ToArray();
 
 
-            foreach (var handlerInterface in handlerInterfaces)
+            foreach(var handlerInterface in handlerInterfaces)
             {
                 var commandType = handlerInterface.GetGenericArguments()[0];
 
@@ -192,10 +192,9 @@ namespace SAL.Core.Processors
                 });
             }
         }
-        
+
         private void RegisterCommonCommandHandler(Type handlerType)
         {
-            
             var externalServiceMethod = handlerType.GetCustomAttributes(typeof(SalExternalMethodAttribute))
                 .OfType<SalExternalMethodAttribute>().FirstOrDefault();
 
@@ -205,7 +204,7 @@ namespace SAL.Core.Processors
 
             var externalUris = handlerType.GetCustomAttributes(typeof(SalExternalUriAttribute))
                 .OfType<SalExternalUriAttribute>().Select(a => a.Uri).ToArray();
-            
+
             var commandName = externalServiceMethod.ServiceMethod;
 
             if (commandHandlers.ContainsKey(commandName))
@@ -224,7 +223,7 @@ namespace SAL.Core.Processors
                 HandlerMethod = null,
                 ValidationMethod = null,
             };
-            
+
             commandHandlers.Add(commandName, commandHandlerInfo);
             logger.Info($"Для команды {commandName} добавлен обработчик {handlerType.Name}");
 
@@ -236,16 +235,16 @@ namespace SAL.Core.Processors
                 ExternalUri = externalUris,
                 Dtos = new DtoInfo[0]
             };
-            
+
             ICommandDtoCreator dtoCreater = null;
             if (handlerType.IsAssignableTo<ICommandDtoCreator>())
             {
-                dtoCreater = (ICommandDtoCreator)container.Resolve(handlerType);
+                dtoCreater = (ICommandDtoCreator) container.Resolve(handlerType);
                 handlerInfo.Dtos = dtoCreater.GetCommandDtos(commandName);
                 handlerInfo.CommandDto = dtoCreater.GetCommandDtoName(commandName);
                 handlerInfo.ResultDto = dtoCreater.GetResultDtoName(commandName);
             }
-            
+
             salService.AddFrontCommandHandler(handlerInfo);
         }
 
@@ -272,14 +271,13 @@ namespace SAL.Core.Processors
                 HandlerContext.Set(HandlerTypes.Processor, "FrontCommandProcessor", rabbitMessage.CorrelationId);
                 var transportMessage = ExtractMessage(rabbitMessage);
                 var commandPayload = ExtractCommandPayload(transportMessage);
-                HandlerContext.Update(transportMessage);
+                HandlerContext.Update(commandPayload.ContextInfo);
                 salLogger.LogIncoming(commandPayload);
                 await Processing(transportMessage, commandPayload);
                 ack();
             }
             catch (JsonReaderException ex)
             {
-       
                 var dto = ex.ToDto();
                 logger.Error("При обработке команды произошла ошибка десериализации", ex);
                 var sb = new StringBuilder();
@@ -287,7 +285,7 @@ namespace SAL.Core.Processors
                 sb.AppendLine(SalEncoding.GetString(rabbitMessage.Payload));
                 logger.Info(sb.ToString());
                 nack();
-                await salClient.RaiseExceptionDetectEvent(rabbitMessage.CorrelationId, dto); 
+                await salClient.RaiseExceptionDetectEvent(rabbitMessage.CorrelationId, dto);
             }
             catch (SalException ex)
             {
@@ -394,11 +392,11 @@ namespace SAL.Core.Processors
 
             if (commandHandlers.TryGetValue(commandPayload.Descriptor.CommandName, out var commandHandlerInfo))
             {
-                HandlerContext.Update(handlerName:commandHandlerInfo.HandlerType.Name);
+                HandlerContext.Update(handlerName: commandHandlerInfo.HandlerType.Name);
                 salLogger.LogHandler(commandPayload, commandHandlerInfo.HandlerType.Name);
-                
+
                 using var scope = container.BeginLifetimeScope();
-                
+
                 var executingContext = new ExecutingContext
                 {
                     Scope = scope,
@@ -409,12 +407,15 @@ namespace SAL.Core.Processors
                 var commandContext = new CommandContext
                 {
                     Descriptor = commandPayload.Descriptor,
-                    SessionId = HandlerContext.SessionId,
-                    AuthId = HandlerContext.AuthId,
-                    ProcessId = HandlerContext.ProcessId,
-                    OperationId = HandlerContext.OperationId
+                    ContextInfo = new ContextInfo
+                    {
+                        SessionId = HandlerContext.SessionId,
+                        AuthId = HandlerContext.AuthId,
+                        ProcessId = HandlerContext.ProcessId,
+                        OperationId = HandlerContext.OperationId
+                    }
                 };
-                
+
 
                 if (!commandHandlerInfo.IsCommon)
                 {
@@ -431,7 +432,11 @@ namespace SAL.Core.Processors
 
                     if (validationErrors.Any())
                     {
-                        await salClient.PublishResultAsync(validationErrors, commandPayload.Descriptor);
+                        await salClient.PublishResultAsync(validationErrors,new CommandContext
+                        {
+                            Descriptor = commandPayload.Descriptor,
+                            ContextInfo = commandPayload.ContextInfo
+                        });
                         return;
                     }
 
@@ -457,6 +462,5 @@ namespace SAL.Core.Processors
 
             return (Task<IEnumerable<FieldError>>) handlerInfo.ValidationMethod.Invoke(handler, new[] {validateObject});
         }
-
     }
 }

@@ -84,17 +84,17 @@ namespace SAL.API
             data.Value.OperationId = operationId;
         }
         
-        public static void Update(TransportMessage msg)
+        public static void Update(ContextInfo contextInfo)
         {
             if(data.Value == null)
                 return;
-            if(msg.SessionInfo == null)
+            if(contextInfo == null)
                 return;
 
-            data.Value.SessionId = msg.SessionInfo.SessionId;
-            data.Value.AuthId = msg.SessionInfo.AuthId;
-            data.Value.ProcessId = msg.SessionInfo.ProcessId;
-            data.Value.OperationId = msg.SessionInfo.OperationId;
+            data.Value.SessionId = contextInfo.SessionId;
+            data.Value.AuthId = contextInfo.AuthId;
+            data.Value.ProcessId = contextInfo.ProcessId;
+            data.Value.OperationId = contextInfo.OperationId;
         }
         
         public static void Update(HandlerTypes handlerType = HandlerTypes.Unknown , string handlerName = "")
