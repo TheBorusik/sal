@@ -28,8 +28,9 @@ namespace SAL.Core.Service
         public LogFactory LogFactory => nLogFactory.logFactory;
         public virtual void InitConfiguration()
         {
-
-            AdapterConfiguration.AdapterHostName = System.Net.Dns.GetHostName();
+            var hostName = Environment.GetEnvironmentVariable("AdapterHostName");
+            AdapterConfiguration.AdapterHostName = string.IsNullOrWhiteSpace(hostName) ? System.Net.Dns.GetHostName() : hostName;
+            
             AdapterConfiguration.AdapterHostIp = System.Net.Dns.GetHostAddresses(AdapterConfiguration.AdapterHostName).Where(ip => ip.AddressFamily == AddressFamily.InterNetwork).Select(ip => ip.ToString()).ToArray();
             
             AdapterConfiguration.RootPath = AppDomain.CurrentDomain.BaseDirectory;
