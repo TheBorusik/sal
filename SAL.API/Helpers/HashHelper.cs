@@ -95,7 +95,7 @@ namespace SAL.API
         private static string MakeHash(HashAlgorithm alg, byte[] data, bool hexString)
         {
             var hash = alg.ComputeHash(data);
-            return hexString ? string.Concat(hash.Select(b => b.ToString("x2"))) : Convert.ToBase64String(hash);
+            return hexString ? Convert.ToHexString(hash) : Convert.ToBase64String(hash);
         }
         
     }
