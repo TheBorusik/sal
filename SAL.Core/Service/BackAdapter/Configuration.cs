@@ -29,9 +29,10 @@ namespace SAL.Core.Service
         public virtual void InitConfiguration()
         {
             var hostName = Environment.GetEnvironmentVariable("AdapterHostName");
-            AdapterConfiguration.AdapterHostName = string.IsNullOrWhiteSpace(hostName) ? System.Net.Dns.GetHostName() : hostName;
+            var dnsHostName = System.Net.Dns.GetHostName();
+            AdapterConfiguration.AdapterHostName = string.IsNullOrWhiteSpace(hostName) ? dnsHostName : hostName;
             
-            AdapterConfiguration.AdapterHostIp = System.Net.Dns.GetHostAddresses(AdapterConfiguration.AdapterHostName).Where(ip => ip.AddressFamily == AddressFamily.InterNetwork).Select(ip => ip.ToString()).ToArray();
+            AdapterConfiguration.AdapterHostIp = System.Net.Dns.GetHostAddresses(dnsHostName).Where(ip => ip.AddressFamily == AddressFamily.InterNetwork).Select(ip => ip.ToString()).ToArray();
             
             AdapterConfiguration.RootPath = AppDomain.CurrentDomain.BaseDirectory;
             AdapterConfiguration.ConfigPath = Path.Combine(AdapterConfiguration.RootPath, "config");
