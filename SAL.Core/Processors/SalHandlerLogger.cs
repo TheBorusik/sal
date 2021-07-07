@@ -358,7 +358,7 @@ namespace SAL.Core.Processors
                             return new HandlerLogger
                             {
                                 Ignore = loggingConfigItem.Value.Ignore,
-                                CropSize = loggingConfigItem.Value.СropSize,
+                                CropSize = loggingConfigItem.Value.CropSize,
                                 Formatting = loggingConfigItem.Value.Formatting,
                                 logger = loggerProvider.CreateLogger(s)
                             };
@@ -399,7 +399,7 @@ namespace SAL.Core.Processors
                             return new HandlerLogger
                             {
                                 Ignore = loggingConfigItem.Value.Ignore,
-                                CropSize = loggingConfigItem.Value.СropSize,
+                                CropSize = loggingConfigItem.Value.CropSize,
                                 Formatting = loggingConfigItem.Value.Formatting,
                                 logger = loggerProvider.CreateLogger(s)
                             };
@@ -440,7 +440,7 @@ namespace SAL.Core.Processors
                             return new HandlerLogger
                             {
                                 Ignore = loggingConfigItem.Value.Ignore,
-                                CropSize = loggingConfigItem.Value.СropSize,
+                                CropSize = loggingConfigItem.Value.CropSize,
                                 Formatting = loggingConfigItem.Value.Formatting,
                                 logger = loggerProvider.CreateLogger(s)
                             };
@@ -480,7 +480,7 @@ namespace SAL.Core.Processors
                             return new HandlerLogger
                             {
                                 Ignore = loggingConfigItem.Value.Ignore,
-                                CropSize = loggingConfigItem.Value.СropSize,
+                                CropSize = loggingConfigItem.Value.CropSize,
                                 Formatting = loggingConfigItem.Value.Formatting,
                                 logger = loggerProvider.CreateLogger(s)
                             };
