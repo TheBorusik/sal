@@ -49,6 +49,7 @@ namespace SAL.API
 
         Task PublishEventAsync(IEvent evnt, TimeSpan? ttl = null, string handlerServiceType = null, string handlerServiceName = null);
 
+        Task PublishCEventAsync(IEvent evnt, string handlerServiceType, TimeSpan? ttl = null);
 
         Task RaiseExceptionDetectEvent(string cid, InternalExceptionDTO exceptionDTO);
         Task RaiseExceptionDetectEvent(string cid, Exception ex);

@@ -18,6 +18,7 @@ namespace SAL.API
             SourceAdapterName = src.SourceAdapterName;
             PublishTimeStamp = src.PublishTimeStamp;
             TTL = src.TTL;
+            IsCEvent = src.IsCEvent;
         }
 
         public string CorrelationId { get; set; }
@@ -32,5 +33,6 @@ namespace SAL.API
         public string SourceAdapterName { get; set; }
         public DateTime PublishTimeStamp { get; set; }
         public TimeSpan? TTL { get; set; }
+        public bool IsCEvent { get; set; }
     }
 }

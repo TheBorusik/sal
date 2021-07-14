@@ -7,5 +7,6 @@
         internal const string CommandExchange = "CommandExchange";
         internal const string CommandResultExchange = "CommandResultExchange";
         internal const string EventExchange = "EventExchange";
+        internal const string CEventExchange = "CEventExchange";
     }
 }

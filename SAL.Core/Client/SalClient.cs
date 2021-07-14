@@ -175,10 +175,29 @@ namespace SAL.Core.Client
             return PublishEventAsync(
                 evnt.GetType().GetRouteKey(),
                 evnt,
+                Guid.NewGuid().ToString("N"),
                 ttl,
                 evnt.GetType().IsSystemEvent(),
                 handlerServiceType,
-                handlerServiceName
+                handlerServiceName, 
+                false
+            );
+        }
+
+        public Task PublishCEventAsync(IEvent evnt, string handlerServiceType, TimeSpan? ttl = null)
+        {
+            if (evnt == null)
+                return Task.CompletedTask;
+
+            return PublishEventAsync(
+                evnt.GetType().GetRouteKey(),
+                evnt,
+                Guid.NewGuid().ToString("N"),
+                ttl,
+                evnt.GetType().IsSystemEvent(),
+                handlerServiceType,
+                null, 
+                true
             );
         }
 
@@ -523,12 +542,8 @@ namespace SAL.Core.Client
             return Task.CompletedTask;
         }
 
-        public Task PublishEventAsync(string eventName, object eventBody, TimeSpan? ttl, bool isSystem, string handlerServiceType, string handlerServiceName)
-        {
-            return PublishEventAsync(eventName, eventBody, Guid.NewGuid().ToString("N"), ttl, isSystem, handlerServiceType, handlerServiceName);
-        }
 
-        public Task PublishEventAsync(string eventName, object eventBody, string correlationId, TimeSpan? ttl, bool isSystem, string handlerServiceType, string handlerServiceName)
+        public Task PublishEventAsync(string eventName, object eventBody, string correlationId, TimeSpan? ttl, bool isSystem, string handlerServiceType, string handlerServiceName, bool isCEvent)
         {
             var eventContext = new EventContext
             {
@@ -550,7 +565,8 @@ namespace SAL.Core.Client
                     PublishTimeStamp = DateTime.UtcNow,
                     TTL = ttl,
                     Contour = ContourName,
-                    IsSystem = isSystem
+                    IsSystem = isSystem,
+                    IsCEvent = isCEvent
                 }
             };
 
@@ -574,6 +590,10 @@ namespace SAL.Core.Client
 
             if (string.IsNullOrWhiteSpace(eventContext.Descriptor.DestinationAdapterType))
                 routingKey = eventContext.Descriptor.EventName;
+            else if (eventContext.Descriptor.IsCEvent)
+            {
+                routingKey = eventContext.Descriptor.DestinationAdapterType;
+            }
             else
             {
                 routingKey = string.IsNullOrWhiteSpace(eventContext.Descriptor.DestinationAdapterName)
@@ -585,6 +605,7 @@ namespace SAL.Core.Client
                     routingKey = $"System#{routingKey}";
                 }
             }
+            
 
 
             var transportMessage = new TransportMessage
@@ -599,7 +620,10 @@ namespace SAL.Core.Client
                 CorrelationId = eventContext.Descriptor.CorrelationId,
             };
 
-            publisher.PublishEvent(Pack(transportMessage));
+            if(!string.IsNullOrWhiteSpace(eventContext.Descriptor.DestinationAdapterType) && eventContext.Descriptor.IsCEvent)
+                publisher.PublishCEvent(Pack(transportMessage));
+            else 
+                publisher.PublishEvent(Pack(transportMessage));
 
             return Task.CompletedTask;
         }

@@ -41,14 +41,6 @@ namespace SAL.API
         Task PublishResultAsync(
             CommonCommandResult result, 
             CommandContext commandContext);
-
-        Task PublishEventAsync(
-            string eventName, 
-            object eventBody, 
-            TimeSpan? ttl,
-            bool isSystem,
-            string handlerServiceType,
-            string handlerServiceName);
         
         Task PublishEventAsync(
             string eventName, 
@@ -57,7 +49,8 @@ namespace SAL.API
             TimeSpan? ttl,
             bool isSystem,
             string handlerServiceType,
-            string handlerServiceName);
+            string handlerServiceName,
+            bool isCEvent);
         
         Task PublishCommandAsync(CommandContext commandContext, JObject commandBody);
 

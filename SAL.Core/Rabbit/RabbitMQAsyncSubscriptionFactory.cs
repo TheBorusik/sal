@@ -67,7 +67,7 @@ namespace SAL.Core.Rabbit
         {
             var queueList = new List<QueueInfo>();
 
-            var queueName = $"#{AdapterConfiguration.AdapterType}#{AdapterConfiguration.AdapterName}" + "#Event";
+            var queueName = $"#{AdapterConfiguration.AdapterType}#{AdapterConfiguration.AdapterName}#Event";
 
             var bindings = eventNames.Select(s => new QueueBinding
             {
@@ -103,7 +103,31 @@ namespace SAL.Core.Rabbit
                 QueueName = queueName,
                 PrefetchCount = prefetchCount
             });
-
+            
+            queueName = $"#{AdapterConfiguration.AdapterType}#Event";
+            bindings = new List<QueueBinding>();
+            bindings.Add(new QueueBinding
+            {
+                ExchangeName = ExchangeNames.CEventExchange,
+                RoutingKey = $"{AdapterConfiguration.AdapterType}"
+            });
+            transport.AddQueue(new Queue
+            {
+                Name = queueName,
+                AutoDelete = false,
+                MaxPriority = 0,
+                Exclusive = false,
+                HasDeadLetter = true,
+                Expire = null,
+                Durable = true,
+                Bindings = bindings.ToArray()
+            });
+            
+            queueList.Add(new QueueInfo
+            {
+                QueueName = queueName,
+                PrefetchCount = prefetchCount
+            });
 
             return new MultiConsumerSubscription(transport, subscriptionName, prefetchCount, queueList.ToArray(), handler);
         }

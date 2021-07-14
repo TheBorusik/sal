@@ -75,6 +75,7 @@ namespace SAL.Core.Rabbit
             exchanges.Add(new Exchange { Name = ExchangeNames.CommandExchange, Type = Topology.ExchangeType.Direct, AlternateExchange = ExchangeNames.NotHandledExchange });
             exchanges.Add(new Exchange { Name = ExchangeNames.CommandResultExchange, Type = Topology.ExchangeType.Direct, AlternateExchange = ExchangeNames.NotHandledExchange });
             exchanges.Add(new Exchange { Name = ExchangeNames.EventExchange, Type = Topology.ExchangeType.Direct });
+            exchanges.Add(new Exchange { Name = ExchangeNames.CEventExchange, Type = Topology.ExchangeType.Direct });
 
 
             queues.Add(new Queue

@@ -25,6 +25,15 @@ namespace SAL.Core.Rabbit
 
             Publish(msg);
         }
+        
+        public void PublishCEvent(RabbitMessage msg)
+        {
+
+            msg.Priority = 0;
+            msg.Exchange = ExchangeNames.CEventExchange;
+
+            Publish(msg);
+        }
 
         public void PublishCommand(RabbitMessage msg)
         {
