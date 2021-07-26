@@ -8,9 +8,8 @@ using SAL.Infrastructure;
 namespace SAL.API
 {
     public abstract class BaseFrontBackCommandHandlerAsync<TCommand, TCommandResult> :
-        ICommandHandlerAsync<TCommand, TCommandResult>,
-        IFrontCommandHandlerAsync<TCommand,TCommandResult>,
-        IValidator<TCommand>
+        ICommandHandler2Async<TCommand, TCommandResult>,
+        IFrontCommandHandler2Async<TCommand,TCommandResult>
         where TCommand : class, IHaveResult<TCommandResult>, new()
         where TCommandResult : class, ICommandResult, new()
     {
@@ -18,15 +17,7 @@ namespace SAL.API
         protected ISalClient salClient { get; set; }
         protected ILifetimeScope scope { get; set; }
         protected ILogger logger { get; set; }
-
-        public void SetContexts(CommandContext commandContext, ExecutingContext executingContext)
-        {
-            this.commandContext = commandContext;
-            salClient = executingContext.SalClient;
-            logger = executingContext.Logger;
-            scope = executingContext.Scope;
-        }
-
+        
         public virtual Task<IEnumerable<FieldError>> Validate(TCommand verifiable)
         {
             return Task.FromResult(new FieldError[0].AsEnumerable());
@@ -58,5 +49,22 @@ namespace SAL.API
             return PublishResult(SalError.CreateDto(code, message, properties, innerException));
         }
 
+        Task ICommandHandler2Async<TCommand, TCommandResult>.Handle(TCommand command, CommandContext commandContext, ExecutingContext executingContext)
+        {
+            this.commandContext = commandContext;
+            salClient = executingContext.SalClient;
+            logger = executingContext.Logger;
+            scope = executingContext.Scope;
+            return Handle(command);
+        }
+
+        Task IFrontCommandHandler2Async<TCommand, TCommandResult>.Handle(TCommand command, CommandContext commandContext, ExecutingContext executingContext)
+        {
+            this.commandContext = commandContext;
+            salClient = executingContext.SalClient;
+            logger = executingContext.Logger;
+            scope = executingContext.Scope;
+            return Handle(command);
+        }
     }
 }

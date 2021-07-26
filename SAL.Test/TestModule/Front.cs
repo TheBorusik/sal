@@ -1,27 +1,28 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
 using Autofac;
 using Newtonsoft.Json.Linq;
 using SAL.API;
-using SAL.Core.S3;
 using SAL.Infrastructure;
 
-[assembly: SalServiceType("SalTest")]
-
 // ReSharper disable once CheckNamespace
-namespace SAL.Test
+namespace SAL.Test.Front
 {
     public class Front : IModule
     {
         public void Configure(ContainerBuilder builder, IConfigWatcher config)
         {
-            //builder.RegisterSalHandler<TestEventAdapter>();
+
             builder.RegisterSalHandler<TestExternal>();
+            builder.RegisterSalHandler<FrontTestCommandHandler>();
+            builder.RegisterSalHandler<BackTestCommandHandler>();
+            
+            builder.RegisterSalHandler<TestCommandResultHandler3>();
+
+            
             builder.RegisterProcessor<TestFront>();
 
-            //  builder.RegisterSalHandler<GetPermissionTreeHandler>();
         }
     }
 
@@ -41,31 +42,15 @@ namespace SAL.Test
 
         public void Online()
         {
-         /*
-            using var scope = lifetimeScope.BeginLifetimeScope();
-            var s3Store = scope.Resolve<IS3Store>();
-            try
-            {
-                s3Store.UploadFileAsync(@"C:\Program Files\Far Manager\Far.exe", "tmp", "aida64extreme632.zip").Wait();
-            //    s3Store.DownloadFileAsync("tmp", "aida64extreme632.zip",@"G:\aida64.zip").Wait();
 
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine(e);
-            }
-            */
          
          using var scope = lifetimeScope.BeginLifetimeScope();
 
-         var cl = scope.ResolveNamed<ISalClient>("front");
-
-       //  var sesPre = SessionManager.Current.Clone();
+         var front = scope.ResolveKeyed<ISalClient>(Contour.Front);
+         var back = scope.ResolveKeyed<ISalClient>(Contour.Back);
          
-         var res = cl.ExecuteCommandAsync<GetPermissionTreeCommand, GetPermissionTreeResult>(new GetPermissionTreeCommand { }).Result;
-
-        // var sesPost = SessionManager.Current.Clone();
-         
+       //  back.PublishFrontCommandAsync("SalTest.FrontTest",new TestCommand()).Wait();
+         back.PublishCommandAsync(new TestCommand()).Wait();
         }
 
         public void Offline()
@@ -111,54 +96,95 @@ namespace SAL.Test
     }
 
 
-    [SalExternalMethod("SalTest.TestCommand")]
-    public class GetPermissionTreeHandler : BaseFrontBackCommandHandlerAsync<GetPermissionTreeCommand, GetPermissionTreeResult>
+
+    [SalCommandName("SalTest.Front.Test")]
+    [SalRequestType("SalTest.FrontTest")]
+    public class TestCommand : IHaveResult<TestResult>
     {
-        private static int index = 0;
-        public GetPermissionTreeHandler()
+        public int Int { get; set; }
+        public string Str { get; set; }
+    }
+
+    public class TestResult : ICommandResult
+    {
+        public int Int { get; set; }
+        public string Str { get; set; }
+    }
+
+    [SalCommandName("SalTest.Front.Test")]
+    public class Test2Result : ICommandResult
+    {
+        public int Int { get; set; }
+        public string Str { get; set; }
+    }
+    
+   
+    
+    public class  FrontTestCommandHandler : BaseFrontCommandHandlerAsync<TestCommand, TestResult>
+    {
+        public FrontTestCommandHandler(ISalClient backClient) : base(backClient)
         {
         }
 
-        public override async Task Handle(GetPermissionTreeCommand command)
+        public override async Task Handle(TestCommand command)
         {
-           // SessionManager.Current.AddOrUpdate("Test1", $"Value_{index++}");
-            await PublishResult(new GetPermissionTreeResult
+            await PublishResult(new TestResult
             {
-            //    Session = SessionManager.Current
+                Int = 10,
+                Str = "100"
             });
-     //       SessionManager.Current.AddOrUpdate("Test2", $"Value_{index++}");
         }
     }
 
 
-    [SalServiceType("SalTest")]
-    [SalCommandName("TestCommand")]
-    public class GetPermissionTreeCommand : IHaveResult<GetPermissionTreeResult>
+    public class BackTestCommandHandler : BaseCommandHandlerAsync<TestCommand, TestResult>
     {
+        public override async Task Handle(TestCommand command)
+        {
+            await PublishResult(new TestResult
+            {
+                Int = 10,
+                Str = "100"
+            });
+        }
+    }
+    
+    
+    [SalContourHandler(Contour.Back)]
+    public class TestCommandResultHandler3 : ICommandResultHandle2Async<Test2Result>
+    {
+        public Task<bool> ResultHandle(CommandResult<Test2Result> result, CommandResultContext commandContext, ExecutingContext executingContext)
+        {
+            return Task.FromResult(true);
+        }
+    }
+    
+    
+    [SalContourHandler(Contour.Back)]
+    public class TestCommandResultHandler1 : ICommandResultHandle2Async<TestCommand, TestResult>
+    {
+        public Task<bool> ResultHandle(CommandResult<TestResult> result, CommandResultContext commandContext, ExecutingContext executingContext)
+        {
+            return Task.FromResult(true);
+        }
+    }
+    
+    [SalContourHandler(Contour.Front)]
+    public class TestCommandResultHandler2 : ICommandResultHandle2Async<TestCommand, TestResult>
+    {
+        public Task<bool> ResultHandle(CommandResult<TestResult> result, CommandResultContext commandContext, ExecutingContext executingContext)
+        {
+            return Task.FromResult(true);
+        }
     }
 
-    public class GetPermissionTreeResult : ICommandResult
+    [SalContourHandler(Contour.Back)]
+    [SalRequestType("SalTest.FrontTest")]
+    public class TestCommonCommandResultHandler : ICommonCommandResultHandler2
     {
-        public JObject Session { get; set; } 
-    }
-
-    public class PermissionTreeItem
-    {
-        public PermissionTreeItemType Type { get; set; }
-        public long? PermissionId { get; set; }
-        public long? CatalogId { get; set; }
-        public long? ParentId { get; set; }
-        public string Name { get; set; }
-        public string Description { get; set; }
-        public string StrId { get; set; }
-        public JObject PermissionSettings { get; set; }
-        public List<PermissionTreeItem> PermissionTree { get; set; }
-    }
-
-    public enum PermissionTreeItemType
-    {
-        Unknown,
-        Catalog,
-        Permission
+        public Task<bool> ResultHandle(CommonCommandResult result, CommandResultContext commandContext, ExecutingContext executingContext)
+        {
+            return Task.FromResult(true);
+        }
     }
 }

@@ -14,9 +14,14 @@
     <PackageReference Include="Autofac" Version="6.0.0" />
     <PackageReference Include="JsonDiffPatch.Net" Version="2.3.0" />
     <PackageReference Include="Microsoft.Extensions.Logging" Version="5.0.0" />
-    <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
+    <PackageReference Include="Newtonsoft.Json.Bson" Version="1.0.2" />
+    <PackageReference Include="Newtonsoft.Json.Schema" Version="3.0.14" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\SAL.Infrastructure\SAL.Infrastructure.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="SystemCommand" />
   </ItemGroup>
 </Project>

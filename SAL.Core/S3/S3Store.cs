@@ -1,7 +1,5 @@
-﻿using System;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using Amazon;
-using Amazon.Internal;
 using Amazon.S3;
 using Amazon.S3.Model;
 using Amazon.S3.Transfer;

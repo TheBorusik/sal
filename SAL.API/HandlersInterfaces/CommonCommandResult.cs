@@ -1,5 +1,6 @@
-﻿using Newtonsoft.Json.Linq;
-using SAL.Infrastructure;
+﻿using System.ComponentModel.DataAnnotations;
+using Newtonsoft.Json.Linq;
+
 
 namespace SAL.API
 {
@@ -7,6 +8,7 @@ namespace SAL.API
     {
         public JObject Result { get; set; }
         public InternalExceptionDTO Error { get; set; }
+        [Required]
         public string ResultCode { get; set; }
         
         public T GetResult<T>() => Result.ConvertValue<T>();

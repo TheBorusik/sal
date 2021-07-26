@@ -1,12 +1,11 @@
-﻿namespace SAL.API
+using Newtonsoft.Json.Schema;
+
+namespace SAL.API
 {
     public class CommandResultHandlerInfo
     {
         public string CommandName;
-        public string CommandDto;
-        public string ResultDto;
+        public JSchema ResultSchema;
         public bool IsCommon;
-
-        public DtoInfo[] Dtos { get; set; }
     }
 }

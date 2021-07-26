@@ -1,5 +1,6 @@
 ﻿using Autofac;
 using SAL.Core.Rabbit.Interfaces;
+using SAL.Infrastructure;
 
 namespace SAL.Core.Service
 {
@@ -9,7 +10,7 @@ namespace SAL.Core.Service
         {
             var backTransport = Container.Resolve<ITransport>();
             backTransport.Start();
-           if(Container.TryResolveNamed("front",typeof(ITransport),out var frontTransport)) 
+           if(Container.TryResolveKeyed(Contour.Front,typeof(ITransport),out var frontTransport)) 
                ((ITransport)frontTransport).Start();
         }
 
@@ -17,7 +18,7 @@ namespace SAL.Core.Service
         {
             var backTransport = Container.Resolve<ITransport>();
             backTransport.Stop();
-            if (Container.TryResolveNamed("front", typeof(ITransport), out var frontTransport))
+            if (Container.TryResolveKeyed(Contour.Front, typeof(ITransport), out var frontTransport))
                 ((ITransport)frontTransport).Stop();
         }
     }

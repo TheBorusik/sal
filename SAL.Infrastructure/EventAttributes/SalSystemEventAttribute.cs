@@ -2,7 +2,7 @@
 
 namespace SAL.Infrastructure
 {
-    [AttributeUsage(AttributeTargets.Class)]
+    [AttributeUsage(AttributeTargets.Class, Inherited = false)]
     public class SalSystemEventAttribute : Attribute
     {
 

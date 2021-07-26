@@ -28,52 +28,52 @@ namespace SAL.API
         {
             var interfaces = handlerType.GetInterfaces();
             bool anyHandler = false;
-            if (interfaces.Any(i => i.IsAssignableTo<ICommandHandler>()))
+            if (interfaces.Any(i => i.IsAssignableTo<ICommandHandler2>()))
             {
-                registration = registration.As<ICommandHandler>();
+                registration = registration.As<ICommandHandler2>();
                 anyHandler = true;
             }
 
-            if (interfaces.Any(i => i.IsAssignableTo<ICommonCommandHandler>()))
+            if (interfaces.Any(i => i.IsAssignableTo<ICommonCommandHandler2>()))
             {
-                registration = registration.As<ICommonCommandHandler>();
+                registration = registration.As<ICommonCommandHandler2>();
                 anyHandler = true;
             }
 
-            if (interfaces.Any(i => i.IsAssignableTo<ICommandResultHandler>()))
+            if (interfaces.Any(i => i.IsAssignableTo<ICommandResultHandler2>()))
             {
-                registration = registration.As<ICommandResultHandler>();
+                registration = registration.As<ICommandResultHandler2>();
                 anyHandler = true;
             }
 
-            if (interfaces.Any(i => i.IsAssignableTo<ICommonCommandResultHandler>()))
+            if (interfaces.Any(i => i.IsAssignableTo<ICommonCommandResultHandler2>()))
             {
-                registration = registration.As<ICommonCommandResultHandler>();
+                registration = registration.As<ICommonCommandResultHandler2>();
                 anyHandler = true;
             }
 
-            if (interfaces.Any(i => i.IsAssignableTo<IEventHandler>()))
+            if (interfaces.Any(i => i.IsAssignableTo<IEventHandler2>()))
             {
-                registration = registration.As<IEventHandler>();
+                registration = registration.As<IEventHandler2>();
                 anyHandler = true;
             }
 
-            if (interfaces.Any(i => i.IsAssignableTo<ICommonEventHandler>()))
+            if (interfaces.Any(i => i.IsAssignableTo<ICommonEventHandler2>()))
             {
-                registration = registration.As<ICommonEventHandler>();
+                registration = registration.As<ICommonEventHandler2>();
                 anyHandler = true;
             }
 
 
-            if (interfaces.Any(i => i.IsAssignableTo<IFrontCommandHandler>()))
+            if (interfaces.Any(i => i.IsAssignableTo<IFrontCommandHandler2>()))
             {
-                registration = registration.As<IFrontCommandHandler>();
+                registration = registration.As<IFrontCommandHandler2>();
                 anyHandler = true;
             }
-
-            if (interfaces.Any(i => i.IsAssignableTo<IFrontCommonCommandHandlerAsync>()))
+            
+            if (interfaces.Any(i => i.IsAssignableTo<IFrontCommonCommandHandler2Async>()))
             {
-                registration = registration.As<IFrontCommonCommandHandlerAsync>();
+                registration = registration.As<IFrontCommonCommandHandler2Async>();
                 anyHandler = true;
             }
 

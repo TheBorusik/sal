@@ -1,13 +1,13 @@
-﻿namespace SAL.API
+using Newtonsoft.Json.Schema;
+
+namespace SAL.API
 {
     public class FrontCommandHandlerInfo
     {
         public string CommandName;
-        public string CommandDto;
-        public string ResultDto;
+        public JSchema CommandSchema;
+        public JSchema ResultSchema;
         public string ExternalMethod;
         public string[] ExternalUri;
-
-        public DtoInfo[] Dtos;
     }
 }

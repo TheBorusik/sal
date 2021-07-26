@@ -1,12 +1,12 @@
-﻿namespace SAL.API
+using Newtonsoft.Json.Schema;
+
+namespace SAL.API
 {
     public class EventHandlerInfo
     {
         public string EventName;
-        public string EventDto;
+        public JSchema EventSchema;
         public bool IsSystem;
         public bool IsCommon;
-
-        public DtoInfo[] Dtos { get; set; }
     }
 }

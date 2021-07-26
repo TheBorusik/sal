@@ -14,6 +14,7 @@ using SAL.Core.Rabbit.EventArgs;
 using SAL.Core.Rabbit.Helpers;
 using SAL.Core.Rabbit.Interfaces;
 using SAL.Core.Rabbit.Topology;
+using SAL.Infrastructure;
 
 namespace SAL.Core.Rabbit
 {
@@ -40,26 +41,29 @@ namespace SAL.Core.Rabbit
         private ConcurrentBag<Queue> queues = new ConcurrentBag<Queue>();
 
         private readonly ILogger logger;
-        private readonly string prefix;
+        private readonly Contour contour;
 
         private CancellationTokenSource tokenSource;
         private Task restoreTask = Task.CompletedTask;
 
-        public RabbitMQTransport(IConfigWatcher configWatcher, ILoggerProvider loggerProvider, string prefix)
+        public RabbitMQTransport(IConfigWatcher configWatcher, ILoggerProvider loggerProvider, Contour contour)
         {
 
-            this.prefix = prefix;
+            this.contour = contour;
             LoggerProvider = loggerProvider;
 
-            var loggerName = $"RMQ.Transport.{prefix}";
+            var loggerName = $"RMQ.Transport.{contour}";
 
             this.logger = loggerProvider.CreateLogger(loggerName);
+            
+            var sectionName = contour == Contour.Back ? "MessageBus" : $"{contour}MessageBus";
 
-            var rabbitConfig = configWatcher.GetSection($"{prefix}MessageBus").ToObject<RabbitConfig>();
+            var rabbitConfig = configWatcher.GetSection(sectionName)?.ToObject<RabbitConfig>();
+            
 
-            if (string.IsNullOrWhiteSpace(rabbitConfig.Host))
+            if (string.IsNullOrWhiteSpace(rabbitConfig?.Host))
             {
-                throw SalError.CreateException(SalErrorCodes.Fatal, "RMQ Config section not found", properties: new { SectionName = $"{prefix}MessageBus" });
+                throw SalError.CreateException(SalErrorCodes.Fatal, "RMQ Config section not found", properties: new { SectionName = $"{contour}MessageBus" });
             }
 
 

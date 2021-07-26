@@ -1,9 +1,7 @@
 ﻿using System;
-using System.Collections.Concurrent;
 using System.IO;
 using System.Threading.Tasks;
 using LiteDB;
-using Newtonsoft.Json.Linq;
 using SAL.API;
 
 namespace SAL.Core.DB.LocalStore

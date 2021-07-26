@@ -2,7 +2,7 @@
 
 namespace SAL.Infrastructure
 {
-    [AttributeUsage( AttributeTargets.Class)]
+    [AttributeUsage( AttributeTargets.Class, AllowMultiple = true, Inherited = false)]
     public class SalEventNameAttribute : Attribute
     {
         public string Name { get; private set; }

@@ -4,7 +4,6 @@ using System.Threading.Tasks;
 using Autofac;
 using Newtonsoft.Json.Linq;
 using SAL.API;
-using SAL.Core.Configuration.Messages;
 using SAL.Core.Helpers;
 using SAL.Core.Processors;
 using SAL.Core.Rabbit.Interfaces;
@@ -18,28 +17,27 @@ namespace SAL.Core.Client
         private readonly IPublisher publisher;
         private readonly ICommandResultProcessor commandResultProcessor;
         private readonly ISalLogger salLogger;
-        public string Contour { get; }
-        public string ContourName { get; }
+        public Contour Contour { get; }
 
-        public SalClient(ILifetimeScope scope, ISalLogger salLogger, string prefix)
+        public SalClient(ILifetimeScope scope, ISalLogger salLogger, Contour contour)
         {
             ITransport transport;
-            if (!string.IsNullOrWhiteSpace(prefix))
+            if (contour == Contour.Front)
             {
-                transport = scope.ResolveNamed<ITransport>(prefix);
-                Contour = prefix.ToUpper();
-                ContourName = transport.CounterName;
+                transport = scope.ResolveKeyed<ITransport>(contour);
+                Contour = contour;
             }
-            else
+            else if (contour == Contour.Back)
             {
                 transport = scope.Resolve<ITransport>();
-                Contour = "BACK";
-                ContourName = transport.CounterName;
+                Contour = contour;
             }
+            else
+                throw new SalUnknownContourException();
 
             this.publisher = transport.CreatePublisher();
 
-            this.commandResultProcessor = !string.IsNullOrWhiteSpace(prefix) ? scope.ResolveNamed<ICommandResultProcessor>(prefix) : scope.Resolve<ICommandResultProcessor>();
+            this.commandResultProcessor = contour != Contour.Back ? scope.ResolveKeyed<ICommandResultProcessor>(contour) : scope.Resolve<ICommandResultProcessor>();
 
             this.salLogger = salLogger;
         }
@@ -52,25 +50,56 @@ namespace SAL.Core.Client
             TimeSpan? ttl = null,
             string handlerServiceType = null,
             string handlerServiceName = null,
-            string resultServiceType = null,
-            string resultServiceName = null
-        )
+            bool typeHandler = false)
+        
             where TCommand : class, ICommand, new()
         {
+            if (Contour == Contour.Front)
+                throw new ContourNotSupportedException();
+            
             if (string.IsNullOrWhiteSpace(correlationId))
                 correlationId = Guid.NewGuid().ToString("N");
 
             var commandType = command.GetType();
 
-            if (string.IsNullOrWhiteSpace(resultServiceType))
-                resultServiceType = AdapterConfiguration.AdapterType;
-
-            if (string.IsNullOrWhiteSpace(resultServiceName) && !commandType.IsResultTypeHandler())
-                resultServiceName = AdapterConfiguration.AdapterName;
-
-
+            var resultServiceType = AdapterConfiguration.AdapterType;
+            var resultServiceName = typeHandler ? null : AdapterConfiguration.AdapterName;
+            
             await PublishCommandAsync(
-                commandType.GetRouteKey(),
+                commandType.GetName(),
+                command,
+                correlationId,
+                priority,
+                ttl,
+                handlerServiceType,
+                handlerServiceName,
+                resultServiceType,
+                resultServiceName
+            );
+
+            return correlationId;
+        }
+
+        public async Task<string> PublishFrontCommandAsync(
+            string commandName, 
+            object command, 
+            string correlationId = null, 
+            CommandPriority priority = CommandPriority.Normal, 
+            TimeSpan? ttl = null, 
+            string handlerServiceType = null, 
+            string handlerServiceName = null, 
+            bool typeHandler = false)
+        {
+            if (string.IsNullOrWhiteSpace(correlationId))
+                correlationId = Guid.NewGuid().ToString("N");
+
+
+            
+            var resultServiceType = AdapterConfiguration.AdapterType;
+            var resultServiceName = typeHandler ? null : AdapterConfiguration.AdapterName;
+            
+            await PublishCommandAsync(
+                commandName,
                 command,
                 correlationId,
                 priority,
@@ -96,7 +125,7 @@ namespace SAL.Core.Client
 
             var commandType = command.GetType();
             var result = await ExecuteCommandAsync(
-                commandType.GetRouteKey(),
+                commandType.GetName(),
                 command,
                 priority,
                 ttl.Value,
@@ -173,7 +202,7 @@ namespace SAL.Core.Client
                 return Task.CompletedTask;
 
             return PublishEventAsync(
-                evnt.GetType().GetRouteKey(),
+                evnt.GetType().GetName(),
                 evnt,
                 Guid.NewGuid().ToString("N"),
                 ttl,
@@ -190,7 +219,7 @@ namespace SAL.Core.Client
                 return Task.CompletedTask;
 
             return PublishEventAsync(
-                evnt.GetType().GetRouteKey(),
+                evnt.GetType().GetName(),
                 evnt,
                 Guid.NewGuid().ToString("N"),
                 ttl,
@@ -218,7 +247,7 @@ namespace SAL.Core.Client
             return PublishEventAsync(new ExceptionDetectedEvent
             {
                 CorrelationId = cid,
-                ExceptionDto = ex.ToDto(SalErrorCodes.Fatal),
+                ExceptionDto = ex.ToDto(),
                 AdapterType = AdapterConfiguration.AdapterType,
                 AdapterName = AdapterConfiguration.AdapterName
             });
@@ -297,7 +326,7 @@ namespace SAL.Core.Client
                     PublishTimeStamp = DateTime.UtcNow,
                     TTL = ttl,
                     IsSync = false,
-                    Contour = ContourName
+                    Contour = Contour.ToString()
                 }
             };
             
@@ -341,7 +370,7 @@ namespace SAL.Core.Client
                 PublishTimeStamp = DateTime.UtcNow,
                 TTL = ttl,
                 IsSync = true,
-                Contour = ContourName
+                Contour = Contour.ToString()
             };
 
 
@@ -389,7 +418,7 @@ namespace SAL.Core.Client
                 PublishTimeStamp = DateTime.UtcNow,
                 TTL = ttl,
                 IsSync = true,
-                Contour = ContourName
+                Contour = Contour.ToString()
             };
             
             var commandContext = new ContextInfo
@@ -479,7 +508,7 @@ namespace SAL.Core.Client
 
             commandResultContext.Descriptor.HandlerAdapterType = AdapterConfiguration.AdapterType;
             commandResultContext.Descriptor.HandlerAdatpterName = AdapterConfiguration.AdapterName;
-            commandResultContext.Descriptor.Contour = ContourName;
+            commandResultContext.Descriptor.Contour = Contour.ToString();
 
             return PublishResultAsync(commandResultContext, result);
         }
@@ -564,7 +593,7 @@ namespace SAL.Core.Client
                     SourceAdapterName = AdapterConfiguration.AdapterName,
                     PublishTimeStamp = DateTime.UtcNow,
                     TTL = ttl,
-                    Contour = ContourName,
+                    Contour = Contour.ToString(),
                     IsSystem = isSystem,
                     IsCEvent = isCEvent
                 }

@@ -7,8 +7,8 @@ namespace SAL.API
 {
     public interface ISalClient
     {
-        string Contour { get; }
-        string ContourName { get; }
+
+        public Contour Contour { get; }
         
         // hi level
         Task<string> PublishCommandAsync<TCommand>(
@@ -18,10 +18,19 @@ namespace SAL.API
             TimeSpan? ttl = null,
             string handlerServiceType = null,
             string handlerServiceName = null,
-            string resultServiceType = null,
-            string resultServiceName = null
+            bool typeHandler = false
         )
             where TCommand : class, ICommand, new();
+        
+        Task<string> PublishFrontCommandAsync(
+            string commandName,
+            object command,
+            string correlationId = null,
+            CommandPriority priority = CommandPriority.Normal,
+            TimeSpan? ttl = null,
+            string handlerServiceType = null,
+            string handlerServiceName = null,
+            bool typeHandler = false);
 
 
         Task<CommandResult<TCommandResult>> ExecuteCommandAsync<TCommand, TCommandResult>(

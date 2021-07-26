@@ -4,16 +4,17 @@ using System.Threading.Tasks;
 using Autofac;
 using SAL.API;
 using SAL.Core.SystemHandlers;
+using SAL.Infrastructure;
 
 namespace SAL.Core.Service
 {
     internal partial class BackAdapter
     {
         protected ISalClient backClient;
-
-        public List<CommandHandlerInfo> backCommands = new List<CommandHandlerInfo>();
-        public List<CommandResultHandlerInfo> backCommandResults = new List<CommandResultHandlerInfo>();
-        public List<EventHandlerInfo> backEvents = new List<EventHandlerInfo>();
+        
+        public List<CommandHandlerInfo> backCommands = new();
+        public List<CommandResultHandlerInfo> backCommandResults = new();
+        public List<EventHandlerInfo> backEvents = new();
 
 
 
@@ -42,16 +43,17 @@ namespace SAL.Core.Service
                 logger.Error( "Ошибка отправки сообщения IAmOffline");
             }
         }
-
-
-        public virtual void AddFrontCommandHandler(FrontCommandHandlerInfo handlerInfo)
-        {
-
-        }
+        
         public virtual void AddExternalHttpHandler(string path)
         {
 
         }
+        
+        public virtual void AddFrontCommandHandler(FrontCommandHandlerInfo handlerInfo)
+        {
+
+        }
+
         public void AddBackCommandHandler(CommandHandlerInfo handlerInfo)
         {
             backCommands.Add(handlerInfo);
@@ -77,7 +79,7 @@ namespace SAL.Core.Service
             backEvents.Add(eventHandlerInfo);
         }
 
-        public virtual  Task SendIm(string contour)
+        public virtual  Task SendIm(Contour contour)
         {
             try
             {
@@ -90,9 +92,9 @@ namespace SAL.Core.Service
                         SalVersion = AdapterConfiguration.SalVersion,
                         AdapterHostName = AdapterConfiguration.AdapterHostName,
                         AdapterHostIp = AdapterConfiguration.AdapterHostIp,
+                        InDocker = AdapterConfiguration.InDocker,
                         CommandHandlers = backCommands.ToArray(),
                         CommandResultHandlers = backCommandResults.ToArray(),
-                        InDocker = AdapterConfiguration.InDocker,
                         EventHandlers = backEvents.ToArray()
                     }, SystemEventTimes.BaseTTL);
             }

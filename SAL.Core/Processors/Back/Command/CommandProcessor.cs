@@ -4,19 +4,18 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Autofac;
 using Autofac.Core;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using Newtonsoft.Json.Schema;
 using SAL.API;
 using SAL.Core.Helpers;
 using SAL.Core.Rabbit;
 using SAL.Core.Rabbit.Interfaces;
 using SAL.Core.Service;
-using SAL.Core.Validators;
 using SAL.Infrastructure;
 
 namespace SAL.Core.Processors
@@ -32,8 +31,8 @@ namespace SAL.Core.Processors
 
         private ISalClient salClient;
 
-        private readonly IDictionary<string, CommandHandlerInfo> commandHandlers = new Dictionary<string, CommandHandlerInfo>();
-        private readonly IDictionary<string, WfmResultHandlerInfo> wfmResultHandler = new Dictionary<string, WfmResultHandlerInfo>();
+        private readonly Dictionary<string, CommandHandlerInfo> commandHandlers = new();
+        private readonly Dictionary<string, WfmResultHandlerInfo> wfmResultHandler = new();
 
         private ISubscription subscription;
 
@@ -61,12 +60,12 @@ namespace SAL.Core.Processors
 
 
                 container.ComponentRegistry.Registrations
-                    .Where(r => r.Services.OfType<TypedService>().Any(ts => ts.ServiceType == typeof(ICommandHandler)))
+                    .Where(r => r.Services.OfType<TypedService>().Any(ts => ts.ServiceType == typeof(ICommandHandler2)))
                     .Select(a => a.Activator.LimitType)
                     .ForEach(RegisterCommandHandler);
 
                 container.ComponentRegistry.Registrations
-                    .Where(r => r.Services.OfType<TypedService>().Any(ts => ts.ServiceType == typeof(ICommonCommandHandler)))
+                    .Where(r => r.Services.OfType<TypedService>().Any(ts => ts.ServiceType == typeof(ICommonCommandHandler2)))
                     .Select(a => a.Activator.LimitType)
                     .ForEach(RegisterCommonCommandHandler);
 
@@ -127,21 +126,25 @@ namespace SAL.Core.Processors
 
         private void RegisterCommandHandler(Type handlerType)
         {
-            var genericValidator = typeof(IValidator<>);
-
             var handlerInterfaces = handlerType.GetInterfaces()
-                .Where(i => i.IsAssignableTo<ICommandHandler>() && i.IsGenericType).ToArray();
+                .Where(i => i.IsAssignableTo<ICommandHandler2>() && i.IsGenericType).ToArray();
 
-            var isInstanceHandler = handlerType.GetCustomAttributes(typeof(SalInstanceHandlerAttribute)).Any();
+            var isInstanceHandler = handlerType.HasAttribute<SalInstanceHandlerAttribute>();
 
             foreach(var handlerInterface in handlerInterfaces)
             {
                 var commandType = handlerInterface.GetGenericArguments()[0];
+                var resultType = handlerInterface.GetGenericArguments()[1];
 
-                var commandName = commandType.GetRouteKey();
+                //todo
+                var commandName = commandType.GetName();
 
                 if (commandHandlers.ContainsKey(commandName))
                     throw new Exception($"{commandName} уже имеет обработчик");
+
+                ICommandSchemeCreator schemeCreator = null;
+                if (handlerType.IsAssignableTo<ICommandSchemeCreator>())
+                    schemeCreator = (ICommandSchemeCreator) container.Resolve(handlerType);
 
 
                 var commandHandlerInfo = new CommandHandlerInfo
@@ -149,64 +152,43 @@ namespace SAL.Core.Processors
                     CommandType = commandType,
                     CommandName = commandName,
 
-                    ResultType = handlerInterface.GetGenericArguments()[1],
-
                     HandlerType = handlerType,
 
                     HandlerMethod = handlerInterface.GetMethod("Handle"),
-                    ValidationMethod = null,
 
                     IsCommon = false,
-                    IsInstanceHandler = isInstanceHandler
+                    IsInstanceHandler = isInstanceHandler,
+                    CommandSchema = schemeCreator == null ? SalSchema.Generate(commandType) : schemeCreator.GetCommandSchema(commandName),
                 };
 
-
-                var validator = genericValidator.MakeGenericType(commandType);
-
-                if (handlerType.GetInterfaces().Any(i => i == validator))
-                {
-                    commandHandlerInfo.ValidationMethod = validator.GetMethod("Validate");
-                }
 
                 commandHandlers.Add(commandName, commandHandlerInfo);
                 logger.Info($"Для команды {commandName} добавлен обработчик {handlerType.Name}");
 
-
-                if (!commandHandlerInfo.CommandName.StartsWith("System."))
+                salService.AddBackCommandHandler(new API.CommandHandlerInfo
                 {
-                    var dtos = new List<DtoInfo>();
-                    dtos.AddRange(commandHandlerInfo.CommandType.GetDtoInfos());
-                    dtos.AddRange(commandHandlerInfo.ResultType.GetDtoInfos());
-
-
-                    salService.AddBackCommandHandler(new API.CommandHandlerInfo
-                    {
-                        IsCommon = commandHandlerInfo.IsCommon,
-                        CommandName = commandHandlerInfo.CommandName,
-                        IsInstanceHandler = commandHandlerInfo.IsInstanceHandler,
-                        CommandDto = commandHandlerInfo.CommandType.Name,
-                        ResultDto = commandHandlerInfo.ResultType.Name,
-                        Dtos = dtos.ToArray()
-                    });
-                }
+                    IsCommon = commandHandlerInfo.IsCommon,
+                    CommandName = commandHandlerInfo.CommandName,
+                    IsInstanceHandler = commandHandlerInfo.IsInstanceHandler,
+                    CommandSchema = commandHandlerInfo.CommandSchema,
+                    ResultSchema = schemeCreator == null ? SalSchema.Generate(resultType) : schemeCreator.GetResultSchema(commandName),
+                });
             }
         }
 
         private void RegisterCommonCommandHandler(Type handlerType)
         {
-            var isInstanceHandler = handlerType.GetCustomAttributes(typeof(SalInstanceHandlerAttribute)).Any();
-
-            ICommandDtoCreator dtoCreater = null;
-            if (handlerType.IsAssignableTo<ICommandDtoCreator>())
-                dtoCreater = (ICommandDtoCreator) container.Resolve(handlerType);
+            var isInstanceHandler = handlerType.HasAttribute<SalInstanceHandlerAttribute>();
 
 
-            handlerType.GetCustomAttributes(typeof(SalCommandHandlerAttribute))
-                .OfType<SalCommandHandlerAttribute>().ForEach(a =>
+            ICommandSchemeCreator schemeCreator = null;
+            if (handlerType.IsAssignableTo<ICommandSchemeCreator>())
+                schemeCreator = (ICommandSchemeCreator) container.Resolve(handlerType);
+
+            handlerType.GetAttributes<SalCommandNameAttribute>()
+                .ForEach(a =>
                 {
-                    var name = a.Name;
-                    name = Regex.Replace(name, "(.+)command$", "$1", RegexOptions.IgnoreCase);
-                    var commandName = $"{a.ServiceType}.{name}";
+                    var commandName = a.Name;
 
                     if (commandHandlers.ContainsKey(commandName))
                         throw new Exception($"{commandName} уже имеет обработчик");
@@ -215,17 +197,12 @@ namespace SAL.Core.Processors
                     {
                         CommandName = commandName,
                         HandlerType = handlerType,
-                        ResultType = null,
                         HandlerMethod = null,
-                        ValidationMethod = null,
                         CommandType = null,
                         IsCommon = true,
-                        IsInstanceHandler = isInstanceHandler
+                        IsInstanceHandler = isInstanceHandler,
+                        CommandSchema = null,
                     };
-
-                    commandHandlers.Add(commandName, commandHandlerInfo);
-
-                    logger.Info($"Для команды {commandName} добавлен уневерсальный обработчик {handlerType.Name}");
 
 
                     var handlerInfo =
@@ -234,16 +211,20 @@ namespace SAL.Core.Processors
                             IsCommon = commandHandlerInfo.IsCommon,
                             CommandName = commandHandlerInfo.CommandName,
                             IsInstanceHandler = commandHandlerInfo.IsInstanceHandler,
-                            Dtos = new DtoInfo[0]
                         };
 
-                    if (dtoCreater != null)
+                    if (schemeCreator != null)
                     {
-                        handlerInfo.Dtos = dtoCreater.GetCommandDtos(commandName);
-                        handlerInfo.CommandDto = dtoCreater.GetCommandDtoName(commandName);
-                        handlerInfo.ResultDto = dtoCreater.GetResultDtoName(commandName);
+                        commandHandlerInfo.CommandSchema = schemeCreator.GetCommandSchema(commandName);
+                        handlerInfo.CommandSchema = commandHandlerInfo.CommandSchema;
+                        handlerInfo.ResultSchema = schemeCreator.GetResultSchema(commandName);
+                        ;
                     }
 
+
+                    commandHandlers.Add(commandName, commandHandlerInfo);
+
+                    logger.Info($"Для команды {commandName} добавлен уневерсальный обработчик {handlerType.Name}");
 
                     salService.AddBackCommandHandler(handlerInfo);
                 });
@@ -252,7 +233,7 @@ namespace SAL.Core.Processors
 
         private void RegisterWfmResultHandler(Type handlerType)
         {
-            var wfmResultHandlerNameAttr = handlerType.GetCustomAttributes(typeof(WfmResultHandlerNameAttribute)).OfType<WfmResultHandlerNameAttribute>().FirstOrDefault();
+            var wfmResultHandlerNameAttr = handlerType.GetAttribute<WfmResultHandlerNameAttribute>();
 
             var wfmResultHandlerName = "default";
             if (wfmResultHandlerNameAttr != null)
@@ -427,7 +408,7 @@ namespace SAL.Core.Processors
                 salLogger.LogHandler(commandPayload, handlerName);
 
                 using var scope = container.BeginLifetimeScope();
-                var handler = (ICommandHandler) scope.Resolve(commandHandlerInfo.HandlerType);
+                var handler = scope.Resolve(commandHandlerInfo.HandlerType);
                 var executingContext = new ExecutingContext
                 {
                     Scope = scope,
@@ -447,36 +428,53 @@ namespace SAL.Core.Processors
                     }
                 };
 
-                handler.SetContexts(commandContext, executingContext);
+                await Validate(commandHandlerInfo, commandPayload);
+
 
                 if (!commandHandlerInfo.IsCommon)
                 {
                     var commandObject = commandPayload.Payload.ConvertValue(commandHandlerInfo.CommandType);
-                    var validator = scope.Resolve<ObjectValidator>();
 
-                    var validationErrors = await validator.ValidateData(commandObject,
-                        o => Validate(handler, commandHandlerInfo, o));
 
-                    if (validationErrors.Any())
-                    {
-                        await salClient.PublishResultAsync(validationErrors, new CommandContext
-                        {
-                            Descriptor = commandPayload.Descriptor,
-                            ContextInfo = commandPayload.ContextInfo
-                        });
-                        return;
-                    }
-
-                    await (Task) commandHandlerInfo.HandlerMethod.Invoke(handler, new[] {commandObject});
+                    await (Task) commandHandlerInfo.HandlerMethod.Invoke(handler, new[] {commandObject, commandContext, executingContext});
                 }
                 else
                 {
-                    await ExecuteCommonHandlerAsync(handler, commandPayload.Payload);
+                    if (handler is ICommonCommandHandler2 ccha)
+                    {
+                        await ccha.Handle(commandPayload.Payload.Clone(), commandContext, executingContext);
+                    }
+                    else
+                    {
+                        throw SalError.CreateException(SalErrorCodes.Fatal, "Обработчик не являеться общим 2", properties: new {handlerType = handler.GetType().Name});
+                    }
                 }
             }
             else
             {
                 throw SalError.CreateException(SalErrorCodes.Fatal, $"Обработчик команды {commandPayload.Descriptor.CommandName} не найден");
+            }
+        }
+
+
+        private async Task Validate(CommandHandlerInfo handlerInfo, CommandPayload commandPayload)
+        {
+            if (handlerInfo.CommandSchema != null)
+            {
+                IList<string> messages;
+                if (!commandPayload.Payload.IsValid(handlerInfo.CommandSchema, out messages))
+                {
+                    await salClient.PublishResultAsync(messages.Select(m => new FieldError
+                        {
+                            Description = m,
+                            Path = String.Empty
+                        }).ToArray(),
+                        new CommandContext
+                        {
+                            Descriptor = commandPayload.Descriptor,
+                            ContextInfo = commandPayload.ContextInfo
+                        });
+                }
             }
         }
 
@@ -493,6 +491,14 @@ namespace SAL.Core.Processors
 
 
             HandlerContext.Update(HandlerTypes.CommandHandler, commandPayload.Descriptor.CommandName);
+
+            /*
+            IList<string> messages;
+            if (!commandPayload.Payload.IsValid(wfmProcessResultCommandSchema, out messages))
+            {
+                
+            }
+            */
 
             var wfmProcessResultCommand = commandPayload.Payload.ConvertValue<WfmProcessResultCommand>();
 
@@ -517,27 +523,6 @@ namespace SAL.Core.Processors
             else
             {
                 throw SalError.CreateException(SalErrorCodes.Fatal, $"Обработчик WfmResult ({wfmResultHandlerName}) не найден");
-            }
-        }
-
-
-        private Task<IEnumerable<FieldError>> Validate(object handler, CommandHandlerInfo handlerInfo, object validateObject)
-        {
-            if (handlerInfo.ValidationMethod == null)
-                return Task.FromResult(new List<FieldError>().AsEnumerable());
-
-            return (Task<IEnumerable<FieldError>>) handlerInfo.ValidationMethod.Invoke(handler, new[] {validateObject});
-        }
-
-        private Task ExecuteCommonHandlerAsync(object handler, JObject command)
-        {
-            if (handler is ICommonCommandHandler ccha)
-            {
-                return ccha.Handle(command);
-            }
-            else
-            {
-                throw SalError.CreateException(SalErrorCodes.Fatal, "Обработчик не являеться общим", properties: new {handlerType = handler.GetType().Name});
             }
         }
     }

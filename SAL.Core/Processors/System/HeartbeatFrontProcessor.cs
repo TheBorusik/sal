@@ -4,6 +4,7 @@ using Autofac;
 using Microsoft.Extensions.Logging;
 using SAL.API;
 using SAL.Core.SystemHandlers;
+using SAL.Infrastructure;
 
 namespace SAL.Core.Processors.System
 {
@@ -14,7 +15,7 @@ namespace SAL.Core.Processors.System
 
         public HeartbeatFrontProcessor(ILifetimeScope container, ILoggerProvider loggerProvider)
         {
-            salClient = container.ResolveNamed<ISalClient>("front");
+            salClient = container.ResolveKeyed<ISalClient>(Contour.Front);
             logger = loggerProvider.CreateLogger(nameof(HeartbeatFrontProcessor));
         }
 

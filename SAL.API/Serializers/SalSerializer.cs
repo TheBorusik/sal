@@ -53,9 +53,5 @@ namespace SAL.API
         {
             return JsonSerializer.Create(sal.SerializerSettings);
         }
-
-
-
-
-    }
+	}
 }

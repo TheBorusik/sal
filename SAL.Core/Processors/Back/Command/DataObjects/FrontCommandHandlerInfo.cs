@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Reflection;
+using Newtonsoft.Json.Schema;
 
 namespace SAL.Core.Processors
 {
@@ -7,15 +8,14 @@ namespace SAL.Core.Processors
     {
         public string CommandName;
         public Type CommandType;
-        public Type ResultType;
-
+        
         public Type HandlerType;
 
         public MethodInfo HandlerMethod;
-        public MethodInfo ValidationMethod;
-
+        
         public bool IsCommon;
 
         public CommandProcessingSettings CommandProcessingSettings;
+        public JSchema CommandSchema;
     }
 }

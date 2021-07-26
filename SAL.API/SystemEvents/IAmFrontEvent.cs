@@ -16,10 +16,11 @@ namespace SAL.API
         public string[] AdapterHostIp { get; set; }
         
         public bool InDocker { get; set; }
-
+        
         public FrontCommandHandlerInfo[] CommandHandlers { get; set; }
         public CommandResultHandlerInfo[] CommandResultHandlers { get; set; }
         public EventHandlerInfo[] EventHandlers { get; set; }
+        
         public string[] ExternalHttp { get; set; }
     }
 }

@@ -2,6 +2,7 @@
 
 namespace SAL.Infrastructure
 {
+    [Obsolete("Use SalRequestTypeAttribute for Command or CommonCommandHandler or ResultHandler")]
     [AttributeUsage(AttributeTargets.Class)]
     public class SalExternalMethodAttribute : Attribute
     {
@@ -12,18 +13,4 @@ namespace SAL.Infrastructure
             ServiceMethod = serviceMethod;
         }
     }
-
-
-    [AttributeUsage(AttributeTargets.Class , AllowMultiple = true)]
-    public class SalExternalUriAttribute : Attribute
-    {
-        public string Uri { get; private set; }
-
-        public SalExternalUriAttribute(string uri)
-        {
-            Uri = uri;
-        }
-    }
-
-
 }

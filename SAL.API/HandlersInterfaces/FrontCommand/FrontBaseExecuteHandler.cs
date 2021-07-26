@@ -6,7 +6,7 @@ using SAL.Infrastructure;
 namespace SAL.API
 {
     public abstract class FrontBaseExecuteHandler<TExternalCommand, TExternalCommandResult, TInternalCommand, TInternalCommandResult> 
-        : IFrontCommandHandlerAsync<TExternalCommand,TExternalCommandResult>
+        : IFrontCommandHandler2Async<TExternalCommand,TExternalCommandResult>
         where TInternalCommand : class, IHaveResult<TInternalCommandResult>, new()
         where TInternalCommandResult : class, ICommandResult, new()
     {
@@ -33,8 +33,9 @@ namespace SAL.API
             return true;
         }
         
+
         
-        public async Task Handle(TExternalCommand command)
+        public async Task Handle(TExternalCommand command, CommandContext commandContext, ExecutingContext executingContext)
         {
             try
             {
@@ -51,17 +52,6 @@ namespace SAL.API
                 if (!await ProcessingError(ex))
                     throw;
             }
-        }
-        
-
-
-
-
-
-        public void SetContexts(CommandContext commandContext, ExecutingContext executingContext)
-        {
-            this.commandContext = commandContext;
-            this.executingContext = executingContext;
         }
     }
 }

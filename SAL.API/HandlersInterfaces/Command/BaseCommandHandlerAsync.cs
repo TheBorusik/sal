@@ -8,8 +8,7 @@ using SAL.Infrastructure;
 namespace SAL.API
 {
     public abstract class BaseCommandHandlerAsync<TCommand, TCommandResult> :
-        ICommandHandlerAsync<TCommand, TCommandResult>,
-        IValidator<TCommand>
+        ICommandHandler2Async<TCommand, TCommandResult>
         where TCommand : class, IHaveResult<TCommandResult>, new()
         where TCommandResult : class, ICommandResult, new()
 
@@ -19,13 +18,7 @@ namespace SAL.API
         protected ILifetimeScope scope { get; set; }
         protected ILogger logger { get; set; }
 
-        public void SetContexts(CommandContext commandContext, ExecutingContext executingContext)
-        {
-            this.commandContext = commandContext;
-            salClient = executingContext.SalClient;
-            logger = executingContext.Logger;
-            scope = executingContext.Scope;
-        }
+
 
 
         public abstract Task Handle(TCommand command);
@@ -55,10 +48,14 @@ namespace SAL.API
             return PublishResult(SalError.CreateDto(code, message, properties, innerException));
         }
 
-
-        public virtual Task<IEnumerable<FieldError>> Validate(TCommand verifiable)
+        
+        public Task Handle(TCommand command, CommandContext commandContext, ExecutingContext executingContext)
         {
-            return Task.FromResult(new FieldError[0].AsEnumerable());
+            this.commandContext = commandContext;
+            salClient = executingContext.SalClient;
+            logger = executingContext.Logger;
+            scope = executingContext.Scope;
+            return Handle(command);
         }
     }
 }

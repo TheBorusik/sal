@@ -3,6 +3,7 @@ using Autofac;
 using SAL.API;
 using SAL.Core.Rabbit.EventArgs;
 using SAL.Core.Rabbit.Interfaces;
+using SAL.Infrastructure;
 
 namespace SAL.Core.WatchDog
 {
@@ -25,8 +26,7 @@ namespace SAL.Core.WatchDog
 
         public void Init()
         {
-            transport = container.ResolveNamed<ITransport>("front");
-
+            transport = container.ResolveKeyed<ITransport>(Contour.Front);
         }
 
         private void TransportOnConnectionRestore(object sender, ConnectionRestoreEventArgs connectionRestoreEventArgs)
@@ -39,7 +39,7 @@ namespace SAL.Core.WatchDog
 
         private void TransportOnConnectionFailure(object sender, ConnectionFailureEventArgs connectionFailureEventArgs)
         {
-            MonitorFailure?.Invoke(this, new MonitorFailureEventArgs()
+            MonitorFailure?.Invoke(this, new MonitorFailureEventArgs
             {
                 MonitorName = MonitorName
             });

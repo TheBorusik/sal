@@ -14,6 +14,7 @@ using SAL.API;
 using SAL.Core.Rabbit;
 using SAL.Core.Rabbit.Interfaces;
 using SAL.Core.Service;
+using SAL.Infrastructure;
 
 
 namespace SAL.Core.Processors
@@ -39,7 +40,7 @@ namespace SAL.Core.Processors
             this.loggerProvider = loggerProvider;
             this.salLogger = salLogger;
             logger = loggerProvider.CreateLogger(nameof(FrontExternalHttpProcessor));
-            salClient = container.ResolveNamed<ISalClient>("front");
+            salClient = container.ResolveKeyed<ISalClient>(Contour.Front);
             salService = container.Resolve<ISalService>();
         }
 
@@ -92,7 +93,7 @@ namespace SAL.Core.Processors
                     logger.Info($"Front External Http processing config \n{configStr}");
                 }
 
-                var transport = container.ResolveNamed<ITransport>("front");
+                var transport = container.ResolveKeyed<ITransport>(Contour.Front);
 
                 var subscriptionFactory = transport.CreateMessageSubscription();
 
@@ -292,7 +293,7 @@ namespace SAL.Core.Processors
                 var executingContext = new ExecutingContext
                 {
                     Scope = scope,
-                    SalClient = scope.ResolveNamed<ISalClient>("front"),
+                    SalClient = scope.ResolveKeyed<ISalClient>(Contour.Front),
                     Logger = commandLogger
                 };
 

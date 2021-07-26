@@ -15,10 +15,9 @@ namespace SAL.API
         
         public bool InDocker { get; set; }
 
+        
         public CommandHandlerInfo[] CommandHandlers { get; set; }
         public CommandResultHandlerInfo[] CommandResultHandlers { get; set; }
         public EventHandlerInfo[] EventHandlers { get; set; }
-
-
     }
 }

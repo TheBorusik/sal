@@ -39,7 +39,7 @@ namespace SAL.Core.WatchDog
 
         private void TransportOnConnectionFailure(object sender, ConnectionFailureEventArgs connectionFailureEventArgs)
         {
-            MonitorFailure?.Invoke(this, new MonitorFailureEventArgs()
+            MonitorFailure?.Invoke(this, new MonitorFailureEventArgs
             {
                 MonitorName = MonitorName
             });

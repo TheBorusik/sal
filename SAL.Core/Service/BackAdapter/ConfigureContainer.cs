@@ -3,7 +3,6 @@ using SAL.API;
 using SAL.Core.Client;
 using SAL.Core.Configuration.Redis;
 using SAL.Core.DB;
-using SAL.Core.DB.LocalStore;
 using SAL.Core.DB.RedisStore;
 using SAL.Core.Processors;
 using SAL.Core.Processors.System;
@@ -12,8 +11,8 @@ using SAL.Core.Rabbit.Interfaces;
 using SAL.Core.S3;
 using SAL.Core.Session;
 using SAL.Core.SystemHandlers;
-using SAL.Core.Validators;
 using SAL.Core.WatchDog;
+using SAL.Infrastructure;
 
 namespace SAL.Core.Service
 {
@@ -32,16 +31,18 @@ namespace SAL.Core.Service
 
 
 
-            builder.Register(c => ConfigWatcher).As<IConfigWatcher>().SingleInstance();
+            builder.Register(_ => ConfigWatcher).As<IConfigWatcher>().SingleInstance();
             builder.RegisterType<WatchDog.WatchDog>().As<IWatchDog>().SingleInstance();
             builder.RegisterType<DbConnectionCreator>().As<IDbConnectionCreator>().SingleInstance();
-            builder.RegisterType<ObjectValidator>().AsSelf().SingleInstance();
+
 
 
             builder.RegisterType<SalClient>()
                 .As<ISalClient>()
                 .As<ILoSalClient>()
-                .WithParameter("prefix", "");
+                .Keyed<ISalClient>(Contour.Back)
+                .Keyed<ILoSalClient>(Contour.Back)
+                .WithParameter("contour", Contour.Back);
 
 
             builder.RegisterType<SalHandlerLogger>()
@@ -60,18 +61,13 @@ namespace SAL.Core.Service
 
             builder.RegisterType<RabbitMQTransport>()
                 .As<ITransport>()
-                .WithParameter("prefix", "")
+                .WithParameter("contour", Contour.Back)
                 .SingleInstance();
 
             builder.RegisterType<BackTransportMonitor>()
                 .As<IWatchDogMonitor>()
                 .SingleInstance();
-
-            /*
-            builder.RegisterSalHandler<GetCommandTestCasesHandler>();
-            builder.RegisterSalHandler<AddCommandTestCaseHandler>();
-            builder.RegisterSalHandler<GetAdapterConfigurationHandler>();
-            */
+            
             
             var redisConfig = ConfigWatcher.GetSection(ConfigurationSectionNames.RedisStore)?.ConvertValue<RedisStoreConfig>();
             if (redisConfig != null)

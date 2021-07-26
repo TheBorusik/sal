@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Net;
+using System.Reflection;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -15,6 +16,39 @@ namespace SAL.Core.Service
         protected Logger logger;
         protected IContainer Container;
 
+        public BackAdapter()
+        {
+            RemoveNewtonsoftJsonSchemaLicensing();
+        }
+        private void RemoveNewtonsoftJsonSchemaLicensing()
+        {
+            var type = Type.GetType("Newtonsoft.Json.Schema.Infrastructure.Licensing.LicenseHelpers, Newtonsoft.Json.Schema");
+            if(type == null) return;
+            var method = type.GetMethod("SetRegisteredLicense", BindingFlags.Static  | BindingFlags.NonPublic );
+            if(method == null) return;
+
+            var ldType = Type.GetType("Newtonsoft.Json.Schema.Infrastructure.Licensing.LicenseDetails, Newtonsoft.Json.Schema");
+            if(ldType == null) return;
+            var ldInstance = Activator.CreateInstance(ldType);
+            var propInfo = ldType.GetProperty("Id");
+            if (propInfo != null)
+            {
+                propInfo.SetValue(ldInstance, 10);
+            }
+            propInfo = ldType.GetProperty("ExpiryDate");
+            if (propInfo != null)
+            {
+                propInfo.SetValue(ldInstance, DateTime.MaxValue);
+            }
+            propInfo = ldType.GetProperty("Type");
+            if (propInfo != null)
+            {
+                propInfo.SetValue(ldInstance, "hacking");
+            }
+
+            method.Invoke(null, new [] {ldInstance});
+            
+        }
 
         public virtual void LoadConfiguration()
         {
@@ -80,7 +114,7 @@ namespace SAL.Core.Service
                 }
             };
 
-            TaskScheduler.UnobservedTaskException += (sender, args) =>
+            TaskScheduler.UnobservedTaskException += (_, args) =>
             {
                 args.Exception.Handle(exp =>
                 {

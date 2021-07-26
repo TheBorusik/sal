@@ -4,30 +4,22 @@ using SAL.Core.Service;
 
 namespace SAL.Core.SystemHandlers
 {
-    class SystemWIWHandler : IEventHandler<WhoIsWhoEvent>
+    class SystemWIWHandler : IEventHandler2<WhoIsWhoEvent>
     {
         private ISalService salService;
-        private EventContext context;
-        private ExecutingContext executingContext;
+
 
         public SystemWIWHandler(ISalService salService)
         {
             this.salService = salService;
         }
-
-
-        public void SetContexts(EventContext eventContext, ExecutingContext executingContext)
+        
+        public Task Handle(WhoIsWhoEvent evnt, EventContext eventContext, ExecutingContext executingContext)
         {
-            this.context = eventContext;
-            this.executingContext = executingContext;
-        }
-
-        public Task Handle(WhoIsWhoEvent evnt)
-        {
-            if (context.CheckIsMyEvent())
+            if (eventContext.CheckIsMyEvent())
                 return Task.CompletedTask;
 
-            if (context.CheckIsExpire(SystemEventTimes.BaseTTL))
+            if (eventContext.CheckIsExpire(SystemEventTimes.BaseTTL))
                 return Task.CompletedTask;
             
 

@@ -15,7 +15,6 @@ using SAL.Core.Rabbit.Interfaces;
 using SAL.Core.Service;
 using SAL.Infrastructure;
 
-
 namespace SAL.Core.Processors
 {
     internal class EventProcessor : IProcessor
@@ -51,12 +50,12 @@ namespace SAL.Core.Processors
                 salClient = container.Resolve<ISalClient>();
 
                 container.ComponentRegistry.Registrations
-                    .Where(r => r.Services.OfType<TypedService>().Any(ts => ts.ServiceType == typeof(IEventHandler)))
+                    .Where(r => r.Services.OfType<TypedService>().Any(ts => ts.ServiceType == typeof(IEventHandler2)))
                     .Select(a => a.Activator.LimitType)
                     .ForEach(RegisterEventHandler);
 
                 container.ComponentRegistry.Registrations
-                    .Where(r => r.Services.OfType<TypedService>().Any(ts => ts.ServiceType == typeof(ICommonEventHandler)))
+                    .Where(r => r.Services.OfType<TypedService>().Any(ts => ts.ServiceType == typeof(ICommonEventHandler2)))
                     .Select(a => a.Activator.LimitType)
                     .ForEach(RegisterCommonEventHandler);
 
@@ -106,14 +105,21 @@ namespace SAL.Core.Processors
 
         private void RegisterEventHandler(Type handlerType)
         {
+            var contourAttr = handlerType.GetAttribute<SalContourHandlerAttribute>();
+            if (contourAttr?.Contour == Contour.Front)
+                return;
+
             var handlerInterfaces = handlerType.GetInterfaces()
-                .Where(i => i.IsAssignableTo<IEventHandler>() && i.IsGenericType).ToArray();
+                .Where(i => i.IsAssignableTo<IEventHandler2>() && i.IsGenericType).ToArray();
+            
+            IEventSchemeCreator schemeCreator = null;
+            if (handlerType.IsAssignableTo<IEventSchemeCreator>())
+                schemeCreator = (IEventSchemeCreator) container.Resolve(handlerType);
 
             foreach(var handlerInterface in handlerInterfaces)
             {
                 var eventType = handlerInterface.GetGenericArguments()[0];
-                var eventName = eventType.GetRouteKey();
-
+                var eventName = eventType.GetName();
                 var isSystem = eventType.IsSystemEvent();
 
                 var eventHandlerInfo = new EventHandlerInfo
@@ -142,8 +148,7 @@ namespace SAL.Core.Processors
                         IsSystem = eventHandlerInfo.IsSystem,
                         IsCommon = eventHandlerInfo.IsCommon,
                         EventName = eventName,
-                        EventDto = eventType.Name,
-                        Dtos = eventType.GetDtoInfos()
+                        EventSchema = schemeCreator == null ? SalSchema.Generate(eventType) : schemeCreator.GetEventScheme(eventName)
                     });
                 }
 
@@ -153,19 +158,23 @@ namespace SAL.Core.Processors
 
         private void RegisterCommonEventHandler(Type handlerType)
         {
-            var attrs = handlerType
-                .GetCustomAttributes(typeof(SalEventHandlerAttribute)).OfType<SalEventHandlerAttribute>().ToArray();
+            var contourAttr = handlerType.GetAttribute<SalContourHandlerAttribute>();
+            if (contourAttr?.Contour == Contour.Front)
+                return;
+
+            var attrs = handlerType.GetAttributes<SalEventNameAttribute>().ToArray();
+
+
+            IEventSchemeCreator schemeCreator = null;
+            if (handlerType.IsAssignableTo<IEventSchemeCreator>())
+                schemeCreator = (IEventSchemeCreator) container.Resolve(handlerType);
 
 
             if (attrs.Any())
             {
-                IEventDtoCreator dtoCreater = null;
-                if (handlerType.IsAssignableTo<IEventDtoCreator>())
-                    dtoCreater = (IEventDtoCreator) container.Resolve(handlerType);
-
                 attrs.ForEach(a =>
                 {
-                    var eventName = a.EventName;
+                    var eventName = a.Name;
 
                     var eventHandlerInfo = new EventHandlerInfo
                     {
@@ -192,15 +201,12 @@ namespace SAL.Core.Processors
                             IsSystem = eventHandlerInfo.IsSystem,
                             IsCommon = eventHandlerInfo.IsCommon,
                             EventName = eventName,
-                            Dtos = new DtoInfo[0]
                         };
 
-                        if (dtoCreater != null)
+                        if (schemeCreator != null)
                         {
-                            eventInfo.EventDto = dtoCreater.GetEventDtoName(eventName);
-                            eventInfo.Dtos = dtoCreater.GetEventDtos(eventName);
+                            eventInfo.EventSchema = schemeCreator.GetEventScheme(eventName);
                         }
-
 
                         salService.AddBackEventHandler(eventInfo);
                     }
@@ -408,29 +414,24 @@ namespace SAL.Core.Processors
             };
 
 
-            var handler = (IEventHandler) scope.Resolve(ehi.HandlerType);
-
-            handler.SetContexts(context, executingContext);
+            var handler = (IEventHandler2) scope.Resolve(ehi.HandlerType);
 
             if (ehi.IsCommon)
-                return ExecuteCommonEventHandlerAsync(handler, eventPayload.Payload);
+            {
+                if (handler is ICommonEventHandler2 eha)
+                {
+                    return eha.Handle(eventPayload.Payload, context, executingContext);
+                }
+                else
+                {
+                    var dto = SalError.CreateDto(SalErrorCodes.Fatal, "Обработчик не являеться общим", properties: new {handlerType = handler.GetType().Name});
+                    throw dto.ToException();
+                }
+            }
             else
             {
                 var evnt = eventPayload.Payload.ConvertValue(ehi.EventType);
-                return (Task) ehi.HandlerMethod.Invoke(handler, new[] {evnt});
-            }
-        }
-
-        private Task ExecuteCommonEventHandlerAsync(object handler, JObject evnt)
-        {
-            if (handler is ICommonEventHandler eha)
-            {
-                return eha.Handle(evnt);
-            }
-            else
-            {
-                var dto = SalError.CreateDto(SalErrorCodes.Fatal, "Обработчик не являеться общим", properties: new {handlerType = handler.GetType().Name});
-                throw dto.ToException();
+                return (Task) ehi.HandlerMethod.Invoke(handler, new[] {evnt, context, executingContext});
             }
         }
     }

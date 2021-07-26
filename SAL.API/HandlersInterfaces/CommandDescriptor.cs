@@ -1,4 +1,5 @@
 ﻿using System;
+using SAL.Infrastructure;
 
 namespace SAL.API
 {

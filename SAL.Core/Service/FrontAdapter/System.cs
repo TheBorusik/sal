@@ -4,22 +4,23 @@ using System.Threading.Tasks;
 using Autofac;
 using SAL.API;
 using SAL.Core.SystemHandlers;
+using SAL.Infrastructure;
 
 namespace SAL.Core.Service
 {
     internal partial class FrontAdapter
     {
         protected ISalClient frontClient;
-
-        public List<FrontCommandHandlerInfo> frontCommands = new List<FrontCommandHandlerInfo>();
-        public List<CommandResultHandlerInfo> frontCommandResults = new List<CommandResultHandlerInfo>();
-        public List<EventHandlerInfo> frontEvents = new List<EventHandlerInfo>();
-        public List<string> externalHttp = new List<string>();
+        
+        public List<FrontCommandHandlerInfo> frontCommands = new();
+        public List<CommandResultHandlerInfo> frontCommandResults = new();
+        public List<EventHandlerInfo> frontEvents = new();
+        public List<string> externalHttp = new();
 
         protected override void InitSystem()
         {
             base.InitSystem();
-            frontClient = Container.ResolveNamed<ISalClient>("front");
+            frontClient = Container.ResolveKeyed<ISalClient>(Contour.Front);
         }
 
         protected override void SendOnline()
@@ -46,14 +47,16 @@ namespace SAL.Core.Service
         }
 
 
-        public override void AddFrontCommandHandler(FrontCommandHandlerInfo handlerInfo)
-        {
-            frontCommands.Add(handlerInfo);
-        }
-
+        
         public override void AddExternalHttpHandler(string path)
         {
             externalHttp.Add(path);
+        }
+        
+
+        public override void AddFrontCommandHandler(FrontCommandHandlerInfo handlerInfo)
+        {
+            frontCommands.Add(handlerInfo);
         }
 
         public override void AddFrontCommandResultHandler(CommandResultHandlerInfo resultHandlerInfo)
@@ -67,7 +70,7 @@ namespace SAL.Core.Service
         }
 
 
-        public override Task SendIm(string contour)
+        public override Task SendIm(Contour contour)
         {
             base.SendIm(contour);
             try
@@ -82,10 +85,10 @@ namespace SAL.Core.Service
                         AdapterHostName = AdapterConfiguration.AdapterHostName,
                         AdapterHostIp = AdapterConfiguration.AdapterHostIp,
                         InDocker = AdapterConfiguration.InDocker,
+                        ExternalHttp = externalHttp.ToArray(),
                         CommandHandlers = frontCommands.ToArray(),
                         CommandResultHandlers = frontCommandResults.ToArray(),
-                        EventHandlers = frontEvents.ToArray(),
-                        ExternalHttp = externalHttp.ToArray()
+                        EventHandlers = frontEvents.ToArray()
                     }, SystemEventTimes.BaseTTL);
             }
             catch (Exception ex)

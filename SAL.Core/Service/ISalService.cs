@@ -1,5 +1,6 @@
 ﻿using System.Threading.Tasks;
 using SAL.API;
+using SAL.Infrastructure;
 
 namespace SAL.Core.Service
 {
@@ -7,17 +8,19 @@ namespace SAL.Core.Service
     {
         void Start();
         void Stop();
-
-        public void AddFrontCommandHandler(FrontCommandHandlerInfo handlerInfo);
+        
         public void AddExternalHttpHandler(string path);
+        
+        public void AddFrontCommandHandler(FrontCommandHandlerInfo handlerInfo);
         public void AddBackCommandHandler(CommandHandlerInfo handlerInfo);
         public void AddFrontCommandResultHandler(CommandResultHandlerInfo resultHandlerInfo);
         public void AddBackCommandResultHandler(CommandResultHandlerInfo resultHandlerInfo);
         public void AddFrontEventHandler(EventHandlerInfo eventHandlerInfo);
         public void AddBackEventHandler(EventHandlerInfo eventHandlerInfo);
         
+        
         //service
-        Task SendIm(string contour);
+        Task SendIm(Contour contour);
     }
 
 }

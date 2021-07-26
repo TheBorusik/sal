@@ -1,7 +1,4 @@
-﻿using System;
-using System.IO;
-using System.Text.RegularExpressions;
-using NLog.LayoutRenderers;
+﻿using NLog.LayoutRenderers;
 using NLog.Layouts;
 using SAL.API;
 using SAL.Core.Configuration.Rabbit;
@@ -10,7 +7,7 @@ using SAL.Core.NLogEx.Adapter;
 using SAL.Core.NLogEx.Layout;
 using SAL.Core.NLogEx.LayoutRenderer;
 using SAL.Core.NLogEx.LayoutRenderer.HandlerContextRenderer;
-using ProcessIdLayoutRenderer = NLog.LayoutRenderers.ProcessIdLayoutRenderer;
+
 
 namespace SAL.Core.Service
 {

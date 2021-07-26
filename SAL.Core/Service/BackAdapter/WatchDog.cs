@@ -5,7 +5,7 @@ namespace SAL.Core.Service
     internal partial class BackAdapter
     {
         private IWatchDog watchDog;
-        protected bool IsOnline = false;
+        protected bool IsOnline;
 
         protected void InitWatchDog()
         {

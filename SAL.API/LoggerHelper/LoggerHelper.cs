@@ -3,7 +3,7 @@ using Microsoft.Extensions.Logging;
 
 namespace SAL.API
 {
-    public static class LoggerHelper
+    public static class eeLoggerHelper
     {
 
         public static void Error(this ILogger logger, InternalExceptionDTO dto)

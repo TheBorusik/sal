@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Text;
-using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using Autofac;
@@ -18,7 +17,6 @@ using SAL.Core.Rabbit.Interfaces;
 using SAL.Core.Service;
 using SAL.Infrastructure;
 
-// ReSharper disable once CheckNamespace
 namespace SAL.Core.Processors
 {
     internal class CommandResultProcessor : IProcessor, ICommandResultProcessor
@@ -35,9 +33,9 @@ namespace SAL.Core.Processors
 
         private readonly ILifetimeScope container;
 
-        private readonly IDictionary<string, LinkedList<CommandResultHandlerInfo>> resultHandlers = new Dictionary<string, LinkedList<CommandResultHandlerInfo>>();
-        private readonly LinkedList<CommandResultHandlerInfo> anyResultHandlers = new LinkedList<CommandResultHandlerInfo>();
-        private readonly ConcurrentDictionary<string, SimpleCommandResultHandlerInfo> simpleCommandResultHandlers = new ConcurrentDictionary<string, SimpleCommandResultHandlerInfo>();
+        private readonly Dictionary<string, LinkedList<CommandResultHandlerInfo>> resultHandlers = new();
+        private readonly LinkedList<CommandResultHandlerInfo> anyResultHandlers = new();
+        private readonly ConcurrentDictionary<string, SimpleCommandResultHandlerInfo> simpleCommandResultHandlers = new();
 
 
         public CommandResultProcessor(ILifetimeScope container, ILoggerProvider loggerProvider, ISalLogger salLogger)
@@ -56,12 +54,12 @@ namespace SAL.Core.Processors
                 salClient = container.Resolve<ISalClient>();
 
                 container.ComponentRegistry.Registrations
-                    .Where(r => r.Services.OfType<TypedService>().Any(ts => ts.ServiceType == typeof(ICommandResultHandler)))
+                    .Where(r => r.Services.OfType<TypedService>().Any(ts => ts.ServiceType == typeof(ICommandResultHandler2)))
                     .Select(a => a.Activator.LimitType)
                     .ForEach(RegisterCommandResultHandler);
 
                 container.ComponentRegistry.Registrations
-                    .Where(r => r.Services.OfType<TypedService>().Any(ts => ts.ServiceType == typeof(ICommonCommandResultHandler)))
+                    .Where(r => r.Services.OfType<TypedService>().Any(ts => ts.ServiceType == typeof(ICommonCommandResultHandler2)))
                     .Select(a => a.Activator.LimitType)
                     .ForEach(RegisterCommonCommandResultHandler);
 
@@ -91,22 +89,46 @@ namespace SAL.Core.Processors
 
         private void RegisterCommandResultHandler(Type handlerType)
         {
+            var contourAttr = handlerType.GetAttribute<SalContourHandlerAttribute>();
+            if(contourAttr?.Contour == Contour.Front)
+                return;
+            
             var handlerInterfaces = handlerType.GetInterfaces()
-                .Where(i => i.IsAssignableTo<ICommandResultHandler>() && i.IsGenericType).ToArray();
+                .Where(i => i.IsAssignableTo<ICommandResultHandler2>() && i.IsGenericType).ToArray();
+            
+            ICommandSchemeCreator schemaCreater = null;
+            if (handlerType.IsAssignableTo<ICommandSchemeCreator>())
+                schemaCreater = (ICommandSchemeCreator) container.Resolve(handlerType);
 
             foreach(var handlerInterface in handlerInterfaces)
             {
-                var commandType = handlerInterface.GetGenericArguments()[0];
-                var commandName = commandType.GetRouteKey();
+
+                string commandName;
+                Type resultType;
+                var args = handlerInterface.GetGenericArguments();
+                if (args.Length == 1)
+                {
+                    commandName = args[0].GetName();
+                    resultType = args[0];
+                }
+                else
+                {
+                    commandName = args[0].GetName();
+                    resultType = args[1];
+                }
+                
+                
+                
+
 
                 var commandResultHandlerInfo = new CommandResultHandlerInfo
                 {
                     CommandName = commandName,
-                    CommandType = commandType,
-                    ResultType = handlerInterface.GetGenericArguments()[1],
+                    ResultType = resultType,
                     HandlerType = handlerType,
                     HandlerMethod = handlerInterface.GetMethod("ResultHandle"),
                     IsCommon = false,
+                    ResultSchema = schemaCreater == null ? SalSchema.Generate(resultType) : schemaCreater.GetResultSchema(commandName)
                 };
 
 
@@ -120,19 +142,12 @@ namespace SAL.Core.Processors
                     handlers.AddLast(commandResultHandlerInfo);
                     resultHandlers.Add(commandName, handlers);
 
-
-                    var dtos = new List<DtoInfo>();
-                    dtos.AddRange(commandResultHandlerInfo.CommandType.GetDtoInfos());
-                    dtos.AddRange(commandResultHandlerInfo.ResultType.GetDtoInfos());
-
-
+                    
                     salService.AddBackCommandResultHandler(new API.CommandResultHandlerInfo()
                     {
                         IsCommon = commandResultHandlerInfo.IsCommon,
                         CommandName = commandResultHandlerInfo.CommandName,
-                        CommandDto = commandResultHandlerInfo.CommandType.Name,
-                        ResultDto = commandResultHandlerInfo.ResultType.Name,
-                        Dtos = dtos.ToArray()
+                        ResultSchema = commandResultHandlerInfo.ResultSchema
                     });
                 }
 
@@ -142,28 +157,36 @@ namespace SAL.Core.Processors
 
         private void RegisterCommonCommandResultHandler(Type handlerType)
         {
-            var commandResultHandlerInfo = new CommandResultHandlerInfo
-            {
-                CommandName = null,
-                CommandType = null,
-                ResultType = null,
-                HandlerType = handlerType,
-                HandlerMethod = null,
-                IsCommon = true,
-            };
-
-            ICommandDtoCreator dtoCreater = null;
-            if (handlerType.IsAssignableTo<ICommandDtoCreator>())
-                dtoCreater = (ICommandDtoCreator) container.Resolve(handlerType);
-
-            var attrs = handlerType.GetCustomAttributes(typeof(SalCommandResultHandlerAttribute)).OfType<SalCommandResultHandlerAttribute>().ToArray();
+            var contourAttr = handlerType.GetAttribute<SalContourHandlerAttribute>();
+            if(contourAttr?.Contour == Contour.Front)
+                return;
+            
+            
+            ICommandSchemeCreator schemaCreater = null;
+            if (handlerType.IsAssignableTo<ICommandSchemeCreator>())
+                schemaCreater = (ICommandSchemeCreator) container.Resolve(handlerType);
+            
+            var attrs = handlerType.GetAttributes<SalCommandNameAttribute>();
             if (attrs.Any())
             {
                 attrs.ForEach(a =>
                 {
-                    var name = a.Name;
-                    name = Regex.Replace(name, "(.+)command$", "$1", RegexOptions.IgnoreCase);
-                    var commandName = $"{a.ServiceType}.{name}";
+                    var commandName = a.Name;
+                    
+                    var commandResultHandlerInfo = new CommandResultHandlerInfo
+                    {
+                        CommandName = commandName,
+                        ResultType = null,
+                        HandlerType = handlerType,
+                        HandlerMethod = null,
+                        IsCommon = true,
+                    };
+                    
+                    if (schemaCreater != null)
+                    {
+                        commandResultHandlerInfo.ResultSchema = schemaCreater.GetResultSchema(commandName);
+                    }
+                    
 
                     if (resultHandlers.TryGetValue(commandName, out var handlers))
                     {
@@ -179,16 +202,9 @@ namespace SAL.Core.Processors
                         {
                             IsCommon = commandResultHandlerInfo.IsCommon,
                             CommandName = commandName,
-                            Dtos = new DtoInfo[0]
+                            ResultSchema = commandResultHandlerInfo.ResultSchema
                         };
-
-                        if (dtoCreater != null)
-                        {
-                            handlerInfo.Dtos = dtoCreater.GetCommandDtos(commandName);
-                            handlerInfo.CommandDto = dtoCreater.GetCommandDtoName(commandName);
-                            handlerInfo.ResultDto = dtoCreater.GetResultDtoName(commandName);
-                        }
-
+                        
                         salService.AddBackCommandResultHandler(handlerInfo);
                     }
 
@@ -197,7 +213,11 @@ namespace SAL.Core.Processors
             }
             else
             {
-                anyResultHandlers.AddLast(commandResultHandlerInfo);
+                anyResultHandlers.AddLast(new CommandResultHandlerInfo
+                {
+                    HandlerType = handlerType,
+                    IsCommon = true
+                });
                 logger.Info($"Добавлен уневерсальный обработчик результата {handlerType.Name}");
             }
         }
@@ -256,7 +276,7 @@ namespace SAL.Core.Processors
             catch (JsonReaderException ex)
             {
                 var dto = ex.ToDto();
-                logger.Error("При обработке команды произошла ошибка десериализации", ex);
+                logger.Error("При обработке результата команды произошла ошибка десериализации", ex);
                 var sb = new StringBuilder();
                 sb.AppendLine("Rabbit message Payload");
                 sb.AppendLine(SalEncoding.GetString(rabbitMessage.Payload));
@@ -321,10 +341,21 @@ namespace SAL.Core.Processors
                 await SyncProcessing(transportMessage, commandResultPayload);
                 ack();
             }
+            catch (JsonReaderException ex)
+            {
+                var dto = ex.ToDto();
+                logger.Error("При обработке результата команды произошла ошибка десериализации", ex);
+                var sb = new StringBuilder();
+                sb.AppendLine("Rabbit message Payload");
+                sb.AppendLine(SalEncoding.GetString(rabbitMessage.Payload));
+                logger.Info(sb.ToString());
+                nack();
+                await salClient.RaiseExceptionDetectEvent(rabbitMessage.CorrelationId, dto);
+            }
             catch (SalException ex)
             {
                 nack();
-                logger.Error("При обработке результата команды произошла ошибка", ex);
+                logger.Error($"При обработке результата команды произошла ошибка ({ex.Code})", ex);
                 await salClient.RaiseExceptionDetectEvent(rabbitMessage.CorrelationId, ex.ToDto());
             }
             catch (TargetInvocationException ex)
@@ -332,8 +363,8 @@ namespace SAL.Core.Processors
                 nack();
                 if (ex.InnerException is SalException sex)
                 {
-                    logger.Error("При обработке результата команды произошла ошибка", ex);
-                    await salClient.RaiseExceptionDetectEvent(rabbitMessage.CorrelationId, ex.ToDto());
+                    logger.Error($"При обработке результата команды произошла ошибка ({sex.Code})", sex);
+                    await salClient.RaiseExceptionDetectEvent(rabbitMessage.CorrelationId, sex.ToDto());
                 }
                 else
                 {
@@ -349,7 +380,6 @@ namespace SAL.Core.Processors
                     await salClient.RaiseExceptionDetectEvent(rabbitMessage.CorrelationId, dto);
                 }
             }
-
             catch (Exception ex)
             {
                 nack();
@@ -510,25 +540,24 @@ namespace SAL.Core.Processors
 
         public Task<bool> ExecuteResultHandlerAsync(ILifetimeScope scope, CommandResultHandlerInfo rchi, CommonCommandResult result, CommandResultContext context, ExecutingContext executingContext)
         {
-            var handler = (ICommandResultHandler) scope.Resolve(rchi.HandlerType);
+            var handler = scope.Resolve(rchi.HandlerType);
 
-            handler.SetContexts(context, executingContext);
-
+            
             if (rchi.IsCommon)
-                return ExecuteCommonResultHandlerAsync(handler, result);
+                return ExecuteCommonResultHandlerAsync(handler, result, context, executingContext);
             else
             {
                 var commandResultType = typeof(CommandResult<>).MakeGenericType(rchi.ResultType);
                 var commandResult = result.ConvertValue(commandResultType);
-                return (Task<bool>) rchi.HandlerMethod.Invoke(handler, new[] {commandResult});
+                return (Task<bool>) rchi.HandlerMethod.Invoke(handler, new[] {commandResult, context, executingContext});
             }
         }
 
-        private Task<bool> ExecuteCommonResultHandlerAsync(object handler, CommonCommandResult commonResult)
+        private Task<bool> ExecuteCommonResultHandlerAsync(object handler, CommonCommandResult commonResult,CommandResultContext context, ExecutingContext executingContext)
         {
-            if (handler is ICommonCommandResultHandler ccrha)
+            if (handler is ICommonCommandResultHandler2 ccrha)
             {
-                return ccrha.ResultHandle(commonResult);
+                return ccrha.ResultHandle(commonResult,context, executingContext);
             }
             else
             {

@@ -6,6 +6,7 @@ using SAL.Core.Processors.System;
 using SAL.Core.Rabbit;
 using SAL.Core.Rabbit.Interfaces;
 using SAL.Core.WatchDog;
+using SAL.Infrastructure;
 
 namespace SAL.Core.Service
 {
@@ -15,15 +16,14 @@ namespace SAL.Core.Service
         {
 
             builder.RegisterType<RabbitMQTransport>()
-                .Named<ITransport>("front")
-                .AsSelf()
-                .WithParameter("prefix", "front")
+                .Keyed<ITransport>(Contour.Front)
+                .WithParameter("contour", Contour.Front)
                 .SingleInstance();
 
             builder.RegisterType<SalClient>()
-                .Named<ISalClient>("front")
-                .Named<ILoSalClient>("front")
-                .WithParameter("prefix", "front");
+                .Keyed<ISalClient>(Contour.Front)
+                .Keyed<ILoSalClient>(Contour.Front)
+                .WithParameter("contour", Contour.Front);
 
             builder.RegisterType<FrontTransportMonitor>()
                 .As<IWatchDogMonitor>()
@@ -31,7 +31,7 @@ namespace SAL.Core.Service
 
             builder.RegisterType<FrontCommandProcessor>().AsProcessor();
             builder.RegisterType<FrontCommandResultProcessor>().AsProcessor()
-                .Named<ICommandResultProcessor>("front");
+                .Keyed<ICommandResultProcessor>(Contour.Front);
             builder.RegisterType<FrontEventProcessor>().AsProcessor();
             
             builder.RegisterType<FrontExternalHttpProcessor>().AsProcessor();

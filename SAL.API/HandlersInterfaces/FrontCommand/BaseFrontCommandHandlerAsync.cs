@@ -7,8 +7,7 @@ using Microsoft.Extensions.Logging;
 namespace SAL.API
 {
     public abstract class BaseFrontCommandHandlerAsync<TCommand, TCommandResult> : 
-        IFrontCommandHandlerAsync<TCommand,TCommandResult>,
-        IValidator<TCommand>
+        IFrontCommandHandler2Async<TCommand,TCommandResult>
     {
         protected CommandContext commandContext;
 
@@ -21,16 +20,7 @@ namespace SAL.API
         protected ISalClient frontClient { get; set; }
         protected ILifetimeScope scope { get; set; }
         protected ILogger logger { get; set; }
-
-        public void SetContexts(CommandContext commandContext, ExecutingContext executingContext)
-        {
-            this.commandContext = commandContext;
-            frontClient = executingContext.SalClient;
-            logger = executingContext.Logger;
-            scope = executingContext.Scope;
-        }
-
-
+        
         public virtual Task<IEnumerable<FieldError>> Validate(TCommand verifiable)
         {
             return Task.FromResult(new FieldError[0].AsEnumerable());
@@ -38,6 +28,15 @@ namespace SAL.API
         
         public abstract Task Handle(TCommand command);
 
+        public Task Handle(TCommand command, CommandContext commandContext, ExecutingContext executingContext)
+        {
+            this.commandContext = commandContext;
+            frontClient = executingContext.SalClient;
+            logger = executingContext.Logger;
+            scope = executingContext.Scope;
+            return Handle(command);
+        }
+        
         public Task PublishResult(TCommandResult result)
         {
             return frontClient?.PublishResultAsync(result, ResultCodes.Success, commandContext);
@@ -61,7 +60,8 @@ namespace SAL.API
         {
             return PublishResult(SalError.CreateDto(code, message, properties, innerException));
         }
-        
+
+
     }
     
 }
