@@ -106,14 +106,16 @@ namespace SAL.Core.Processors
                 string commandName;
                 Type resultType;
                 var args = handlerInterface.GetGenericArguments();
+                
+                
                 if (args.Length == 1)
                 {
-                    commandName = args[0].GetName();
+                    commandName = handlerType.GetSalName();
                     resultType = args[0];
                 }
                 else
                 {
-                    commandName = args[0].GetName();
+                    commandName = args[0].GetSalName();
                     resultType = args[1];
                 }
                 

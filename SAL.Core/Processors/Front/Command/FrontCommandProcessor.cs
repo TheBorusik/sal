@@ -131,9 +131,14 @@ namespace SAL.Core.Processors
             var externalUris = handlerType.GetAttributes<SalExternalUriAttribute>().Select(a => a.Uri).ToArray();
 
             var handlerInterface = handlerInterfaces.First();
+            
+            var args = handlerInterface.GetGenericArguments();
 
-            var commandType = handlerInterface.GetGenericArguments()[0];
-            var resultType = handlerInterface.GetGenericArguments()[1];
+            var commandType = args[0];
+            Type resultType = null;
+                
+            if (args.Length == 2)
+                resultType = args[1];
             
             var commandName = commandType.GetRequestType();
             if(string.IsNullOrWhiteSpace(commandName))
@@ -180,8 +185,7 @@ namespace SAL.Core.Processors
 
             if (extRequestType == null)
                 throw new Exception($"Для обработчика {handlerType.Name} не заданно Request Type. (требуеться задать SalRequestTypeAttribute)");
-
-
+            
             var externalUris = handlerType.GetCustomAttributes(typeof(SalExternalUriAttribute))
                 .OfType<SalExternalUriAttribute>().Select(a => a.Uri).ToArray();
 

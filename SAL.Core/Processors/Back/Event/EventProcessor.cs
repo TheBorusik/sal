@@ -119,7 +119,7 @@ namespace SAL.Core.Processors
             foreach(var handlerInterface in handlerInterfaces)
             {
                 var eventType = handlerInterface.GetGenericArguments()[0];
-                var eventName = eventType.GetName();
+                var eventName = eventType.GetSalName();
                 var isSystem = eventType.IsSystemEvent();
 
                 var eventHandlerInfo = new EventHandlerInfo

@@ -19,7 +19,7 @@ namespace SAL.API
 
         public static JSchema Generate(Type type)
         {
-            return generator.Generate(type);
+            return type == null ? null : generator.Generate(type);
         }
     }
     

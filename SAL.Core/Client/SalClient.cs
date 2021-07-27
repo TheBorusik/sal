@@ -66,7 +66,7 @@ namespace SAL.Core.Client
             var resultServiceName = typeHandler ? null : AdapterConfiguration.AdapterName;
             
             await PublishCommandAsync(
-                commandType.GetName(),
+                commandType.GetSalName(),
                 command,
                 correlationId,
                 priority,
@@ -125,7 +125,7 @@ namespace SAL.Core.Client
 
             var commandType = command.GetType();
             var result = await ExecuteCommandAsync(
-                commandType.GetName(),
+                commandType.GetSalName(),
                 command,
                 priority,
                 ttl.Value,
@@ -202,7 +202,7 @@ namespace SAL.Core.Client
                 return Task.CompletedTask;
 
             return PublishEventAsync(
-                evnt.GetType().GetName(),
+                evnt.GetType().GetSalName(),
                 evnt,
                 Guid.NewGuid().ToString("N"),
                 ttl,
@@ -219,7 +219,7 @@ namespace SAL.Core.Client
                 return Task.CompletedTask;
 
             return PublishEventAsync(
-                evnt.GetType().GetName(),
+                evnt.GetType().GetSalName(),
                 evnt,
                 Guid.NewGuid().ToString("N"),
                 ttl,

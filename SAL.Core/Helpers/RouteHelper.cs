@@ -20,7 +20,7 @@ namespace SAL.Core.Helpers
     {
         private static ConcurrentDictionary<Type, RouteKeyMap> routeMap = new ConcurrentDictionary<Type, RouteKeyMap>();
 
-        public static string GetName(this Type type)
+        public static string GetSalName(this Type type)
         {
             var map = routeMap.GetOrAdd(type, AddValueFactory);
             return map.Name;
@@ -41,13 +41,9 @@ namespace SAL.Core.Helpers
         
         private static RouteKeyMap AddValueFactory(Type type)
         {
-            if (type.IsAssignableTo<ICommand>())
-                return ProcessCommand(type);
-            if (type.IsAssignableTo<ICommandResult>())
-                return ProcessCommand(type);
             if (type.IsAssignableTo<IEvent>())
                 return ProcessEvent(type);
-            return null;
+            return ProcessCommand(type);
         }
 
 

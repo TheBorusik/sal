@@ -4,7 +4,7 @@ using SAL.Infrastructure;
 namespace SAL.API
 {
     public class CommandResult<TCommandResult> 
-        where TCommandResult : class, ICommandResult, new()
+        where TCommandResult : class, new()
     {
         public JObject Result { get; set; }
         public  InternalExceptionDTO Error { get; set; }

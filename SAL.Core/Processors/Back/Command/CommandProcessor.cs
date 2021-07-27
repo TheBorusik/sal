@@ -133,12 +133,18 @@ namespace SAL.Core.Processors
 
             foreach(var handlerInterface in handlerInterfaces)
             {
-                var commandType = handlerInterface.GetGenericArguments()[0];
-                var resultType = handlerInterface.GetGenericArguments()[1];
+                var args = handlerInterface.GetGenericArguments();
+                
 
-                //todo
-                var commandName = commandType.GetName();
-
+                var commandType = args[0];
+                Type resultType = null;
+                
+                if (args.Length == 2)
+                    resultType = args[1];
+                
+                
+                var commandName = commandType.GetSalName();
+                
                 if (commandHandlers.ContainsKey(commandName))
                     throw new Exception($"{commandName} уже имеет обработчик");
 
@@ -218,7 +224,6 @@ namespace SAL.Core.Processors
                         commandHandlerInfo.CommandSchema = schemeCreator.GetCommandSchema(commandName);
                         handlerInfo.CommandSchema = commandHandlerInfo.CommandSchema;
                         handlerInfo.ResultSchema = schemeCreator.GetResultSchema(commandName);
-                        ;
                     }
 
 

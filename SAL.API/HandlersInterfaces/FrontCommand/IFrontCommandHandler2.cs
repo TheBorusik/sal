@@ -11,4 +11,9 @@ namespace SAL.API
     {
         Task Handle(TCommand command,CommandContext commandContext, ExecutingContext executingContext);
     }
+    
+    public interface IFrontCommandHandler2Async<in TCommand> : IFrontCommandHandler2
+    {
+        Task Handle(TCommand command,CommandContext commandContext, ExecutingContext executingContext);
+    }
 }

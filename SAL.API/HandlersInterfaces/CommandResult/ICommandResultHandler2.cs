@@ -8,14 +8,14 @@ namespace SAL.API
     }
     
     public interface ICommandResultHandle2Async<TCommand, TCommandResult> : ICommandResultHandler2
-        where TCommand : class, IHaveResult<TCommandResult>, new()
-        where TCommandResult : class, ICommandResult, new()
+        where TCommand : class, new()
+        where TCommandResult : class, new()
     {
         Task<bool> ResultHandle(CommandResult<TCommandResult> result, CommandResultContext commandContext, ExecutingContext executingContext);
     }
     
     public interface ICommandResultHandle2Async<TCommandResult> : ICommandResultHandler2
-        where TCommandResult : class, ICommandResult, new()
+        where TCommandResult : class, new()
     {
         Task<bool> ResultHandle(CommandResult<TCommandResult> result, CommandResultContext commandContext, ExecutingContext executingContext);
     }
