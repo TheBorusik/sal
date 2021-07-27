@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using Newtonsoft.Json.Linq;
 
 namespace SAL.API
@@ -133,7 +135,8 @@ namespace SAL.API
             var dto = new InternalExceptionDTO
             {
                 Code = SalErrorCodes.ValidationFailed,
-                Message = validationErrors.ToIndentedJson(),
+                Message = string.Join(Environment.NewLine,
+                    validationErrors.Select(v => string.IsNullOrWhiteSpace(v.Path) ? v.Description : $"{v.Description}. Path '{v.Path}'")),
                 TimeStamp = DateTime.UtcNow,
                 Properties = JObject.FromObject(new { ValidationErrors  = validationErrors }) ,
                 AdapterName = $"{AdapterConfiguration.AdapterType}.{AdapterConfiguration.AdapterName}",

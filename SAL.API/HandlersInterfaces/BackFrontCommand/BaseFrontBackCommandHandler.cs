@@ -10,8 +10,8 @@ namespace SAL.API
     public abstract class BaseFrontBackCommandHandlerAsync<TCommand, TCommandResult> :
         ICommandHandler2Async<TCommand, TCommandResult>,
         IFrontCommandHandler2Async<TCommand,TCommandResult>
-        where TCommand : class, IHaveResult<TCommandResult>, new()
-        where TCommandResult : class, ICommandResult, new()
+        where TCommand : class, new()
+        where TCommandResult : class, new()
     {
         protected CommandContext commandContext;
         protected ISalClient salClient { get; set; }
@@ -28,7 +28,7 @@ namespace SAL.API
         
         public Task PublishResult(TCommandResult result)
         {
-            return salClient?.PublishResultAsync(result, commandContext);
+            return salClient?.PublishResultAsync(result, ResultCodes.Success, commandContext);
         }
 
         public Task PublishResult(object result, string code)
