@@ -102,33 +102,25 @@ namespace SAL.Core.Processors
 
             foreach(var handlerInterface in handlerInterfaces)
             {
+                var resultType = handlerInterface.GetGenericArguments()[0];
+                var handleMethod = handlerInterface.GetMethod("ResultHandle");
 
-                string commandName;
-                Type resultType;
-                var args = handlerInterface.GetGenericArguments();
-                
-                
-                if (args.Length == 1)
+                var commandName = handleMethod.GetAttribute<SalCommandNameAttribute>()?.Name;
+
+                if (string.IsNullOrWhiteSpace(commandName) && handlerInterfaces.Length == 1)
                 {
-                    commandName = handlerType.GetSalName();
-                    resultType = args[0];
+                    commandName = handlerType.GetAttribute<SalCommandNameAttribute>()?.Name;
                 }
-                else
-                {
-                    commandName = args[0].GetSalName();
-                    resultType = args[1];
-                }
-                
-                
-                
 
-
+                if (string.IsNullOrWhiteSpace(commandName))
+                    throw new Exception($"Для {handlerInterface.Name} d {handlerType.Name}  не заданно имя команды (SalCommandNameAttribute)");
+                
                 var commandResultHandlerInfo = new CommandResultHandlerInfo
                 {
                     CommandName = commandName,
                     ResultType = resultType,
                     HandlerType = handlerType,
-                    HandlerMethod = handlerInterface.GetMethod("ResultHandle"),
+                    HandleMethod = handlerInterface.GetMethod("ResultHandle"),
                     IsCommon = false,
                     ResultSchema = schemaCreater == null ? SalSchema.Generate(resultType) : schemaCreater.GetResultSchema(commandName)
                 };
@@ -180,7 +172,7 @@ namespace SAL.Core.Processors
                         CommandName = commandName,
                         ResultType = null,
                         HandlerType = handlerType,
-                        HandlerMethod = null,
+                        HandleMethod = null,
                         IsCommon = true,
                     };
                     
@@ -551,7 +543,7 @@ namespace SAL.Core.Processors
             {
                 var commandResultType = typeof(CommandResult<>).MakeGenericType(rchi.ResultType);
                 var commandResult = result.ConvertValue(commandResultType);
-                return (Task<bool>) rchi.HandlerMethod.Invoke(handler, new[] {commandResult, context, executingContext});
+                return (Task<bool>) rchi.HandleMethod.Invoke(handler, new[] {commandResult, context, executingContext});
             }
         }
 

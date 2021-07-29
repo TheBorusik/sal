@@ -119,8 +119,20 @@ namespace SAL.Core.Processors
             foreach(var handlerInterface in handlerInterfaces)
             {
                 var eventType = handlerInterface.GetGenericArguments()[0];
-                var eventName = eventType.GetSalName();
-                var isSystem = eventType.IsSystemEvent();
+                var handleMethod = handlerInterface.GetMethod("Handle");
+                
+                var eventName = handleMethod.GetAttribute<SalEventNameAttribute>()?.Name;
+
+                if (string.IsNullOrWhiteSpace(eventName) && handlerInterfaces.Length == 1)
+                {
+                    eventName = handlerType.GetAttribute<SalEventNameAttribute>()?.Name;
+                }
+
+                if (string.IsNullOrWhiteSpace(eventName))
+                    throw new Exception($"Для {handlerInterface.Name} d {handlerType.Name}  не заданно имя Event (SalEventNameAttribute)");
+
+
+                var isSystem = string.Equals(eventName.Split(".").First(), "System", StringComparison.InvariantCultureIgnoreCase);
 
                 var eventHandlerInfo = new EventHandlerInfo
                 {
@@ -129,7 +141,7 @@ namespace SAL.Core.Processors
                     EventType = eventType,
 
                     IsSystem = isSystem,
-                    HandlerMethod = handlerInterface.GetMethod("Handle"),
+                    HandleMethod = handleMethod,
                     IsCommon = false,
                 };
 
@@ -175,14 +187,15 @@ namespace SAL.Core.Processors
                 attrs.ForEach(a =>
                 {
                     var eventName = a.Name;
+                    var isSystem = string.Equals(eventName.Split(".").First(), "System", StringComparison.InvariantCultureIgnoreCase);
 
                     var eventHandlerInfo = new EventHandlerInfo
                     {
                         HandlerType = handlerType,
                         EventName = eventName,
                         EventType = null,
-                        IsSystem = false,
-                        HandlerMethod = null,
+                        IsSystem = isSystem,
+                        HandleMethod = null,
                         IsCommon = true,
                     };
 
@@ -222,7 +235,7 @@ namespace SAL.Core.Processors
                     EventName = null,
                     EventType = null,
                     IsSystem = false,
-                    HandlerMethod = null,
+                    HandleMethod = null,
                     IsCommon = true,
                 };
 
@@ -431,7 +444,7 @@ namespace SAL.Core.Processors
             else
             {
                 var evnt = eventPayload.Payload.ConvertValue(ehi.EventType);
-                return (Task) ehi.HandlerMethod.Invoke(handler, new[] {evnt, context, executingContext});
+                return (Task) ehi.HandleMethod.Invoke(handler, new[] {evnt, context, executingContext});
             }
         }
     }

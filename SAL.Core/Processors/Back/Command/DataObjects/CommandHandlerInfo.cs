@@ -10,7 +10,7 @@ namespace SAL.Core.Processors
         public Type CommandType;
         
         public Type HandlerType;
-        public MethodInfo HandlerMethod;
+        public MethodInfo HandleMethod;
         
         public bool IsCommon;
         public bool IsInstanceHandler;
@@ -24,6 +24,6 @@ namespace SAL.Core.Processors
     {
         public string HandlerName;
         public Type HandlerType;
-        public MethodInfo HandlerMethod;
+        public MethodInfo HandleMethod;
     }
 }

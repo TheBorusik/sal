@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using System;
+using System.ComponentModel.DataAnnotations;
 using Newtonsoft.Json.Linq;
 
 
@@ -22,5 +23,37 @@ namespace SAL.API
                 Error = Error?.Clone()
             };
         }
+
+        public static CommonCommandResult Create(object result)
+        {
+            return new()
+            {
+                ResultCode = ResultCodes.Success,
+                Error = null,
+                Result = JObject.FromObject(result)
+            };
+        }
+        
+        public static CommonCommandResult Create(Exception ex, string errorCode = SalErrorCodes.Fatal)
+        {
+            return new()
+            {
+                ResultCode = ResultCodes.Error,
+                Error = ex.ToDto(errorCode),
+                Result = null
+            };   
+        }
+        
+        public static CommonCommandResult Create(InternalExceptionDTO exDto)
+        {
+            return new()
+            {
+                ResultCode = ResultCodes.Error,
+                Error = exDto.Clone(),
+                Result = null
+            };    
+        }
+        
+        
     }
 }

@@ -22,5 +22,20 @@ namespace SAL.API
             return type.GetCustomAttributes(typeof(T)).Any();
         }
         
+        public static T GetAttribute<T>(this MethodInfo methodInfo)
+        {
+            return methodInfo.GetCustomAttributes(typeof(T)).OfType<T>().FirstOrDefault();
+        }
+        
+        public static IEnumerable<T> GetAttributes<T>(this MethodInfo methodInfo)
+        {
+            return methodInfo.GetCustomAttributes(typeof(T)).OfType<T>();
+        }
+        
+        public static bool HasAttribute<T>(this MethodInfo methodInfo)
+        {
+            return methodInfo.GetCustomAttributes(typeof(T)).Any();
+        }
+        
     }
 }

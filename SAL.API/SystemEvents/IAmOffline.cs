@@ -2,8 +2,7 @@
 
 namespace SAL.API
 {
-    [SalSystemEvent]
-    [SalEventName("IAmOffline")]
+    [SalEventName("System.IAmOffline")]
     public class IAmOffline : IEvent
     {
         public string Type { get; set; }

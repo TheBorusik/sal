@@ -6,7 +6,7 @@ using SAL.Infrastructure;
 namespace SAL.API
 {
     public abstract class FrontBaseExecuteHandler<TExternalCommand, TExternalCommandResult, TInternalCommand, TInternalCommandResult> 
-        : IFrontCommandHandler2Async<TExternalCommand,TExternalCommandResult>
+        : IFrontCommandHandler2Async<TExternalCommand>
         where TInternalCommand : class, IHaveResult<TInternalCommandResult>, new()
         where TInternalCommandResult : class, ICommandResult, new()
     {

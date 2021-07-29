@@ -9,37 +9,16 @@ using SAL.Infrastructure;
 
 namespace SAL.Core.Helpers
 {
-    internal class RouteKeyMap
-    {
-        public string Name;
-        public string RequestType;
-        public bool IsSystemEvent;
-    }
-
     public static class RouteHelper
     {
-        private static ConcurrentDictionary<Type, RouteKeyMap> routeMap = new ConcurrentDictionary<Type, RouteKeyMap>();
+        private static ConcurrentDictionary<Type, string> routeMap = new ();
 
         public static string GetSalName(this Type type)
         {
-            var map = routeMap.GetOrAdd(type, AddValueFactory);
-            return map.Name;
+            return  routeMap.GetOrAdd(type, AddValueFactory);
         }
-
-        public static string GetRequestType(this Type type)
-        {
-            var map = routeMap.GetOrAdd(type, AddValueFactory);
-            return map.RequestType;
-        }
-
-        public static bool IsSystemEvent(this Type type)
-        {
-            var map = routeMap.GetOrAdd(type, AddValueFactory);
-            return map.IsSystemEvent;
-        }
-
         
-        private static RouteKeyMap AddValueFactory(Type type)
+        private static string AddValueFactory(Type type)
         {
             if (type.IsAssignableTo<IEvent>())
                 return ProcessEvent(type);
@@ -47,43 +26,15 @@ namespace SAL.Core.Helpers
         }
 
 
-
-        private static RouteKeyMap ProcessCommand(Type type)
+        private static string ProcessCommand(Type type)
         {
-            var scnAttribute = type.GetAttribute<SalCommandNameAttribute>();
-            
-            if (scnAttribute == null)
-            {
-                throw new Exception($"Не заданно значение SalCommandNameAttribute для типа {type.Name}.");
-            }
-            
-            return new RouteKeyMap
-            {
-                Name = scnAttribute.Name,
-                IsSystemEvent = false,
-                RequestType = type.GetAttribute<SalRequestTypeAttribute>()?.RequestType
-            };
+            return type.GetAttribute<SalCommandNameAttribute>()?.Name;
         }
-        
-        
-        private static RouteKeyMap ProcessEvent(Type type)
+
+
+        private static string ProcessEvent(Type type)
         {
-            var name = string.Empty;
-            var evnAttribute = type.GetAttribute<SalEventNameAttribute>();
-            if (evnAttribute == null)
-            {
-                throw new Exception($"Не заданно значение SalEventNameAttribute для типа {type.Name}.");
-            }
-
-            name = evnAttribute.Name;
-            
-            var isSystem = type.GetCustomAttributes(typeof(SalSystemEventAttribute)).Any();
-
-            return new RouteKeyMap
-            {
-                Name = isSystem ? $"System.{name}" : name,
-                IsSystemEvent = isSystem
-            };
+            return type.GetAttribute<SalEventNameAttribute>()?.Name;
         }
     }
 }

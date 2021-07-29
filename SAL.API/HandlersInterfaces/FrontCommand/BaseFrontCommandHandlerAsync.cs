@@ -7,7 +7,7 @@ using Microsoft.Extensions.Logging;
 namespace SAL.API
 {
     public abstract class BaseFrontCommandHandlerAsync<TCommand, TCommandResult> : 
-        IFrontCommandHandler2Async<TCommand,TCommandResult>
+        IFrontCommandHandler2Async<TCommand>
     {
         protected CommandContext commandContext;
 

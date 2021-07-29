@@ -9,7 +9,7 @@ namespace SAL.Core.Processors
         public string EventName;
         public Type EventType;
         public bool IsSystem;
-        public MethodInfo HandlerMethod;
+        public MethodInfo HandleMethod;
         public bool IsCommon;
 
     }

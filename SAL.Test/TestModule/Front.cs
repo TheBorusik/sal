@@ -1,8 +1,10 @@
 ﻿using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Text;
 using System.Threading.Tasks;
 using Autofac;
 using Newtonsoft.Json.Linq;
+using Newtonsoft.Json.Schema;
 using SAL.API;
 using SAL.Infrastructure;
 
@@ -16,8 +18,9 @@ namespace SAL.Test.Front
 
             builder.RegisterSalHandler<TestExternal>();
             builder.RegisterSalHandler<FrontTestCommandHandler>();
-            builder.RegisterSalHandler<BackTestCommandHandler>();
+     //       builder.RegisterSalHandler<BackTestCommandHandler>();
             
+            builder.RegisterSalHandler<TestCommandResultHandler1>();
             builder.RegisterSalHandler<TestCommandResultHandler3>();
 
             
@@ -48,9 +51,10 @@ namespace SAL.Test.Front
 
          var front = scope.ResolveKeyed<ISalClient>(Contour.Front);
          var back = scope.ResolveKeyed<ISalClient>(Contour.Back);
-         
-       //  back.PublishFrontCommandAsync("SalTest.FrontTest",new TestCommand()).Wait();
-         back.PublishCommandAsync(new TestCommand()).Wait();
+
+         front.PublishCommandAsync("SalTest.FrontTest", new TestCommand()).Wait();
+
+         back.PublishCommandAsync("SalTest.Front.Test",new TestCommand()).Wait();
         }
 
         public void Offline()
@@ -95,36 +99,31 @@ namespace SAL.Test.Front
         }
     }
 
-
-
-    [SalCommandName("SalTest.Front.Test")]
-    [SalRequestType("SalTest.FrontTest")]
-    public class TestCommand : IHaveResult<TestResult>
-    {
-        public int Int { get; set; }
-        public string Str { get; set; }
-    }
-
-    public class TestResult : ICommandResult
-    {
-        public int Int { get; set; }
-        public string Str { get; set; }
-    }
-
-    [SalCommandName("SalTest.Front.Test")]
-    public class Test2Result : ICommandResult
-    {
-        public int Int { get; set; }
-        public string Str { get; set; }
-    }
     
-   
-    
-    public class  FrontTestCommandHandler : BaseFrontCommandHandlerAsync<TestCommand, TestResult>
+    public class TestCommand 
     {
-        public FrontTestCommandHandler(ISalClient backClient) : base(backClient)
-        {
-        }
+        
+        public int[] Int { get; set; }
+        public string Str { get; set; }
+    }
+    public class TestResult 
+    {
+        public int Int { get; set; }
+        public string Str { get; set; }
+    }
+    public class Test2Result 
+    {
+        public int Int2 { get; set; }
+        public string Str2 { get; set; }
+    }
+
+
+    
+
+    [BackCommandName("SalTest.Front.Test")]
+    [FrontCommandName("SalTest.FrontTest")]
+    public class  FrontTestCommandHandler : BaseFrontBackCommandHandlerAsync<TestCommand, TestResult>
+    {
 
         public override async Task Handle(TestCommand command)
         {
@@ -137,49 +136,41 @@ namespace SAL.Test.Front
     }
 
 
-    public class BackTestCommandHandler : BaseCommandHandlerAsync<TestCommand, TestResult>
-    {
-        public override async Task Handle(TestCommand command)
-        {
-            await PublishResult(new TestResult
-            {
-                Int = 10,
-                Str = "100"
-            });
-        }
-    }
+
     
     
-    [SalContourHandler(Contour.Back)]
-    public class TestCommandResultHandler3 : ICommandResultHandle2Async<Test2Result>
+    [SalContourHandler(Contour.Both)]
+    [SalCommandName("SalTest.Front.Test")]
+    public class TestCommandResultHandler3 : ICommandResultHandle2Async<Test2Result>, ICommandResultHandle2Async<TestResult>
     {
+        [SalCommandName("SalTest.Front.Test")]
         public Task<bool> ResultHandle(CommandResult<Test2Result> result, CommandResultContext commandContext, ExecutingContext executingContext)
         {
             return Task.FromResult(true);
         }
-    }
-    
-    
-    [SalContourHandler(Contour.Back)]
-    public class TestCommandResultHandler1 : ICommandResultHandle2Async<TestCommand, TestResult>
-    {
+        
+        [SalCommandName("SalTest.Front.Test")]
         public Task<bool> ResultHandle(CommandResult<TestResult> result, CommandResultContext commandContext, ExecutingContext executingContext)
         {
-            return Task.FromResult(true);
+            throw new System.NotImplementedException();
         }
     }
+    
     
     [SalContourHandler(Contour.Front)]
-    public class TestCommandResultHandler2 : ICommandResultHandle2Async<TestCommand, TestResult>
+    [SalCommandName("SalTest.FrontTest")]
+    public class TestCommandResultHandler1 : ICommandResultHandle2Async<TestResult>
     {
         public Task<bool> ResultHandle(CommandResult<TestResult> result, CommandResultContext commandContext, ExecutingContext executingContext)
         {
             return Task.FromResult(true);
         }
     }
+    
+   
 
     [SalContourHandler(Contour.Back)]
-    [SalRequestType("SalTest.FrontTest")]
+
     public class TestCommonCommandResultHandler : ICommonCommandResultHandler2
     {
         public Task<bool> ResultHandle(CommonCommandResult result, CommandResultContext commandContext, ExecutingContext executingContext)

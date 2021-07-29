@@ -2,8 +2,7 @@
 
 namespace SAL.API
 {
-    [SalSystemEvent]
-    [SalEventName("ExceptionDetected")]
+    [SalEventName("System.ExceptionDetected")]
     public class ExceptionDetectedEvent : IEvent
     {
         public string CorrelationId { get; set; }

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Autofac;
 using Newtonsoft.Json.Linq;
@@ -52,7 +53,7 @@ namespace SAL.Core.Client
             string handlerServiceName = null,
             bool typeHandler = false)
         
-            where TCommand : class, ICommand, new()
+            where TCommand : class, new()
         {
             if (Contour == Contour.Front)
                 throw new ContourNotSupportedException();
@@ -80,7 +81,7 @@ namespace SAL.Core.Client
             return correlationId;
         }
 
-        public async Task<string> PublishFrontCommandAsync(
+        public async Task<string> PublishCommandAsync(
             string commandName, 
             object command, 
             string correlationId = null, 
@@ -136,6 +137,22 @@ namespace SAL.Core.Client
             return new CommandResult<TCommandResult>(result.CommandResult);
         }
 
+        public async Task<CommandResult<TCommandResult>> ExecuteCommandAsync<TCommandResult>(string commandName, object command, CommandPriority priority = CommandPriority.Normal, TimeSpan? ttl = null, string handlerServiceType = null, string handlerServiceName = null) where TCommandResult : class, new()
+        {
+            ttl ??= TimeSpan.FromSeconds(60);
+            
+            var result = await ExecuteCommandAsync(
+                commandName,
+                command,
+                priority,
+                ttl.Value,
+                handlerServiceType,
+                handlerServiceName
+            );
+            
+            return new CommandResult<TCommandResult>(result.CommandResult);
+        }
+
 
         public Task PublishResultAsync(ICommandResult result, CommandContext commandContext)
         {
@@ -167,6 +184,18 @@ namespace SAL.Core.Client
             return PublishResultAsync(new CommonCommandResult
             {
                 Error = exceptionDTO,
+                Result = null,
+                ResultCode = ResultCodes.Error
+            }, commandContext);
+        }
+
+        public Task PublishResultAsync(Exception exception, string code , CommandContext commandContext)
+        {
+            if (string.IsNullOrWhiteSpace(code))
+                code = SalErrorCodes.Fatal;
+            return PublishResultAsync(new CommonCommandResult
+            {
+                Error = exception.ToDto(code),
                 Result = null,
                 ResultCode = ResultCodes.Error
             }, commandContext);
@@ -206,7 +235,6 @@ namespace SAL.Core.Client
                 evnt,
                 Guid.NewGuid().ToString("N"),
                 ttl,
-                evnt.GetType().IsSystemEvent(),
                 handlerServiceType,
                 handlerServiceName, 
                 false
@@ -223,7 +251,37 @@ namespace SAL.Core.Client
                 evnt,
                 Guid.NewGuid().ToString("N"),
                 ttl,
-                evnt.GetType().IsSystemEvent(),
+                handlerServiceType,
+                null, 
+                true
+            );
+        }
+
+        public Task PublishEventAsync(string eventName, object evnt,  TimeSpan? ttl = null, string handlerServiceType = null, string handlerServiceName = null)
+        {
+            if (evnt == null)
+                return Task.CompletedTask;
+
+            return PublishEventAsync(
+                eventName,
+                evnt,
+                Guid.NewGuid().ToString("N"),
+                ttl,
+                handlerServiceType,
+                handlerServiceName,
+                false);
+        }
+
+        public Task PublishCEventAsync(string eventName, object evnt, string handlerServiceType, TimeSpan? ttl = null)
+        {
+            if (evnt == null)
+                return Task.CompletedTask;
+
+            return PublishEventAsync(
+                eventName,
+                evnt,
+                Guid.NewGuid().ToString("N"),
+                ttl,
                 handlerServiceType,
                 null, 
                 true
@@ -572,7 +630,7 @@ namespace SAL.Core.Client
         }
 
 
-        public Task PublishEventAsync(string eventName, object eventBody, string correlationId, TimeSpan? ttl, bool isSystem, string handlerServiceType, string handlerServiceName, bool isCEvent)
+        public Task PublishEventAsync(string eventName, object eventBody, string correlationId, TimeSpan? ttl, string handlerServiceType, string handlerServiceName, bool isCEvent)
         {
             var eventContext = new EventContext
             {
@@ -594,7 +652,7 @@ namespace SAL.Core.Client
                     PublishTimeStamp = DateTime.UtcNow,
                     TTL = ttl,
                     Contour = Contour.ToString(),
-                    IsSystem = isSystem,
+                    IsSystem = string.Equals(eventName.Split('.').First(), "System", StringComparison.InvariantCultureIgnoreCase),
                     IsCEvent = isCEvent
                 }
             };

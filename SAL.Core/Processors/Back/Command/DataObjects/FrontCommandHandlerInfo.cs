@@ -11,7 +11,7 @@ namespace SAL.Core.Processors
         
         public Type HandlerType;
 
-        public MethodInfo HandlerMethod;
+        public MethodInfo HandleMethod;
         
         public bool IsCommon;
 

@@ -2,7 +2,7 @@
 
 namespace SAL.Infrastructure
 {
-    [Obsolete("Use SalRequestTypeAttribute for Command or CommonCommandHandler or ResultHandler")]
+    [Obsolete("Use SalCommandNameAttribute")]
     [AttributeUsage(AttributeTargets.Class)]
     public class SalExternalMethodAttribute : Attribute
     {

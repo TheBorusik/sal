@@ -2,8 +2,7 @@
 
 namespace SAL.API
 {
-    [SalSystemEvent]
-    [SalEventName("IAmFront")]
+    [SalEventName("System.IAmFront")]
     public class IAmFrontEvent : IEvent
     {
         public string Type { get; set; }

@@ -130,6 +130,14 @@ namespace SAL.Core.Processors
                 .Where(i => i.IsAssignableTo<ICommandHandler2>() && i.IsGenericType).ToArray();
 
             var isInstanceHandler = handlerType.HasAttribute<SalInstanceHandlerAttribute>();
+            
+            ICommandSchemeCreator schemeCreator = null;
+            if (handlerType.IsAssignableTo<ICommandSchemeCreator>())
+                schemeCreator = (ICommandSchemeCreator) container.Resolve(handlerType);
+            
+            ICommandNameResolver nameResolvert = null;
+            if (handlerType.IsAssignableTo<ICommandNameResolver>())
+                nameResolvert = (ICommandNameResolver) container.Resolve(handlerType);
 
             foreach(var handlerInterface in handlerInterfaces)
             {
@@ -137,21 +145,28 @@ namespace SAL.Core.Processors
                 
 
                 var commandType = args[0];
-                Type resultType = null;
+                var handleMethod = handlerInterface.GetMethod("Handle");
                 
-                if (args.Length == 2)
-                    resultType = args[1];
-                
-                
-                var commandName = commandType.GetSalName();
-                
-                if (commandHandlers.ContainsKey(commandName))
-                    throw new Exception($"{commandName} уже имеет обработчик");
+                string commandName = null;
+               
+                if (nameResolvert != null)
+                {
+                    commandName = nameResolvert.Resolve(handlerInterface);
+                    if (string.IsNullOrWhiteSpace(commandName))
+                        throw new Exception($"Для {handlerInterface.Name} в {handlerType.Name} не удаеться получить имя команды");
+                }
+                else
+                {
+                    commandName = handleMethod.GetAttribute<SalCommandNameAttribute>()?.Name;
 
-                ICommandSchemeCreator schemeCreator = null;
-                if (handlerType.IsAssignableTo<ICommandSchemeCreator>())
-                    schemeCreator = (ICommandSchemeCreator) container.Resolve(handlerType);
+                    if (string.IsNullOrWhiteSpace(commandName) && handlerInterfaces.Length == 1)
+                    {
+                        commandName = handlerType.GetAttribute<SalCommandNameAttribute>()?.Name;
+                    }
 
+                    if (string.IsNullOrWhiteSpace(commandName))
+                        throw new Exception($"Для {handlerInterface.Name} в {handlerType.Name} не заданно имя команды (SalCommandNameAttribute)");
+                }
 
                 var commandHandlerInfo = new CommandHandlerInfo
                 {
@@ -160,7 +175,7 @@ namespace SAL.Core.Processors
 
                     HandlerType = handlerType,
 
-                    HandlerMethod = handlerInterface.GetMethod("Handle"),
+                    HandleMethod = handleMethod,
 
                     IsCommon = false,
                     IsInstanceHandler = isInstanceHandler,
@@ -177,7 +192,7 @@ namespace SAL.Core.Processors
                     CommandName = commandHandlerInfo.CommandName,
                     IsInstanceHandler = commandHandlerInfo.IsInstanceHandler,
                     CommandSchema = commandHandlerInfo.CommandSchema,
-                    ResultSchema = schemeCreator == null ? SalSchema.Generate(resultType) : schemeCreator.GetResultSchema(commandName),
+                    ResultSchema = schemeCreator == null ? null : schemeCreator.GetResultSchema(commandName),
                 });
             }
         }
@@ -203,7 +218,7 @@ namespace SAL.Core.Processors
                     {
                         CommandName = commandName,
                         HandlerType = handlerType,
-                        HandlerMethod = null,
+                        HandleMethod = null,
                         CommandType = null,
                         IsCommon = true,
                         IsInstanceHandler = isInstanceHandler,
@@ -225,8 +240,7 @@ namespace SAL.Core.Processors
                         handlerInfo.CommandSchema = commandHandlerInfo.CommandSchema;
                         handlerInfo.ResultSchema = schemeCreator.GetResultSchema(commandName);
                     }
-
-
+                    
                     commandHandlers.Add(commandName, commandHandlerInfo);
 
                     logger.Info($"Для команды {commandName} добавлен уневерсальный обработчик {handlerType.Name}");
@@ -252,7 +266,7 @@ namespace SAL.Core.Processors
             {
                 HandlerName = wfmResultHandlerName,
                 HandlerType = handlerType,
-                HandlerMethod = typeof(IWfmResultHandler).GetMethod("Handle"),
+                HandleMethod = typeof(IWfmResultHandler).GetMethod("Handle"),
             };
 
 
@@ -441,7 +455,7 @@ namespace SAL.Core.Processors
                     var commandObject = commandPayload.Payload.ConvertValue(commandHandlerInfo.CommandType);
 
 
-                    await (Task) commandHandlerInfo.HandlerMethod.Invoke(handler, new[] {commandObject, commandContext, executingContext});
+                    await (Task) commandHandlerInfo.HandleMethod.Invoke(handler, new[] {commandObject, commandContext, executingContext});
                 }
                 else
                 {
@@ -523,7 +537,7 @@ namespace SAL.Core.Processors
                 using var scope = container.BeginLifetimeScope();
                 var handler = (IWfmResultHandler) scope.Resolve(wfmResultHandlerInfo.HandlerType);
 
-                await (Task) wfmResultHandlerInfo.HandlerMethod.Invoke(handler, new object[] {wfmProcessResultCommand.ProcessResult, wfmProcessResultCommand.ProcessInfo});
+                await (Task) wfmResultHandlerInfo.HandleMethod.Invoke(handler, new object[] {wfmProcessResultCommand.ProcessResult, wfmProcessResultCommand.ProcessInfo});
             }
             else
             {

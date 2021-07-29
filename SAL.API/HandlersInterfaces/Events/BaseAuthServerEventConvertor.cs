@@ -23,7 +23,7 @@ namespace SAL.API
             this.eventContext = eventContext;
             this.executingContext = executingContext;
             var notifyEvent  = await Convert(eventContext.Descriptor, evnt);
-            await frontClient.PublishEventAsync("AuthServer.ClientNotify", notifyEvent, eventContext.Descriptor.CorrelationId, TimeSpan.FromSeconds(30), false, null, null, false);
+            await frontClient.PublishEventAsync("AuthServer.ClientNotify", notifyEvent, eventContext.Descriptor.CorrelationId, TimeSpan.FromSeconds(30), null, null, false);
 
         }
         protected virtual async Task<NotifyEvent> Convert(EventDescriptor eventDescriptor, JObject evnt)

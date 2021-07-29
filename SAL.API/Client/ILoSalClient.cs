@@ -47,7 +47,6 @@ namespace SAL.API
             object eventBody,
             string correlationId,
             TimeSpan? ttl,
-            bool isSystem,
             string handlerServiceType,
             string handlerServiceName,
             bool isCEvent);

@@ -92,28 +92,34 @@ namespace SAL.Core.Processors
             if(contourAttr?.Contour == Contour.Back)
                 return;
             
-            var handlerInterfaces = handlerType.GetInterfaces()
-                .Where(i => i.IsAssignableTo<ICommandResultHandler2>() && i.IsGenericType).ToArray();
-            
             ICommandSchemeCreator schemaCreater = null;
             if (handlerType.IsAssignableTo<ICommandSchemeCreator>())
                 schemaCreater = (ICommandSchemeCreator) container.Resolve(handlerType);
+            
+            var handlerInterfaces = handlerType.GetInterfaces()
+                .Where(i => i.IsAssignableTo<ICommandResultHandler2>() && i.IsGenericType).ToArray();
 
             foreach(var handlerInterface in handlerInterfaces)
             {
-                var commandType = handlerInterface.GetGenericArguments()[0];
-                var resultType = handlerInterface.GetGenericArguments()[1];
+                var resultType = handlerInterface.GetGenericArguments()[0];
+                var handleMethod = handlerInterface.GetMethod("ResultHandle");
                 
-                var commandName = commandType.GetRequestType();
-                if(string.IsNullOrWhiteSpace(commandName))
-                    throw new Exception($"Для типа {commandType.Name} не задан SalExtRequestType Attribute");
+                var commandName = handleMethod.GetAttribute<SalCommandNameAttribute>()?.Name;
 
+                if (string.IsNullOrWhiteSpace(commandName) && handlerInterfaces.Length == 1)
+                {
+                    commandName = handlerType.GetAttribute<SalCommandNameAttribute>()?.Name;
+                }
+
+                if (string.IsNullOrWhiteSpace(commandName))
+                    throw new Exception($"Для {handlerInterface.Name}  не заданно имя команды (SalCommandNameAttribute)");
+                
                 var commandResultHandlerInfo = new CommandResultHandlerInfo
                 {
                     CommandName = commandName,
                     ResultType = resultType,
                     HandlerType = handlerType,
-                    HandlerMethod = handlerInterface.GetMethod("ResultHandle"),
+                    HandleMethod = handleMethod,
                     IsCommon = false,
                     ResultSchema = schemaCreater == null ? SalSchema.Generate(resultType) : schemaCreater.GetResultSchema(commandName)
                 };
@@ -156,19 +162,19 @@ namespace SAL.Core.Processors
                 schemaCreater = (ICommandSchemeCreator) container.Resolve(handlerType);
             
             
-            var attrs = handlerType.GetAttributes<SalRequestTypeAttribute>().ToArray();
+            var attrs = handlerType.GetAttributes<SalCommandNameAttribute>().ToArray();
             if (attrs.Any())
             {
                 attrs.ForEach(a =>
                 {
-                    var commandName = a.RequestType;
+                    var commandName = a.Name;
                     
                     var commandResultHandlerInfo = new CommandResultHandlerInfo
                     {
                         CommandName = commandName,
                         ResultType = null,
                         HandlerType = handlerType,
-                        HandlerMethod = null,
+                        HandleMethod = null,
                         IsCommon = true,
                     };
                     
@@ -554,7 +560,7 @@ namespace SAL.Core.Processors
 
             var commandResultType = typeof(CommandResult<>).MakeGenericType(rchi.ResultType);
             var commandResult = result.ConvertValue(commandResultType);
-            return (Task<bool>) rchi.HandlerMethod.Invoke(handler, new[] {commandResult, context, executingContext});
+            return (Task<bool>) rchi.HandleMethod.Invoke(handler, new[] {commandResult, context, executingContext});
         }
         
     }

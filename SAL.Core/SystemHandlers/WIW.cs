@@ -1,9 +1,11 @@
 ﻿using System.Threading.Tasks;
 using SAL.API;
 using SAL.Core.Service;
+using SAL.Infrastructure;
 
 namespace SAL.Core.SystemHandlers
 {
+    [SalEventName("System.WhoIsWho")]
     class SystemWIWHandler : IEventHandler2<WhoIsWhoEvent>
     {
         private ISalService salService;

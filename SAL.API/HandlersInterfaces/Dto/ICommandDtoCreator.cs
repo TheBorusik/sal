@@ -28,4 +28,9 @@ namespace SAL.API
     {
         JSchema GetEventScheme(string eventName);
     }
+
+    public interface ICommandNameResolver
+    {
+        string Resolve(Type handlerInterfaceType);
+    }
 }

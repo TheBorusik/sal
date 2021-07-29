@@ -8,9 +8,9 @@ using SAL.Infrastructure;
 namespace SAL.API
 {
     public abstract class BaseCommandHandlerAsync<TCommand, TCommandResult> :
-        ICommandHandler2Async<TCommand, TCommandResult>
-        where TCommand : class, IHaveResult<TCommandResult>, new()
-        where TCommandResult : class, ICommandResult, new()
+        ICommandHandler2Async<TCommand>
+        where TCommand : class, new()
+        where TCommandResult : class,  new()
 
     {
         protected CommandContext commandContext;
@@ -26,7 +26,7 @@ namespace SAL.API
 
         public Task PublishResult(TCommandResult result)
         {
-            return salClient?.PublishResultAsync(result, commandContext);
+            return salClient?.PublishResultAsync(result, ResultCodes.Success, commandContext);
         }
 
         public Task PublishResult(object result, string code)

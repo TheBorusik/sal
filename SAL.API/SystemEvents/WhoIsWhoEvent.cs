@@ -2,8 +2,7 @@
 
 namespace SAL.API
 {
-    [SalSystemEvent]
-    [SalEventName("WhoIsWho")]
+    [SalEventName("System.WhoIsWho")]
     public class WhoIsWhoEvent : IEvent
     {
     }
