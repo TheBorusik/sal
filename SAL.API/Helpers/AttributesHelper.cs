@@ -5,7 +5,7 @@ using System.Reflection;
 
 namespace SAL.API
 {
-    internal static class AttributesHelper
+    public static class AttributesHelper
     {
         public static T GetAttribute<T>(this Type type)
         {
