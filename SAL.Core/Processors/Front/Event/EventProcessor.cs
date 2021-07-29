@@ -121,7 +121,9 @@ namespace SAL.Core.Processors
             foreach(var handlerInterface in handlerInterfaces)
             {
                 var eventType = handlerInterface.GetGenericArguments()[0];
-                var handleMethod = handlerInterface.GetMethod("Handle");
+                
+                var interfaceMethodInfo = handlerInterface.GetMethod("Handle");
+                var handleMethod = handlerType.GetMethodByInterfaceMethodInfo(interfaceMethodInfo);
                 
                 var eventName = handleMethod.GetAttribute<SalEventNameAttribute>()?.Name;
 
@@ -131,7 +133,7 @@ namespace SAL.Core.Processors
                 }
 
                 if (string.IsNullOrWhiteSpace(eventName))
-                    throw new Exception($"Для {handlerInterface.Name} d {handlerType.Name}  не заданно имя Event (SalEventNameAttribute)");
+                    throw new Exception($"Для {handlerInterface.Name}({eventType.Name}) d {handlerType.Name}  не заданно имя Event (SalEventNameAttribute)");
 
 
                 var isSystem = string.Equals(eventName.Split(".").First(), "System", StringComparison.InvariantCultureIgnoreCase);

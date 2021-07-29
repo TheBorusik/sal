@@ -102,7 +102,9 @@ namespace SAL.Core.Processors
             foreach(var handlerInterface in handlerInterfaces)
             {
                 var resultType = handlerInterface.GetGenericArguments()[0];
-                var handleMethod = handlerInterface.GetMethod("ResultHandle");
+                
+                var interfaceMethodInfo = handlerInterface.GetMethod("ResultHandle");
+                var handleMethod = handlerType.GetMethodByInterfaceMethodInfo(interfaceMethodInfo);
                 
                 var commandName = handleMethod.GetAttribute<SalCommandNameAttribute>()?.Name;
 
@@ -112,7 +114,7 @@ namespace SAL.Core.Processors
                 }
 
                 if (string.IsNullOrWhiteSpace(commandName))
-                    throw new Exception($"Для {handlerInterface.Name}  не заданно имя команды (SalCommandNameAttribute)");
+                    throw new Exception($"Для {resultType.Name} в {handlerType.Name}  не заданно имя команды (SalCommandNameAttribute)");
                 
                 var commandResultHandlerInfo = new CommandResultHandlerInfo
                 {

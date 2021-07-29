@@ -36,5 +36,10 @@ namespace SAL.Core.Helpers
         {
             return type.GetAttribute<SalEventNameAttribute>()?.Name;
         }
+
+        public static MethodInfo GetMethodByInterfaceMethodInfo(this Type type, MethodInfo interfaceMethodInfo)
+        {
+            return type.GetMethod(interfaceMethodInfo.Name, interfaceMethodInfo.GetParameters().Select(pi => pi.ParameterType).ToArray());
+        }
     }
 }

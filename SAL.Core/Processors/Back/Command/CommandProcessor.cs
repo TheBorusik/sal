@@ -145,7 +145,9 @@ namespace SAL.Core.Processors
                 
 
                 var commandType = args[0];
-                var handleMethod = handlerInterface.GetMethod("Handle");
+                
+                var interfaceMethodInfo = handlerInterface.GetMethod("Handle");
+                var handleMethod = handlerType.GetMethodByInterfaceMethodInfo(interfaceMethodInfo);
                 
                 string commandName = null;
                
@@ -153,7 +155,7 @@ namespace SAL.Core.Processors
                 {
                     commandName = nameResolvert.Resolve(handlerInterface);
                     if (string.IsNullOrWhiteSpace(commandName))
-                        throw new Exception($"Для {handlerInterface.Name} в {handlerType.Name} не удаеться получить имя команды");
+                        throw new Exception($"Для {commandType.Name} в {handlerType.Name} не удаеться получить имя команды");
                 }
                 else
                 {

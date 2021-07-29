@@ -16,15 +16,18 @@ namespace SAL.Test.Front
         public void Configure(ContainerBuilder builder, IConfigWatcher config)
         {
 
-            builder.RegisterSalHandler<TestExternal>();
-            builder.RegisterSalHandler<FrontTestCommandHandler>();
+         //   builder.RegisterSalHandler<TestExternal>();
+         //   builder.RegisterSalHandler<FrontTestCommandHandler>();
+         //   builder.RegisterSalHandler<GateEventHandler>();
      //       builder.RegisterSalHandler<BackTestCommandHandler>();
+     
+     
             
-            builder.RegisterSalHandler<TestCommandResultHandler1>();
+           // builder.RegisterSalHandler<TestCommandResultHandler1>();
             builder.RegisterSalHandler<TestCommandResultHandler3>();
 
             
-            builder.RegisterProcessor<TestFront>();
+           // builder.RegisterProcessor<TestFront>();
 
         }
     }
@@ -139,9 +142,10 @@ namespace SAL.Test.Front
 
     
     
-    [SalContourHandler(Contour.Both)]
-    [SalCommandName("SalTest.Front.Test")]
-    public class TestCommandResultHandler3 : ICommandResultHandle2Async<Test2Result>, ICommandResultHandle2Async<TestResult>
+    [SalContourHandler(Contour.Back)]
+    public class TestCommandResultHandler3 : 
+        ICommandResultHandle2Async<Test2Result>, 
+        ICommandResultHandle2Async<TestResult>
     {
         [SalCommandName("SalTest.Front.Test")]
         public Task<bool> ResultHandle(CommandResult<Test2Result> result, CommandResultContext commandContext, ExecutingContext executingContext)
@@ -152,7 +156,7 @@ namespace SAL.Test.Front
         [SalCommandName("SalTest.Front.Test")]
         public Task<bool> ResultHandle(CommandResult<TestResult> result, CommandResultContext commandContext, ExecutingContext executingContext)
         {
-            throw new System.NotImplementedException();
+            return Task.FromResult(true);
         }
     }
     
@@ -176,6 +180,23 @@ namespace SAL.Test.Front
         public Task<bool> ResultHandle(CommonCommandResult result, CommandResultContext commandContext, ExecutingContext executingContext)
         {
             return Task.FromResult(true);
+        }
+    }
+    
+    
+    [SalEventName("System.WhoIsIntegration")]
+    public class WhoIsIntegrationEvent : IEvent
+    {
+    }
+    
+    [SalContourHandler(Contour.Back)]
+    internal class GateEventHandler : IEventHandler2<WhoIsIntegrationEvent>
+    {
+        
+        [SalEventName("System.WhoIsIntegration")]
+        public Task Handle(WhoIsIntegrationEvent evnt, EventContext eventContext, ExecutingContext executingContext)
+        {
+            return Task.CompletedTask;
         }
     }
 }
