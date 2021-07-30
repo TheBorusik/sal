@@ -24,7 +24,8 @@ namespace SAL.Test.Front
      
             
            // builder.RegisterSalHandler<TestCommandResultHandler1>();
-            builder.RegisterSalHandler<TestCommandResultHandler3>();
+        //    builder.RegisterSalHandler<TestCommandResultHandler3>();
+            builder.RegisterSalHandler<GateEventHandler>();
 
             
            // builder.RegisterProcessor<TestFront>();
@@ -55,9 +56,6 @@ namespace SAL.Test.Front
          var front = scope.ResolveKeyed<ISalClient>(Contour.Front);
          var back = scope.ResolveKeyed<ISalClient>(Contour.Back);
 
-         front.PublishCommandAsync("SalTest.FrontTest", new TestCommand()).Wait();
-
-         back.PublishCommandAsync("SalTest.Front.Test",new TestCommand()).Wait();
         }
 
         public void Offline()
@@ -68,7 +66,25 @@ namespace SAL.Test.Front
         {
         }
     }
-
+    
+    internal class GateEventHandler : 
+        IEventHandler2<IAmOffline>, 
+        IEventHandler2<HeartbeatEvent>
+    {
+        public Task Handle(IAmOffline evnt, EventContext eventContext, ExecutingContext executingContext)
+        {
+            return Task.CompletedTask;
+        }
+        
+        public Task Handle(HeartbeatEvent evnt, EventContext eventContext, ExecutingContext executingContext)
+        {
+            return Task.CompletedTask;
+        }
+    }
+    
+    
+    
+    
     [SalExternalHttpPath("/api/ehtest")]
     public class TestExternal : FrontExternalHttpMethod
     {
@@ -92,111 +108,13 @@ namespace SAL.Test.Front
 </html>
 ";
 
-       //     SessionManager.Current.AddOrUpdate("Test", "Test");
+            //     SessionManager.Current.AddOrUpdate("Test", "Test");
             await PublishResult(new ExternalHttpResponse
             {
                 ContentType = "text/html;charset=UTF-8",
                 Body = Encoding.UTF8.GetBytes(returnHtml),
                 StatusCode = 200
             });
-        }
-    }
-
-    
-    public class TestCommand 
-    {
-        
-        public int[] Int { get; set; }
-        public string Str { get; set; }
-    }
-    public class TestResult 
-    {
-        public int Int { get; set; }
-        public string Str { get; set; }
-    }
-    public class Test2Result 
-    {
-        public int Int2 { get; set; }
-        public string Str2 { get; set; }
-    }
-
-
-    
-
-    [BackCommandName("SalTest.Front.Test")]
-    [FrontCommandName("SalTest.FrontTest")]
-    public class  FrontTestCommandHandler : BaseFrontBackCommandHandlerAsync<TestCommand, TestResult>
-    {
-
-        public override async Task Handle(TestCommand command)
-        {
-            await PublishResult(new TestResult
-            {
-                Int = 10,
-                Str = "100"
-            });
-        }
-    }
-
-
-
-    
-    
-    [SalContourHandler(Contour.Back)]
-    public class TestCommandResultHandler3 : 
-        ICommandResultHandle2Async<Test2Result>, 
-        ICommandResultHandle2Async<TestResult>
-    {
-        [SalCommandName("SalTest.Front.Test")]
-        public Task<bool> ResultHandle(CommandResult<Test2Result> result, CommandResultContext commandContext, ExecutingContext executingContext)
-        {
-            return Task.FromResult(true);
-        }
-        
-        [SalCommandName("SalTest.Front.Test")]
-        public Task<bool> ResultHandle(CommandResult<TestResult> result, CommandResultContext commandContext, ExecutingContext executingContext)
-        {
-            return Task.FromResult(true);
-        }
-    }
-    
-    
-    [SalContourHandler(Contour.Front)]
-    [SalCommandName("SalTest.FrontTest")]
-    public class TestCommandResultHandler1 : ICommandResultHandle2Async<TestResult>
-    {
-        public Task<bool> ResultHandle(CommandResult<TestResult> result, CommandResultContext commandContext, ExecutingContext executingContext)
-        {
-            return Task.FromResult(true);
-        }
-    }
-    
-   
-
-    [SalContourHandler(Contour.Back)]
-
-    public class TestCommonCommandResultHandler : ICommonCommandResultHandler2
-    {
-        public Task<bool> ResultHandle(CommonCommandResult result, CommandResultContext commandContext, ExecutingContext executingContext)
-        {
-            return Task.FromResult(true);
-        }
-    }
-    
-    
-    [SalEventName("System.WhoIsIntegration")]
-    public class WhoIsIntegrationEvent : IEvent
-    {
-    }
-    
-    [SalContourHandler(Contour.Back)]
-    internal class GateEventHandler : IEventHandler2<WhoIsIntegrationEvent>
-    {
-        
-        [SalEventName("System.WhoIsIntegration")]
-        public Task Handle(WhoIsIntegrationEvent evnt, EventContext eventContext, ExecutingContext executingContext)
-        {
-            return Task.CompletedTask;
         }
     }
 }
