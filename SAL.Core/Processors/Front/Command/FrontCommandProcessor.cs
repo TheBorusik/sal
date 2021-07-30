@@ -152,15 +152,19 @@ namespace SAL.Core.Processors
                 }
                 else
                 {
-                    commandName = handleMethod.GetAttribute<SalCommandNameAttribute>()?.Name;
+                    commandName = commandType.GetSalName();
+                    
+                    var cnAttr = handleMethod.GetAttribute<SalCommandNameAttribute>()?.Name;
 
-                    if (string.IsNullOrWhiteSpace(commandName) && handlerInterfaces.Length == 1)
+                    if (string.IsNullOrWhiteSpace(cnAttr) && handlerInterfaces.Length == 1)
                     {
-                        commandName = handlerType.GetAttribute<SalCommandNameAttribute>()?.Name;
+                        cnAttr = handlerType.GetAttribute<SalCommandNameAttribute>()?.Name;
                     }
 
-                    if (string.IsNullOrWhiteSpace(commandName))
-                        throw new Exception($"Для {commandType.Name} в {handlerType.Name} не заданно имя команды (SalCommandNameAttribute)");
+                    if (string.IsNullOrWhiteSpace(cnAttr) && string.IsNullOrWhiteSpace(commandName))
+                        throw new Exception($"Для {handlerInterface.Name} в {handlerType.Name} не заданно имя команды (SalCommandNameAttribute)");
+                    if (!string.IsNullOrWhiteSpace(cnAttr))
+                        commandName = cnAttr;
                 }
                 
                 

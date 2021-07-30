@@ -143,31 +143,36 @@ namespace SAL.Core.Processors
             {
                 var args = handlerInterface.GetGenericArguments();
                 
-
                 var commandType = args[0];
-                
                 var interfaceMethodInfo = handlerInterface.GetMethod("Handle");
                 var handleMethod = handlerType.GetMethodByInterfaceMethodInfo(interfaceMethodInfo);
-                
+
                 string commandName = null;
-               
+                
+                
                 if (nameResolvert != null)
                 {
-                    commandName = nameResolvert.Resolve(handlerInterface);
+                     commandName = nameResolvert.Resolve(handlerInterface);
                     if (string.IsNullOrWhiteSpace(commandName))
                         throw new Exception($"Для {commandType.Name} в {handlerType.Name} не удаеться получить имя команды");
-                }
-                else
-                {
-                    commandName = handleMethod.GetAttribute<SalCommandNameAttribute>()?.Name;
 
-                    if (string.IsNullOrWhiteSpace(commandName) && handlerInterfaces.Length == 1)
+
+
+                }
+                else 
+                {
+                    commandName = commandType.GetSalName();
+                    var cnAttr = handleMethod.GetAttribute<SalCommandNameAttribute>()?.Name;
+
+                    if (string.IsNullOrWhiteSpace(cnAttr) && handlerInterfaces.Length == 1)
                     {
-                        commandName = handlerType.GetAttribute<SalCommandNameAttribute>()?.Name;
+                        cnAttr = handlerType.GetAttribute<SalCommandNameAttribute>()?.Name;
                     }
 
-                    if (string.IsNullOrWhiteSpace(commandName))
+                    if (string.IsNullOrWhiteSpace(cnAttr) && string.IsNullOrWhiteSpace(commandName))
                         throw new Exception($"Для {handlerInterface.Name} в {handlerType.Name} не заданно имя команды (SalCommandNameAttribute)");
+                    if (!string.IsNullOrWhiteSpace(cnAttr))
+                        commandName = cnAttr;
                 }
 
                 var commandHandlerInfo = new CommandHandlerInfo

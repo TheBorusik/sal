@@ -123,16 +123,21 @@ namespace SAL.Core.Processors
                 var interfaceMethodInfo = handlerInterface.GetMethod("Handle");
                 var handleMethod = handlerType.GetMethodByInterfaceMethodInfo(interfaceMethodInfo);
                 
-                var eventName = handleMethod.GetAttribute<SalEventNameAttribute>()?.Name;
+ 
+                var eventName = eventType.GetSalName();
+                
+                 var enAttr= handleMethod.GetAttribute<SalEventNameAttribute>()?.Name;
 
-                if (string.IsNullOrWhiteSpace(eventName) && handlerInterfaces.Length == 1)
+                if (string.IsNullOrWhiteSpace(enAttr) && handlerInterfaces.Length == 1)
                 {
-                    eventName = handlerType.GetAttribute<SalEventNameAttribute>()?.Name;
+                    enAttr = handlerType.GetAttribute<SalEventNameAttribute>()?.Name;
                 }
 
-                if (string.IsNullOrWhiteSpace(eventName))
+                if (string.IsNullOrWhiteSpace(enAttr) && string.IsNullOrWhiteSpace(eventName))
                     throw new Exception($"Для {eventType.Name} в {handlerType.Name}  не заданно имя Event (SalEventNameAttribute)");
-
+                
+                if (!string.IsNullOrWhiteSpace(enAttr))
+                    eventName = enAttr;
 
                 var isSystem = string.Equals(eventName.Split(".").First(), "System", StringComparison.InvariantCultureIgnoreCase);
 

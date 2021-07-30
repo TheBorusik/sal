@@ -22,7 +22,9 @@ namespace SAL.Core.Helpers
         {
             if (type.IsAssignableTo<IEvent>())
                 return ProcessEvent(type);
-            return ProcessCommand(type);
+            if(type.IsAssignableTo<ICommand>())
+                return ProcessCommand(type);
+            return null;
         }
 
 
