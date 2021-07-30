@@ -149,5 +149,26 @@ namespace SAL.API
 
             return dto;
         }
+        
+        public static Exception CreateValidation(IList<FieldError> validationErrors)
+        {
+            var dto = new InternalExceptionDTO
+            {
+                Code = SalErrorCodes.ValidationFailed,
+                Message = string.Join(Environment.NewLine,
+                    validationErrors.Select(v => string.IsNullOrWhiteSpace(v.Path) ? v.Description : $"{v.Description}. Path '{v.Path}'")),
+                TimeStamp = DateTime.UtcNow,
+                Properties = JObject.FromObject(new { ValidationErrors  = validationErrors }) ,
+                AdapterName = $"{AdapterConfiguration.AdapterType}.{AdapterConfiguration.AdapterName}",
+                HandlerName = $"{HandlerContext.HandlerType}.{HandlerContext.HandlerName}",
+                SessionId = HandlerContext.SessionId,
+                CorrelationId = HandlerContext.CorrelationId,
+                AuthId = HandlerContext.AuthId,
+                ProcessId = HandlerContext.ProcessId
+            };
+
+            return dto.ToException();
+        }
+        
     }
 }
