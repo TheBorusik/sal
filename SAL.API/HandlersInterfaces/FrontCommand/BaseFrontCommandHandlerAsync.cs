@@ -1,30 +1,25 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Autofac;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json.Schema;
 
 namespace SAL.API
 {
     public abstract class BaseFrontCommandHandlerAsync<TCommand, TCommandResult> : 
-        IFrontCommandHandler2Async<TCommand>
+        IFrontCommandHandler2Async<TCommand>,
+        ICommandSchemeCreator,
+        ICommandNameResolver
     {
         protected CommandContext commandContext;
 
-        protected BaseFrontCommandHandlerAsync(ISalClient backClient)
-        {
-            this.backClient = backClient;
-        }
-
-        protected ISalClient backClient { get; set; }
+        
         protected ISalClient frontClient { get; set; }
         protected ILifetimeScope scope { get; set; }
         protected ILogger logger { get; set; }
         
-        public virtual Task<IEnumerable<FieldError>> Validate(TCommand verifiable)
-        {
-            return Task.FromResult(new FieldError[0].AsEnumerable());
-        }
         
         public abstract Task Handle(TCommand command);
 
@@ -62,6 +57,20 @@ namespace SAL.API
         }
 
 
+        public JSchema GetCommandSchema(string commandName)
+        {
+            return SalSchema.Generate(typeof(TCommand));
+        }
+
+        public JSchema GetResultSchema(string commandName)
+        {
+            return SalSchema.Generate(typeof(TCommandResult));
+        }
+
+        public string Resolve(Type handlerInterfaceType)
+        {
+            return GetType().GetAttribute<FrontCommandNameAttribute>()?.CommandName;
+        }
     }
     
 }

@@ -80,14 +80,12 @@ namespace SAL.API
         {
             if (handlerInterfaceType == typeof(IFrontCommandHandler2Async<TCommand>))
             {
-                var name = GetType().GetAttribute<FrontCommandNameAttribute>()?.CommandName;
-                return name;
+                return GetType().GetAttribute<FrontCommandNameAttribute>()?.CommandName;
             }
 
             if (handlerInterfaceType == typeof(ICommandHandler2Async<TCommand>))
             {
-                var name2=   GetType().GetAttribute<BackCommandNameAttribute>()?.CommandName;
-                return name2;
+                return  GetType().GetAttribute<BackCommandNameAttribute>()?.CommandName;
             }
 
             return null;

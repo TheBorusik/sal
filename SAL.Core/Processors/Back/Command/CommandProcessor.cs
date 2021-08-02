@@ -155,9 +155,6 @@ namespace SAL.Core.Processors
                      commandName = nameResolvert.Resolve(handlerInterface);
                     if (string.IsNullOrWhiteSpace(commandName))
                         throw new Exception($"Для {commandType.Name} в {handlerType.Name} не удаеться получить имя команды");
-
-
-
                 }
                 else 
                 {

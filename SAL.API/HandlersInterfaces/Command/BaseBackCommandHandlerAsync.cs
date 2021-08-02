@@ -1,14 +1,18 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Autofac;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json.Schema;
 using SAL.Infrastructure;
 
 namespace SAL.API
 {
-    public abstract class BaseCommandHandlerAsync<TCommand, TCommandResult> :
-        ICommandHandler2Async<TCommand>
+    public abstract class BaseBackCommandHandlerAsync<TCommand, TCommandResult> :
+        ICommandHandler2Async<TCommand>,
+        ICommandSchemeCreator,
+        ICommandNameResolver
         where TCommand : class, new()
         where TCommandResult : class,  new()
 
@@ -56,6 +60,21 @@ namespace SAL.API
             logger = executingContext.Logger;
             scope = executingContext.Scope;
             return Handle(command);
+        }
+
+        public JSchema GetCommandSchema(string commandName)
+        {
+            return SalSchema.Generate(typeof(TCommand));
+        }
+
+        public JSchema GetResultSchema(string commandName)
+        {
+            return SalSchema.Generate(typeof(TCommandResult));
+        }
+
+        public string Resolve(Type handlerInterfaceType)
+        {
+            return  GetType().GetAttribute<BackCommandNameAttribute>()?.CommandName;
         }
     }
 }
