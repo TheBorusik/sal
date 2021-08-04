@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using Autofac;
 using Microsoft.Extensions.Logging;
 using SAL.API;
+using SAL.API.Const;
 using SAL.Core.SystemHandlers;
 using SAL.Infrastructure;
 
@@ -33,7 +34,7 @@ namespace SAL.Core.Processors.System
                     AdapterHostIp = AdapterConfiguration.AdapterHostIp,
                     InDocker = AdapterConfiguration.InDocker,
                     Timestamp = DateTime.UtcNow
-                }, SystemEventTimes.BaseTTL);
+                }, SalConst.SystemEventTTL);
             }
             catch (Exception ex)
             {

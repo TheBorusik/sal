@@ -1,5 +1,6 @@
 ﻿using System.Threading.Tasks;
 using SAL.API;
+using SAL.API.Const;
 using SAL.Core.Service;
 using SAL.Infrastructure;
 
@@ -21,7 +22,7 @@ namespace SAL.Core.SystemHandlers
             if (eventContext.CheckIsMyEvent())
                 return Task.CompletedTask;
 
-            if (eventContext.CheckIsExpire(SystemEventTimes.BaseTTL))
+            if (eventContext.CheckIsExpire(SalConst.SystemEventTTL))
                 return Task.CompletedTask;
             
 

@@ -2,6 +2,7 @@
 using System.Threading;
 using System.Threading.Tasks;
 using SAL.API;
+using SAL.API.Const;
 
 namespace SAL.Core.Processors.System
 {
@@ -23,7 +24,7 @@ namespace SAL.Core.Processors.System
                 beatTask = Task.Run(async () =>
                 {
                     var sendEvent = new AutoResetEvent(false);
-                    var beatTimer = new Timer(s => sendEvent.Set(), null, TimeSpan.FromSeconds(0), TimeSpan.FromSeconds(5));
+                    var beatTimer = new Timer(s => sendEvent.Set(), null, TimeSpan.FromSeconds(0), SalConst.HearBeatInterval);
                     var waitHandles = new[] { cancellationToken.Token.WaitHandle, sendEvent };
 
                     while (true)

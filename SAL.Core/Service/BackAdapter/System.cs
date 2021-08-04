@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Autofac;
 using SAL.API;
+using SAL.API.Const;
 using SAL.Core.SystemHandlers;
 using SAL.Infrastructure;
 
@@ -36,7 +37,7 @@ namespace SAL.Core.Service
                 {
                     Type = AdapterConfiguration.AdapterType,
                     Name = AdapterConfiguration.AdapterName
-                }, SystemEventTimes.BaseTTL).Wait();
+                }, SalConst.SystemEventTTL).Wait();
             }
             catch (Exception)
             {
@@ -96,7 +97,7 @@ namespace SAL.Core.Service
                         CommandHandlers = backCommands.ToArray(),
                         CommandResultHandlers = backCommandResults.ToArray(),
                         EventHandlers = backEvents.ToArray()
-                    }, SystemEventTimes.BaseTTL);
+                    }, SalConst.SystemEventTTL);
             }
             catch (Exception ex)
             {
