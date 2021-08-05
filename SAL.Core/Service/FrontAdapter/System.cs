@@ -87,6 +87,7 @@ namespace SAL.Core.Service
                         AdapterHostName = AdapterConfiguration.AdapterHostName,
                         AdapterHostIp = AdapterConfiguration.AdapterHostIp,
                         InDocker = AdapterConfiguration.InDocker,
+                        MachineName = AdapterConfiguration.MachineName,
                         ExternalHttp = externalHttp.ToArray(),
                         CommandHandlers = frontCommands.ToArray(),
                         CommandResultHandlers = frontCommandResults.ToArray(),

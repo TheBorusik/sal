@@ -15,6 +15,8 @@ namespace SAL.API
         public string[] AdapterHostIp { get; set; }
         
         public bool InDocker { get; set; }
+        
+        public string MachineName { get; set; }
 
         
         public CommandHandlerInfo[] CommandHandlers { get; set; }
