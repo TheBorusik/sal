@@ -61,6 +61,7 @@ namespace SAL.Core.Service
 
             builder.RegisterType<RabbitMQTransport>()
                 .As<ITransport>()
+                .Keyed<ITransport>(Contour.Back)
                 .WithParameter("contour", Contour.Back)
                 .SingleInstance();
 
