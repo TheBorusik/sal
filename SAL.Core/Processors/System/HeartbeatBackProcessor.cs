@@ -33,6 +33,7 @@ namespace SAL.Core.Processors.System
                     AdapterHostName = AdapterConfiguration.AdapterHostName,
                     AdapterHostIp = AdapterConfiguration.AdapterHostIp,
                     InDocker = AdapterConfiguration.InDocker,
+                    MachineName = AdapterConfiguration.MachineName,
                     
                     Timestamp = DateTime.UtcNow
                 }, SalConst.SystemEventTTL);
