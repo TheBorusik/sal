@@ -91,18 +91,7 @@ namespace SAL.Core.Processors
                 }
 
                 commandProcessorConfig = baseJsonConfig.ToObject<CommandProcessorConfig>();
-
-
-                if (!AdapterConfiguration.InDocker)
-                {
-                    var tmp = new JObject();
-                    tmp.AddOrUpdate(ConfigurationSectionNames.CommandProcessor, commandProcessorConfig);
-                    var configStr = tmp.ToIndentedJson();
-                    File.WriteAllText(Path.Combine(AdapterConfiguration.ConfigPath, $"{ConfigurationSectionNames.CommandProcessor}.txt"), configStr);
-                    logger.Info($"Command processing config \n{configStr}");
-                }
-
-
+                
                 var transport = container.Resolve<ITransport>();
 
                 var subscriptionFactory = transport.CreateMessageSubscription();

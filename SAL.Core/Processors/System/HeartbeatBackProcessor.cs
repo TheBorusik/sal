@@ -27,11 +27,13 @@ namespace SAL.Core.Processors.System
                 {
                     Type = AdapterConfiguration.AdapterType,
                     Name = AdapterConfiguration.AdapterName,
+                    AdapterContour = AdapterConfiguration.AdapterContour,
                     AdapterVersion = AdapterConfiguration.AdapterVersion,
                     SalVersion = AdapterConfiguration.SalVersion,
                     AdapterHostName = AdapterConfiguration.AdapterHostName,
                     AdapterHostIp = AdapterConfiguration.AdapterHostIp,
                     InDocker = AdapterConfiguration.InDocker,
+                    
                     Timestamp = DateTime.UtcNow
                 }, SalConst.SystemEventTTL);
             }

@@ -83,15 +83,7 @@ namespace SAL.Core.Processors
                 }
 
                 processorConfig = baseJsonConfig.ToObject<ExternalHttpProcessorConfig>();
-
-                if (!AdapterConfiguration.InDocker)
-                {
-                    var tmp = new JObject();
-                    tmp.AddOrUpdate(ConfigurationSectionNames.FrontExternalHttpProcessor, processorConfig);
-                    var configStr = tmp.ToIndentedJson();
-                    File.WriteAllText(Path.Combine(AdapterConfiguration.ConfigPath, $"{ConfigurationSectionNames.FrontExternalHttpProcessor}.txt"), configStr);
-                    logger.Info($"Front External Http processing config \n{configStr}");
-                }
+                
 
                 var transport = container.ResolveKeyed<ITransport>(Contour.Front);
 

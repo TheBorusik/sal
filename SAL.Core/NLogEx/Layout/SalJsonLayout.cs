@@ -6,6 +6,7 @@ using Newtonsoft.Json.Serialization;
 using NLog;
 using NLog.Layouts;
 using SAL.API;
+using SAL.Infrastructure;
 
 namespace SAL.Core.NLogEx.Layout
 {
@@ -17,7 +18,7 @@ namespace SAL.Core.NLogEx.Layout
         public string AdapterName { get; set; }
         public string AdapterVersion { get; set; }
         public int SalVersion { get; set; }
-        public string Contour { get; set; }
+        public Contour AdatpterContour { get; set; }
         public string AdapterHostName { get; set; }
         public string[] AdapterHostIp { get; set; }
         public string HandlerType { get; set; }
@@ -28,6 +29,7 @@ namespace SAL.Core.NLogEx.Layout
         
         public long? AuthId { get; set; }
         public long? ProcessId { get; set; }
+        public string OperationId { get; set; } 
         public string Level { get; set; }
         public string Logger { get; set; }
         public string Message { get; set; }
@@ -91,7 +93,7 @@ namespace SAL.Core.NLogEx.Layout
                 AdapterName = AdapterConfiguration.AdapterName,
                 AdapterVersion = AdapterConfiguration.AdapterVersion,
                 SalVersion = AdapterConfiguration.SalVersion,
-                Contour = AdapterConfiguration.Contour,
+                AdatpterContour = AdapterConfiguration.AdapterContour,
                 AdapterHostIp = AdapterConfiguration.AdapterHostIp,
                 AdapterHostName = AdapterConfiguration.AdapterHostName,
                 HandlerType = HandlerContext.HandlerType.ToString(),
@@ -100,6 +102,8 @@ namespace SAL.Core.NLogEx.Layout
                 CorrelationId = HandlerContext.CorrelationId,
                 AuthId = HandlerContext.AuthId,
                 ProcessId = HandlerContext.ProcessId,
+                OperationId = HandlerContext.OperationId,
+                
                 Level = logEvent.Level.Name,
                 Logger = logEvent.LoggerName,
                 Message = logEvent.FormattedMessage,

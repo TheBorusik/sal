@@ -16,7 +16,7 @@ using SAL.Core.NLogEx.Adapter;
 using SAL.Core.NLogEx.Layout;
 using SAL.Core.NLogEx.LayoutRenderer;
 using SAL.Core.NLogEx.LayoutRenderer.HandlerContextRenderer;
-
+using SAL.Infrastructure;
 
 
 namespace SAL.Core.Service
@@ -41,6 +41,7 @@ namespace SAL.Core.Service
             AdapterConfiguration.AdapterType = Environment.GetEnvironmentVariable("AdapterType");
 
             AdapterConfiguration.InDocker = Environment.GetEnvironmentVariable("DOTNET_RUNNING_IN_CONTAINER") == "true";
+            AdapterConfiguration.MachineName = System.Environment.MachineName;
             
             if(string.IsNullOrWhiteSpace(AdapterConfiguration.AdapterType))
                 throw new ConfigurationErrorException("Не заданно значение AdapterType в переменных окружения");
@@ -157,7 +158,7 @@ namespace SAL.Core.Service
 
         protected virtual void ApplyConfiguration()
         {
-            AdapterConfiguration.Contour = "BACK";
+            AdapterConfiguration.AdapterContour = Contour.Back;
             
             var messageBus = ConfigWatcher.GetSection(ConfigurationSectionNames.MessageBus)?.ConvertValue<RabbitConfig>();
             if (messageBus == null)

@@ -89,6 +89,7 @@ namespace SAL.Core.Service
                     {
                         Type = AdapterConfiguration.AdapterType,
                         Name = AdapterConfiguration.AdapterName,
+                        AdapterContour = AdapterConfiguration.AdapterContour,
                         AdapterVersion = AdapterConfiguration.AdapterVersion,
                         SalVersion = AdapterConfiguration.SalVersion,
                         AdapterHostName = AdapterConfiguration.AdapterHostName,

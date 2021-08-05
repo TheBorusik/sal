@@ -1,3 +1,5 @@
+using SAL.Infrastructure;
+
 namespace SAL.API
 {
     public static class AdapterConfiguration
@@ -19,10 +21,11 @@ namespace SAL.API
         public static int SalVersion { get; internal set; }
         public static int Revision { get; internal set; }
 
-        public static string Contour { get; internal set; }
+        public static Contour AdapterContour { get; internal set; }
         public static string ContourName { get; internal set; }
         public static string BackContourName { get; internal set; }
 
         public static bool InDocker { get; internal set; }
+        public static string MachineName { get; internal set; }
     }
 }

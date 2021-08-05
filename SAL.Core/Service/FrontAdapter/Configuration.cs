@@ -7,6 +7,7 @@ using SAL.Core.NLogEx.Adapter;
 using SAL.Core.NLogEx.Layout;
 using SAL.Core.NLogEx.LayoutRenderer;
 using SAL.Core.NLogEx.LayoutRenderer.HandlerContextRenderer;
+using SAL.Infrastructure;
 
 
 namespace SAL.Core.Service
@@ -15,7 +16,7 @@ namespace SAL.Core.Service
     {
         protected override void ApplyConfiguration()
         {
-            AdapterConfiguration.Contour = "FRONT";
+            AdapterConfiguration.AdapterContour = Contour.Front;
             
             var messageBus = ConfigWatcher.GetSection(ConfigurationSectionNames.MessageBus)?.ConvertValue<RabbitConfig>();
             if (messageBus == null)

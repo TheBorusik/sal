@@ -26,7 +26,7 @@ namespace SAL.Core.NLogEx.Adapter
 
             logFactory.Configuration.Variables["adapterName"] = AdapterConfiguration.AdapterName;
             logFactory.Configuration.Variables["adapterType"] = AdapterConfiguration.AdapterType;
-            logFactory.Configuration.Variables["adapterContour"] = AdapterConfiguration.Contour;
+            logFactory.Configuration.Variables["adapterContour"] = AdapterConfiguration.AdapterContour.ToString();
 
             var logDir = Path.Combine(AdapterConfiguration.LogRootPath, $"{AdapterConfiguration.ContourName}-{AdapterConfiguration.AdapterType}");
             logFactory.Configuration.Variables["logDir"] = logDir;
