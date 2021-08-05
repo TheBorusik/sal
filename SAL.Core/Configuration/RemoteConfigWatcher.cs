@@ -92,7 +92,7 @@ namespace SAL.Core.Configuration
             subscriber.Subscribe(configurationBusName).OnMessage(RedisHandler);
 
             Console.WriteLine("Connected to configurationBus");
-            Console.WriteLine("Geting AdapterName");
+            Console.WriteLine($"Geting AdapterName for type {AdapterConfiguration.AdapterType}");
             baseServiceSection.AdapterName = GetAdapterName(e => throw new ConfigurationErrorException(e.Code)).Result;
             baseServiceSection.LogRoot = "";
             baseServiceSection.RootStorePath = "";
