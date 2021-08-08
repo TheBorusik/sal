@@ -78,7 +78,7 @@ namespace SAL.Core.Service
                 var firstModule = modules.First();
                 var firstModuleType = Type.GetType(firstModule, false);
                 if (firstModuleType == null)
-                    throw new ConfigurationErrorException("Не возможно получить тип первого модуля.");
+                    throw new ConfigurationErrorException($"Не возможно получить тип первого модуля ({firstModule})");
 
                 var mainAssembly = firstModuleType.Assembly;
                 
