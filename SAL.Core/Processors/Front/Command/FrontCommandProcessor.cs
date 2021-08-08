@@ -109,6 +109,32 @@ namespace SAL.Core.Processors
 
         private void RegisterCommandHandler(Type handlerType)
         {
+            try
+            {
+                RegisterCommandHandler2(handlerType);
+            }
+            catch (Exception ex)
+            {
+                logger.Error($"Ошибка добавления типа {handlerType.Name}", ex);
+                throw;
+            }
+        }
+
+        private void RegisterCommonCommandHandler(Type handlerType)
+        {
+            try
+            {
+                RegisterCommonCommandHandler2(handlerType);
+            }
+            catch (Exception ex)
+            {
+                logger.Error($"Ошибка добавления типа {handlerType.Name}", ex);
+                throw;
+            }
+        }
+        
+        private void RegisterCommandHandler2(Type handlerType)
+        {
             var handlerInterfaces = handlerType.GetInterfaces()
                 .Where(i => i.IsAssignableTo<IFrontCommandHandler2>() && i.IsGenericType).ToArray();
 
@@ -197,7 +223,7 @@ namespace SAL.Core.Processors
             }
         }
 
-        private void RegisterCommonCommandHandler(Type handlerType)
+        private void RegisterCommonCommandHandler2(Type handlerType)
         {
             var commandNameAttr = handlerType.GetAttribute<SalCommandNameAttribute>();
 
