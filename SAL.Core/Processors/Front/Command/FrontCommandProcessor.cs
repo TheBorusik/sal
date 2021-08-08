@@ -151,7 +151,8 @@ namespace SAL.Core.Processors
             {
                 var interfaceMethodInfo = handlerInterface.GetMethod("Handle");
                 var handleMethod = handlerType.GetMethodByInterfaceMethodInfo(interfaceMethodInfo);
-
+                if (handleMethod == null)
+                    handleMethod = interfaceMethodInfo;
 
                 var externalUris = handleMethod.GetAttributes<SalExternalUriAttribute>().Select(a => a.Uri).ToArray();
                 if(externalUris.Length == 0 && handlerInterfaces.Length == 1)

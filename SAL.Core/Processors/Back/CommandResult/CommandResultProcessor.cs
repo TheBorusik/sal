@@ -87,7 +87,34 @@ namespace SAL.Core.Processors
             }
         }
 
+
         private void RegisterCommandResultHandler(Type handlerType)
+        {
+            try
+            {
+                RegisterCommandResultHandler2(handlerType);
+            }
+            catch (Exception ex)
+            {
+                logger.Error($"Ошибка добавления типа {handlerType.Name}", ex);
+                throw;
+            }
+        }
+        
+        private void RegisterCommonCommandResultHandler(Type handlerType)
+        {
+            try
+            {
+                RegisterCommonCommandResultHandler2(handlerType);
+            }
+            catch (Exception ex)
+            {
+                logger.Error($"Ошибка добавления типа {handlerType.Name}", ex);
+                throw;
+            }
+        }
+
+        private void RegisterCommandResultHandler2(Type handlerType)
         {
             var contourAttr = handlerType.GetAttribute<SalContourHandlerAttribute>();
             if(contourAttr?.Contour == Contour.Front)
@@ -150,7 +177,7 @@ namespace SAL.Core.Processors
             }
         }
 
-        private void RegisterCommonCommandResultHandler(Type handlerType)
+        private void RegisterCommonCommandResultHandler2(Type handlerType)
         {
             var contourAttr = handlerType.GetAttribute<SalContourHandlerAttribute>();
             if(contourAttr?.Contour == Contour.Front)

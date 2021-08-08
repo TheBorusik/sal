@@ -109,6 +109,19 @@ namespace SAL.Core.Processors
 
         private void RegisterHandler(Type handlerType)
         {
+            try
+            {
+                RegisterHandler2(handlerType);
+            }
+            catch (Exception ex)
+            {
+                logger.Error($"Ошибка добавления типа {handlerType.Name}", ex);
+                throw;
+            }
+        }
+        
+        private void RegisterHandler2(Type handlerType)
+        {
             var externalPathMethod = handlerType.GetCustomAttributes(typeof(SalExternalHttpPathAttribute))
                 .OfType<SalExternalHttpPathAttribute>().FirstOrDefault();
             if (externalPathMethod == null)

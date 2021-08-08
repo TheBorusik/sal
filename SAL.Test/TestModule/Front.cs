@@ -25,10 +25,10 @@ namespace SAL.Test.Front
             
            // builder.RegisterSalHandler<TestCommandResultHandler1>();
         //    builder.RegisterSalHandler<TestCommandResultHandler3>();
-            builder.RegisterSalHandler<GateEventHandler>();
+            builder.RegisterSalHandler<SendCommandResultHandler>();
 
             
-           // builder.RegisterProcessor<TestFront>();
+            builder.RegisterProcessor<TestFront>();
 
         }
     }
@@ -56,6 +56,8 @@ namespace SAL.Test.Front
          var front = scope.ResolveKeyed<ISalClient>(Contour.Front);
          var back = scope.ResolveKeyed<ISalClient>(Contour.Back);
 
+         back.PublishCommandAsync("Observer.SendCommandResult1", new { });
+
         }
 
         public void Offline()
@@ -82,6 +84,24 @@ namespace SAL.Test.Front
         }
     }
     
+    
+    public class SendCommandResultCommand : IHaveResult<Nothing>
+    {
+        public string CorrelationId { get; set; }
+        public CommonCommandResult CommandResult { get; set; }       
+    }
+    
+    
+    
+    [FrontCommandName("Observer.SendCommandResult1")]
+    [BackCommandName("Observer.SendCommandResultCom1")]
+    public class SendCommandResultHandler : BaseFrontBackCommandHandlerAsync<SendCommandResultCommand, Nothing>
+    {
+        public override  Task Handle(SendCommandResultCommand command)
+        {
+            return Task.CompletedTask;
+        }
+    }
     
     
     

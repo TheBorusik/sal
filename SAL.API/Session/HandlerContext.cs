@@ -108,13 +108,13 @@ namespace SAL.API
         }
         
         
-        public static string HandlerName => data.Value.HandlerName;
-        public static HandlerTypes HandlerType => data.Value.HandlerType;
-        public static string SessionId => data.Value.SessionId;
-        public static string CorrelationId => data.Value.CorrelationId;
-        public static long? ProcessId => data.Value.ProcessId;
-        public static long? AuthId => data.Value.AuthId;
-        public static string OperationId => data.Value.OperationId;
+        public static string HandlerName => data.Value?.HandlerName;
+        public static HandlerTypes HandlerType => data.Value?.HandlerType ?? HandlerTypes.Unknown;
+        public static string SessionId => data.Value?.SessionId;
+        public static string CorrelationId => data.Value?.CorrelationId;
+        public static long? ProcessId => data.Value?.ProcessId;
+        public static long? AuthId => data.Value?.AuthId;
+        public static string OperationId => data.Value?.OperationId;
         
     }
 }
