@@ -180,6 +180,10 @@ namespace SAL.Core.Service
             
             LayoutRenderer.Register<SalMessageLayoutRenderer>("message");
             SalLayoutRenderRegistrar.Register(LayoutRenderer.Register);
+            
+            var assembly = Assembly.Load("NLog.Targets.ElasticSearch");
+            NLog.Config.ConfigurationItemFactory.Default.RegisterItemsFromAssembly(assembly);
+            
             nLogFactory = new NLogFactoryAdapter(ConfigWatcher.GetSection(ConfigurationSectionNames.Nlog));
             logger = nLogFactory.GetLogger(nameof(BackAdapter));
         }

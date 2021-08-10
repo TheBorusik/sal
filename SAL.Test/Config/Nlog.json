@@ -8,6 +8,10 @@
     "Targets": {
       "@async": true,
 
+
+
+      
+
 /*      "LogStash": {
         "Type": "BufferingWrapper",
         "FlushTimeout": 5000,

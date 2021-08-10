@@ -38,17 +38,7 @@ namespace SAL.Core.Service
 
         protected override void InitNLog()
         {
-            Layout.Register<SalJsonLayout>("SalJsonLayout");
-            LayoutRenderer.Register<SessionIdLayoutRenderer>("sid");
-            LayoutRenderer.Register<CorrelationIdLayoutRenderer>("cid");
-            LayoutRenderer.Register<WfmProcessIdLayoutRenderer>("pid");
-            LayoutRenderer.Register<AuthIdLayoutRenderer>("aid");
-            LayoutRenderer.Register<OperationIdLayoutRenderer>("oid");
-            
-            LayoutRenderer.Register<SalMessageLayoutRenderer>("message");
-
-            SalLayoutRenderRegistrar.Register(LayoutRenderer.Register);
-            nLogFactory = new NLogFactoryAdapter(ConfigWatcher.GetSection(ConfigurationSectionNames.Nlog));
+            base.InitNLog();
             logger = nLogFactory.GetLogger(nameof(FrontAdapter));
         }
     }

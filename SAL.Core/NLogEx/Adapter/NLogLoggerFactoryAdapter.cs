@@ -21,6 +21,8 @@ namespace SAL.Core.NLogEx.Adapter
         private void Load(JToken nlogConfig)
         {
             logFactory.Configuration = new JTokenLoggingConfiguration(nlogConfig, logFactory);
+            
+
 
             logFactory.KeepVariablesOnReload = true;
 

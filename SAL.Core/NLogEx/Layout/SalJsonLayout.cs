@@ -53,38 +53,26 @@ namespace SAL.Core.NLogEx.Layout
     public class SalJsonLayout : NLog.Layouts.Layout
     {
 
-        private static readonly JsonSerializerSettings JSettings;
-        private static readonly JsonSerializer JSerializer;
-
+        private static readonly JsonSerializerSettings jSettings;
+        
         static SalJsonLayout()
         {
-            JSettings = new JsonSerializerSettings
+            jSettings = new JsonSerializerSettings
             {
                 Formatting = Formatting.None,
-                ContractResolver = new CamelCasePropertyNamesContractResolver(),
+                ContractResolver = new DefaultContractResolver(),
                 NullValueHandling = NullValueHandling.Ignore,
                 DefaultValueHandling = DefaultValueHandling.Include,
                 DateFormatHandling = DateFormatHandling.IsoDateFormat,
                 TypeNameHandling = TypeNameHandling.None
             };
 
-            JSettings.Converters.Add(new StringEnumConverter());
-
-            JSerializer = JsonSerializer.CreateDefault(JSettings);
+            jSettings.Converters.Add(new StringEnumConverter());
         }
-
-        public bool UniversalTime { get; set; }
-
+        
         protected override string GetFormattedMessage(LogEventInfo logEvent)
         {
-            var jObject = new JObject();
-            logEvent.Parameters?.ForEach(p =>
-            {
-                if (p is LogEventInfoProperty leiProperty)
-                {
-                    jObject.Add(ToCamelCase(leiProperty.Name), JToken.FromObject(leiProperty.Value, JSerializer));
-                }
-            });
+
 
             var salLogEvent = new SalLogEventInfo
             {
@@ -113,50 +101,10 @@ namespace SAL.Core.NLogEx.Layout
                 salLogEvent.Exception = logEvent.Exception.ToDto();
 
             
-            jObject.Merge(JObject.FromObject(salLogEvent, JSerializer));
-
-
-            return JsonConvert.SerializeObject(jObject, JSettings);
+            return JsonConvert.SerializeObject(salLogEvent, jSettings);
         }
 
 
-        private static string ToCamelCase(string s)
-        {
-            if (string.IsNullOrEmpty(s) || !char.IsUpper(s[0]))
-            {
-                return s;
-            }
 
-            var chars = s.ToCharArray();
-
-            for (var i = 0; i < chars.Length; i++)
-            {
-                if (i == 1 && !char.IsUpper(chars[i]))
-                {
-                    break;
-                }
-
-                var hasNext = (i + 1 < chars.Length);
-                if (i > 0 && hasNext && !char.IsUpper(chars[i + 1]))
-                {
-                    if (char.IsSeparator(chars[i + 1]))
-                    {
-                        chars[i] = ToLower(chars[i]);
-                    }
-
-                    break;
-                }
-
-                chars[i] = ToLower(chars[i]);
-            }
-
-            return new string(chars);
-        }
-
-        private static char ToLower(char c)
-        {
-            c = char.ToLowerInvariant(c);
-            return c;
-        }
     }
 }
