@@ -16,8 +16,6 @@ namespace SAL.Core.Service
                 .AppendLine($"AdapterType     : {AdapterConfiguration.AdapterType}")
                 .AppendLine($"AdapterName     : {AdapterConfiguration.AdapterName}")
                 .AppendLine($"AdapterVersion  : {AdapterConfiguration.AdapterVersion}")
-                .AppendLine($"AdapterHostName : {AdapterConfiguration.AdapterHostName}")
-                .AppendLine($"AdapterHostIp   : {string.Join(", ", AdapterConfiguration.AdapterHostIp)}")
                 .AppendLine($"FrontContourName: {AdapterConfiguration.ContourName}")
                 .AppendLine($"BackContourName : {AdapterConfiguration.BackContourName}")
                 .AppendLine($"SalVersion      : {AdapterConfiguration.SalVersion} ({AdapterConfiguration.Revision})")

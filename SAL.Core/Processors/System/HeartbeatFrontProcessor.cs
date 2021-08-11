@@ -31,8 +31,6 @@ namespace SAL.Core.Processors.System
                     AdapterContour = AdapterConfiguration.AdapterContour,
                     AdapterVersion = AdapterConfiguration.AdapterVersion,
                     SalVersion = AdapterConfiguration.SalVersion,
-                    AdapterHostName = AdapterConfiguration.AdapterHostName,
-                    AdapterHostIp = AdapterConfiguration.AdapterHostIp,
                     InDocker = AdapterConfiguration.InDocker,
                     MachineName = AdapterConfiguration.MachineName,
                     Timestamp = DateTime.UtcNow

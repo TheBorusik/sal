@@ -8,8 +8,6 @@ namespace SAL.API
         public static string AdapterType { get; internal set; }
         public static string AdapterFullName => $"{AdapterType}.{AdapterName}";
         public static string AdapterVersion { get; internal set; }
-        public static string AdapterHostName { get; internal set; }
-        public static string[] AdapterHostIp { get; internal set; }
 
         public static string LogRootPath { get; internal set; }
 

@@ -187,7 +187,7 @@ namespace SAL.Core.Configuration
                 Payload = JObject.FromObject(new GetAdapterNameReq
                 {
                     AdapterType = AdapterConfiguration.AdapterType,
-                    AdapterHost = AdapterConfiguration.AdapterHostName,
+                    MachineName = AdapterConfiguration.MachineName,
                     InDocker = AdapterConfiguration.InDocker
                 })
             };

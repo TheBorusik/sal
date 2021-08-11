@@ -82,8 +82,6 @@ namespace SAL.Core.NLogEx.Layout
                 AdapterVersion = AdapterConfiguration.AdapterVersion,
                 SalVersion = AdapterConfiguration.SalVersion,
                 AdatpterContour = AdapterConfiguration.AdapterContour,
-                AdapterHostIp = AdapterConfiguration.AdapterHostIp,
-                AdapterHostName = AdapterConfiguration.AdapterHostName,
                 HandlerType = HandlerContext.HandlerType.ToString(),
                 HandlerName = HandlerContext.HandlerName,
                 SessionId = HandlerContext.SessionId,

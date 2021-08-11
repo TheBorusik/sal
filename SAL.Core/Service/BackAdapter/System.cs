@@ -92,8 +92,6 @@ namespace SAL.Core.Service
                         AdapterContour = AdapterConfiguration.AdapterContour,
                         AdapterVersion = AdapterConfiguration.AdapterVersion,
                         SalVersion = AdapterConfiguration.SalVersion,
-                        AdapterHostName = AdapterConfiguration.AdapterHostName,
-                        AdapterHostIp = AdapterConfiguration.AdapterHostIp,
                         InDocker = AdapterConfiguration.InDocker,
                         MachineName = AdapterConfiguration.MachineName,
                         CommandHandlers = backCommands.ToArray(),

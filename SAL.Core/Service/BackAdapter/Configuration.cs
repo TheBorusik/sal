@@ -28,12 +28,6 @@ namespace SAL.Core.Service
         public LogFactory LogFactory => nLogFactory.logFactory;
         public virtual void InitConfiguration()
         {
-            var hostName = Environment.GetEnvironmentVariable("AdapterHostName");
-            var dnsHostName = System.Net.Dns.GetHostName();
-            AdapterConfiguration.AdapterHostName = string.IsNullOrWhiteSpace(hostName) ? dnsHostName : hostName;
-            
-            AdapterConfiguration.AdapterHostIp = System.Net.Dns.GetHostAddresses(dnsHostName).Where(ip => ip.AddressFamily == AddressFamily.InterNetwork).Select(ip => ip.ToString()).ToArray();
-            
             AdapterConfiguration.RootPath = AppDomain.CurrentDomain.BaseDirectory;
             AdapterConfiguration.ConfigPath = Path.Combine(AdapterConfiguration.RootPath, "config");
             if (!Directory.Exists(AdapterConfiguration.ConfigPath))
@@ -41,7 +35,7 @@ namespace SAL.Core.Service
             AdapterConfiguration.AdapterType = Environment.GetEnvironmentVariable("AdapterType");
 
             AdapterConfiguration.InDocker = Environment.GetEnvironmentVariable("DOTNET_RUNNING_IN_CONTAINER") == "true";
-            AdapterConfiguration.MachineName = System.Environment.MachineName;
+            AdapterConfiguration.MachineName = Environment.MachineName;
             
             if(string.IsNullOrWhiteSpace(AdapterConfiguration.AdapterType))
                 throw new ConfigurationErrorException("Не заданно значение AdapterType в переменных окружения");
