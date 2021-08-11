@@ -6,6 +6,7 @@ using SAL.Infrastructure;
 
 namespace SAL.Core.SystemHandlers
 {
+    [SalContourHandler(Contour.Both)]
     [SalEventName("System.WhoIsWho")]
     class SystemWIWHandler : IEventHandler2<WhoIsWhoEvent>
     {
