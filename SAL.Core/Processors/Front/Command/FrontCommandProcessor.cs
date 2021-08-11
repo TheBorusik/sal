@@ -153,11 +153,7 @@ namespace SAL.Core.Processors
                 var handleMethod = handlerType.GetMethodByInterfaceMethodInfo(interfaceMethodInfo);
                 if (handleMethod == null)
                     handleMethod = interfaceMethodInfo;
-
-                var externalUris = handleMethod.GetAttributes<SalExternalUriAttribute>().Select(a => a.Uri).ToArray();
-                if(externalUris.Length == 0 && handlerInterfaces.Length == 1)
-                    externalUris = handlerType.GetAttributes<SalExternalUriAttribute>().Select(a => a.Uri).ToArray();
-
+                
 
                 var args = handlerInterface.GetGenericArguments();
                 var commandType = args[0];
@@ -219,7 +215,6 @@ namespace SAL.Core.Processors
                     CommandName = commandHandlerInfo.CommandName,
                     CommandSchema = commandHandlerInfo.CommandSchema,
                     ResultSchema = schemaCreater?.GetResultSchema(commandName),
-                    ExternalUri = externalUris
                 });
             }
         }
@@ -235,9 +230,7 @@ namespace SAL.Core.Processors
 
             if (commandHandlers.ContainsKey(commandName))
                 throw new Exception($"Команда {commandName} уже имеет обработчик");
-
-            var externalUris = handlerType.GetCustomAttributes(typeof(SalExternalUriAttribute))
-                .OfType<SalExternalUriAttribute>().Select(a => a.Uri).ToArray();
+            
 
             ICommandSchemeCreator schemaCreater = null;
             if (handlerType.IsAssignableTo<ICommandSchemeCreator>())
@@ -262,7 +255,6 @@ namespace SAL.Core.Processors
             var handlerInfo = new API.FrontCommandHandlerInfo
             {
                 CommandName = commandHandlerInfo.CommandName,
-                ExternalUri = externalUris,
             };
 
             if (schemaCreater != null)

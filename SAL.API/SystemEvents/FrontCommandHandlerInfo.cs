@@ -7,6 +7,5 @@ namespace SAL.API
         public string CommandName;
         public JSchema CommandSchema;
         public JSchema ResultSchema;
-        public string[] ExternalUri;
     }
 }
