@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Concurrent;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
@@ -133,7 +134,7 @@ namespace SAL.Core.Configuration
                 return;
             }
             
-            if(!configMessage.Destination.ContainsKey(AdapterConfiguration.AdapterType))
+            if(!configMessage.Destination.Any(s => string.Equals(s ,AdapterConfiguration.AdapterType)))
                 return;
             
             if(configMessage.Type == MessageTypes.ConfigChanged)
