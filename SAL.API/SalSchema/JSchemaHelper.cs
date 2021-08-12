@@ -38,5 +38,11 @@ namespace SAL.API
         {
             ThrowIsInvalid(JObject.FromObject(obj), schema);
         }
+
+        public static JToken Restore(this JSchema schema)
+        {
+            var restorer = new SchemaObjectRestorer();
+            return restorer.ResoreFromJSchema(schema);
+        }
     }
 }
