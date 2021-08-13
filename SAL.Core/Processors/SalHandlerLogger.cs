@@ -55,7 +55,7 @@ namespace SAL.Core.Processors
                 sb.Append(body);
             else
             {
-                sb.Append(body.Substring(0, loggerSettings.CropSize));
+                sb.Append(CropString(body, loggerSettings.CropSize));
             }
             loggerSettings.logger.LogInformation(sb.ToString());
         }
@@ -87,7 +87,7 @@ namespace SAL.Core.Processors
                 sb.Append(body);
             else
             {
-                sb.Append(body.Substring(0, loggerSettings.CropSize));
+                sb.Append(CropString(body, loggerSettings.CropSize));
             }
             loggerSettings.logger.LogInformation(sb.ToString());
         }
@@ -114,7 +114,7 @@ namespace SAL.Core.Processors
                 sb.Append(body);
             else
             {
-                sb.Append(body.Substring(0, loggerSettings.CropSize));
+                sb.Append(CropString(body, loggerSettings.CropSize));
             }
             loggerSettings.logger.LogInformation(sb.ToString());
         }
@@ -148,7 +148,7 @@ namespace SAL.Core.Processors
                 sb.Append(body);
             else
             {
-                sb.Append(body.Substring(0, loggerSettings.CropSize));
+                sb.Append(CropString(body, loggerSettings.CropSize));
             }
 
             var old = HandlerContext.CorrelationId;
@@ -187,7 +187,7 @@ namespace SAL.Core.Processors
                 sb.Append(body);
             else
             {
-                sb.Append(body.Substring(0, loggerSettings.CropSize));
+                sb.Append(CropString(body, loggerSettings.CropSize));
             }
             
             var old = HandlerContext.CorrelationId;
@@ -305,7 +305,7 @@ namespace SAL.Core.Processors
                 sb.Append(body);
             else
             {
-                sb.Append(body.Substring(0, loggerSettings.CropSize));
+                sb.Append(CropString(body, loggerSettings.CropSize));
             }
             loggerSettings.logger.LogInformation(sb.ToString());
         }
@@ -502,6 +502,13 @@ namespace SAL.Core.Processors
                 CropSize = -1
 
             };
+        }
+
+        string CropString(string data, int cropSize)
+        {
+            if (data.Length < cropSize)
+                return data;
+            return $"{data.Substring(0, cropSize)}...[{data.Length}]";
         }
 
     }
