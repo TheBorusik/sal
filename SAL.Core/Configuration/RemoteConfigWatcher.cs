@@ -134,7 +134,7 @@ namespace SAL.Core.Configuration
                 return;
             }
             
-            if(!configMessage.Destination.Any(s => string.Equals(s ,AdapterConfiguration.AdapterType)))
+            if(!configMessage.Destination.Any(s => string.Equals(s ,AdapterConfiguration.AdapterFullName)))
                 return;
             
             if(configMessage.Type == MessageTypes.ConfigChanged)
@@ -224,7 +224,7 @@ namespace SAL.Core.Configuration
             var diff = JsonPatcher.Diff(configurationRoot, tmpConfig);
 
             configurationRoot = JsonPatcher.Patch(configurationRoot, diff);
-
+            
             diff.ForEach(d =>
             {
                 if (d is JProperty dp)
