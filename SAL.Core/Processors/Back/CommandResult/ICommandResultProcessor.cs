@@ -9,6 +9,7 @@ namespace SAL.Core.Processors
     {
         void RegisterSimpleCommandResultHandler(string correlationId, 
             TaskCompletionSource<SimpleCommandResult> completionSource, 
-            TimeSpan timeOut);
+            TimeSpan timeOut,
+            bool throwIfTimeout);
     }
 }

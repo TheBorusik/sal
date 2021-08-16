@@ -4,6 +4,7 @@
     {
         public const string Error = "Error";
         public const string Success = "Success";
+        public const string SalCommandTimeout = "SalCommandTimeout";
     }
     
     public static partial class SalErrorCodes

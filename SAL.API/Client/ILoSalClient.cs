@@ -27,6 +27,7 @@ namespace SAL.API
             object commandBody,
             CommandPriority priority,
             TimeSpan ttl,
+            bool throwIfTimeout,
             string handlerAdapterType,
             string handlerAdapterName
         );

@@ -49,6 +49,7 @@ namespace SAL.API
             object command,
             CommandPriority priority = CommandPriority.Normal,
             TimeSpan? ttl = null,
+            bool throwIfTimeout = true,
             string handlerServiceType = null,
             string handlerServiceName = null
         ) where TCommandResult : class, new();

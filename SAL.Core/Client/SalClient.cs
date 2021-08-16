@@ -130,6 +130,7 @@ namespace SAL.Core.Client
                 command,
                 priority,
                 ttl.Value,
+                true,
                 handlerServiceType,
                 handlerServiceName
             );
@@ -137,7 +138,14 @@ namespace SAL.Core.Client
             return new CommandResult<TCommandResult>(result.CommandResult);
         }
 
-        public async Task<CommandResult<TCommandResult>> ExecuteCommandAsync<TCommandResult>(string commandName, object command, CommandPriority priority = CommandPriority.Normal, TimeSpan? ttl = null, string handlerServiceType = null, string handlerServiceName = null) where TCommandResult : class, new()
+        public async Task<CommandResult<TCommandResult>> ExecuteCommandAsync<TCommandResult>(
+            string commandName, 
+            object command, 
+            CommandPriority priority = CommandPriority.Normal, 
+            TimeSpan? ttl = null,
+            bool throwIfTimeout = true,
+            string handlerServiceType = null, 
+            string handlerServiceName = null) where TCommandResult : class, new()
         {
             ttl ??= TimeSpan.FromSeconds(60);
             
@@ -146,6 +154,7 @@ namespace SAL.Core.Client
                 command,
                 priority,
                 ttl.Value,
+                throwIfTimeout,
                 handlerServiceType,
                 handlerServiceName
             );
@@ -398,6 +407,7 @@ namespace SAL.Core.Client
             object commandBody,
             CommandPriority priority,
             TimeSpan ttl,
+            bool throwIfTimeout,
             string handlerAdapterType,
             string handlerAdapterName)
         {
@@ -448,7 +458,7 @@ namespace SAL.Core.Client
 
             };
 
-            return await ExecuteCommandAsync(commandPayload, routingKey);
+            return await ExecuteCommandAsync(commandPayload, routingKey, throwIfTimeout);
         }
 
         public async Task<SimpleCommandResult> ExecuteExternalHttp(
@@ -494,11 +504,11 @@ namespace SAL.Core.Client
                 ContextInfo = commandContext
             };
 
-            return await ExecuteCommandAsync(commandPayload, routingKey);
+            return await ExecuteCommandAsync(commandPayload, routingKey, true);
         }
 
 
-        public async Task<SimpleCommandResult> ExecuteCommandAsync(CommandPayload commandPayload, string routingKey)
+        public async Task<SimpleCommandResult> ExecuteCommandAsync(CommandPayload commandPayload, string routingKey, bool throwIfTimeout)
         {
             commandPayload.Descriptor.TTL ??= TimeSpan.FromMinutes(1);
 
@@ -519,7 +529,7 @@ namespace SAL.Core.Client
             var completionSource = new TaskCompletionSource<SimpleCommandResult>();
 
             commandResultProcessor.RegisterSimpleCommandResultHandler(commandPayload.Descriptor.CorrelationId, completionSource,
-                commandPayload.Descriptor.TTL.Value);
+                commandPayload.Descriptor.TTL.Value, throwIfTimeout);
 
             publisher.PublishCommand(Pack(transportMessage));
 

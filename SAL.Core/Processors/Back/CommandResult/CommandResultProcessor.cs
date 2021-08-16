@@ -244,14 +244,15 @@ namespace SAL.Core.Processors
             }
         }
 
-        public void RegisterSimpleCommandResultHandler(string correlationId, TaskCompletionSource<SimpleCommandResult> completionSource, TimeSpan timeOut)
+        public void RegisterSimpleCommandResultHandler(string correlationId, TaskCompletionSource<SimpleCommandResult> completionSource, TimeSpan timeOut, bool throwIfTimeout)
         {
             var simpleCommandResultHandler = new SimpleCommandResultHandlerInfo
             {
                 CommandCorrelationId = correlationId,
                 ExpireDate = DateTime.UtcNow + timeOut,
                 CompletionSource = completionSource,
-                CancellationTokenSource = new CancellationTokenSource()
+                CancellationTokenSource = new CancellationTokenSource(),
+                ThrowIfTimeout = throwIfTimeout
             };
 
             simpleCommandResultHandlers.TryAdd(correlationId, simpleCommandResultHandler);
@@ -260,7 +261,19 @@ namespace SAL.Core.Processors
             {
                 if (simpleCommandResultHandlers.TryRemove(correlationId, out var scrh))
                 {
-                    scrh.CompletionSource.TrySetException(new SalCommandTimeoutException());
+                    if (scrh.ThrowIfTimeout)
+                        scrh.CompletionSource.TrySetException(new SalCommandTimeoutException());
+                    else
+                        scrh.CompletionSource.TrySetResult(new SimpleCommandResult
+                        {
+                            CommandResultContext = null,
+                            CommandResult = new CommonCommandResult
+                            {
+                                ResultCode = ResultCodes.SalCommandTimeout,
+                                Error = null,
+                                Result = null
+                            }
+                        });
                 }
             });
             simpleCommandResultHandler.CancellationTokenSource.CancelAfter(timeOut);

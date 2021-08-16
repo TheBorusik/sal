@@ -11,6 +11,7 @@ namespace SAL.Core.Processors
         public DateTime ExpireDate;
         public TaskCompletionSource<SimpleCommandResult> CompletionSource;
         public CancellationTokenSource CancellationTokenSource;
+        public bool ThrowIfTimeout;
 
         //   public Canselation
 
