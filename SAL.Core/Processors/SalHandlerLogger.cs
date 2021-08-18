@@ -25,6 +25,10 @@ namespace SAL.Core.Processors
         {
             this.loggerProvider = loggerProvider;
             this.configWatcher = configWatcher;
+            configWatcher.Subscribe(LoggingSettingsSectionName, (s, arg) =>
+            {
+                loggers.Clear();
+            });
         }
 
         public void LogIncoming(CommandPayload commandPayload)
