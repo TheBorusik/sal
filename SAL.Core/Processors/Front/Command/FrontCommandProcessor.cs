@@ -437,7 +437,8 @@ namespace SAL.Core.Processors
 
                 var handler = scope.Resolve(commandHandlerInfo.HandlerType);
 
-                await Validate(commandHandlerInfo, commandPayload);
+                if(!await Validate(commandHandlerInfo, commandPayload))
+                    return;
 
 
                 if (!commandHandlerInfo.IsCommon)
@@ -463,7 +464,7 @@ namespace SAL.Core.Processors
             }
         }
 
-        private async Task Validate(FrontCommandHandlerInfo handlerInfo, CommandPayload commandPayload)
+        private async Task<bool> Validate(FrontCommandHandlerInfo handlerInfo, CommandPayload commandPayload)
         {
             if (handlerInfo.CommandSchema != null)
             {
@@ -480,8 +481,10 @@ namespace SAL.Core.Processors
                             Descriptor = commandPayload.Descriptor,
                             ContextInfo = commandPayload.ContextInfo
                         });
+                    return false;
                 }
             }
+            return true;
         }
     }
 }

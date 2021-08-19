@@ -484,7 +484,8 @@ namespace SAL.Core.Processors
                     }
                 };
 
-                await Validate(commandHandlerInfo, commandPayload);
+               if(!await Validate(commandHandlerInfo, commandPayload))
+                   return;
 
 
                 if (!commandHandlerInfo.IsCommon)
@@ -513,7 +514,7 @@ namespace SAL.Core.Processors
         }
 
 
-        private async Task Validate(CommandHandlerInfo handlerInfo, CommandPayload commandPayload)
+        private async Task<bool> Validate(CommandHandlerInfo handlerInfo, CommandPayload commandPayload)
         {
             if (handlerInfo.CommandSchema != null)
             {
@@ -530,8 +531,11 @@ namespace SAL.Core.Processors
                             Descriptor = commandPayload.Descriptor,
                             ContextInfo = commandPayload.ContextInfo
                         });
+                    return false;
                 }
             }
+
+            return true;
         }
 
         protected virtual async Task ProcessingWfmResult(TransportMessage transportMessage, CommandPayload commandPayload)

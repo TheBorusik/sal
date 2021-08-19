@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 using Autofac;
@@ -83,7 +84,7 @@ namespace SAL.Test.Front
             return Task.CompletedTask;
         }
     }
-    
+
     
     public class SendCommandResultCommand : IHaveResult<Nothing>
     {
