@@ -56,6 +56,7 @@ namespace SAL.Test.Front
 
          var front = scope.ResolveKeyed<ISalClient>(Contour.Front);
          var back = scope.ResolveKeyed<ISalClient>(Contour.Back);
+         var back2 = scope.Resolve<ISalClient>();
 
          back.PublishCommandAsync("Observer.SendCommandResult1", new { });
 

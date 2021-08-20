@@ -271,6 +271,23 @@ namespace SAL.API
             return (token.Type == JTokenType.Null) ||
                    (token.Type == JTokenType.Object && !token.HasValues);
         }
+
+        public static bool IsNull(this JToken token)
+        {
+            if (token == null)
+                return true;
+            if (token.Type == JTokenType.Null)
+                return true;
+            if (token.Type == JTokenType.None)
+                return true;
+            if (token.Type == JTokenType.String)
+            {
+                if (string.Equals(token.Value<string>(), "null"))
+                    return true;
+            }
+            return false;
+        }
+        
     
         
         
