@@ -4,7 +4,7 @@ using Newtonsoft.Json.Linq;
 
 namespace SAL.API
 {
-    [Obsolete]
+    [Obsolete("Use IFrontCommonCommandHandler2Async")]
     public interface IFrontCommonCommandHandlerAsync : IFrontCommandHandler
     {
         Task Handle(JObject command);

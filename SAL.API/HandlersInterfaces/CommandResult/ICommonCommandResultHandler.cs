@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 
 namespace SAL.API
 {
-    [Obsolete]
+    [Obsolete("Use ICommonCommandResultHandler2")]
     public interface ICommonCommandResultHandler : ICommandResultHandler
     {
         Task<bool> ResultHandle(CommonCommandResult result);

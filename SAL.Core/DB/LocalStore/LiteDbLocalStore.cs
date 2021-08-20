@@ -13,7 +13,7 @@ namespace SAL.Core.DB.LocalStore
     }
 
 
-    [Obsolete]
+    [Obsolete("Use RedisStore")]
     public class LiteDbLocalStore : ILocalStore, IDisposable
     {
         private LiteDatabase db;

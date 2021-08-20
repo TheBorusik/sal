@@ -2,7 +2,7 @@
 
 namespace SAL.Infrastructure
 {
-    [Obsolete("Use SalCommandNameAttribute")]
+    [Obsolete("Use SalCommandNameAttribute or BackCommandNameAttribute for BaseBackCommandHandler or FrontCommandNameAttribute for BaseFrontCommandHandler ")]
     [AttributeUsage(AttributeTargets.Class)]
     public class SalExternalMethodAttribute : Attribute
     {

@@ -4,7 +4,7 @@ using Newtonsoft.Json.Linq;
 
 namespace SAL.API
 {
-    [Obsolete]
+    [Obsolete("Use ICommonCommandHandler2")]
     public interface ICommonCommandHandler : ICommandHandler
     {
         Task Handle(JObject command);

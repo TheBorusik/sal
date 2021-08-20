@@ -2,7 +2,7 @@
 
 namespace SAL.API
 {
-    [Obsolete]
+    [Obsolete("Use JSchema")]
     public class DtoInfo
     {
         public string Name { get; set; }

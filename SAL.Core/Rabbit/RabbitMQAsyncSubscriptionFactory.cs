@@ -222,7 +222,6 @@ namespace SAL.Core.Rabbit
             return new MultiConsumerSubscription(transport, subscriptionName, syncPrefetchCount, queueList.ToArray(), handler);
         }
 
-        [Obsolete]
         public ISubscription CreateCommand(ushort globalPrefetchCount, ushort mainPrefetchCount, CommandInfo[] commands, Func<RabbitMessage, Action, Action, Task> handler, string subscriptionName = "Command")
         {
             var queueList = new List<QueueInfo>();

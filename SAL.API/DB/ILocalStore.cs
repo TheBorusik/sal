@@ -2,7 +2,7 @@
 
 namespace SAL.API
 {
-    [Obsolete]
+    [Obsolete("Don Use  this interface")]
     public interface ILocalStore : IStore
     {
 
