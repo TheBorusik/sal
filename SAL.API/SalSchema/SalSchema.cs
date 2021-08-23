@@ -45,7 +45,6 @@ namespace SAL.API
             {
                 return new JSchema
                 {
-                    Type = JSchemaType.Object | JSchemaType.Null,
                     Format = "any",
                 };
             }
