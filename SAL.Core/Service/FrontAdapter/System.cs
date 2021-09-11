@@ -16,7 +16,7 @@ namespace SAL.Core.Service
         public List<FrontCommandHandlerInfo> frontCommands = new();
         public List<CommandResultHandlerInfo> frontCommandResults = new();
         public List<EventHandlerInfo> frontEvents = new();
-        public List<string> externalHttp = new();
+        public List<ExternalHandlerInfo> externalHttp = new();
 
         protected override void InitSystem()
         {
@@ -49,9 +49,9 @@ namespace SAL.Core.Service
 
 
         
-        public override void AddExternalHttpHandler(string path)
+        public override void AddExternalHttpHandler(ExternalHandlerInfo extInfo)
         {
-            externalHttp.Add(path);
+            externalHttp.Add(extInfo);
         }
         
 
@@ -86,10 +86,10 @@ namespace SAL.Core.Service
                         SalVersion = AdapterConfiguration.SalVersion,
                         InDocker = AdapterConfiguration.InDocker,
                         MachineName = AdapterConfiguration.MachineName,
-                        ExternalHttp = externalHttp.ToArray(),
                         CommandHandlers = frontCommands.ToArray(),
                         CommandResultHandlers = frontCommandResults.ToArray(),
-                        EventHandlers = frontEvents.ToArray()
+                        EventHandlers = frontEvents.ToArray(),
+                        ExternalHandlers = externalHttp.ToArray(),
                     }, SalConst.SystemEventTTL);
             }
             catch (Exception ex)

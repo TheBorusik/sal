@@ -24,6 +24,6 @@ namespace SAL.API
         public CommandResultHandlerInfo[] CommandResultHandlers { get; set; }
         public EventHandlerInfo[] EventHandlers { get; set; }
         
-        public string[] ExternalHttp { get; set; }
+        public ExternalHandlerInfo[] ExternalHandlers { get; set; }
     }
 }

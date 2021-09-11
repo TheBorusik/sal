@@ -45,7 +45,7 @@ namespace SAL.Core.Service
             }
         }
         
-        public virtual void AddExternalHttpHandler(string path)
+        public virtual void AddExternalHttpHandler(ExternalHandlerInfo extInfo)
         {
 
         }

@@ -133,14 +133,17 @@ namespace SAL.Core.Processors
 
             var handlerInfo = new FrontExternalHttpHandlerInfo
             {
-                HandlerType = handlerType,
-                ExternalPath = externalPathMethod.Uri.ToLower()
+                HandlerType = handlerType
             };
 
             handlers.Add(externalPathMethod.Uri, handlerInfo);
             logger.Info($"Для внешнего адреса {externalPathMethod.Uri} добавлен обработчик {handlerType.Name}");
 
-            salService.AddExternalHttpHandler(externalPathMethod.Uri);
+            salService.AddExternalHttpHandler(new ExternalHandlerInfo
+            {
+                Path = externalPathMethod.Uri.ToLower(),
+                PathRegExp = externalPathMethod.RegExp
+            });
         }
 
 

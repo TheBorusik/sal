@@ -15,6 +15,7 @@ namespace SAL.API
         public string HandlerName => Dto.HandlerName;
         public string Sid => Dto.SessionId;
         public string Cid => Dto.CorrelationId;
+        public string Oid => Dto.OperationId;
         public long? AuthId => Dto.AuthId;
         public long? ProcessId => Dto.ProcessId;
 

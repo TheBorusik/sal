@@ -35,6 +35,7 @@ namespace SAL.API
                 HandlerName = $"{HandlerContext.HandlerType}.{HandlerContext.HandlerName}",
                 SessionId = HandlerContext.SessionId,
                 CorrelationId = HandlerContext.CorrelationId,
+                OperationId = HandlerContext.OperationId,
                 AuthId = HandlerContext.AuthId,
                 ProcessId = HandlerContext.ProcessId,
                 InnerException = innerException.ToDto(),
@@ -78,6 +79,7 @@ namespace SAL.API
                 HandlerName = $"{HandlerContext.HandlerType}.{HandlerContext.HandlerName}",
                 SessionId = HandlerContext.SessionId,
                 CorrelationId = HandlerContext.CorrelationId,
+                OperationId = HandlerContext.OperationId,
                 AuthId = HandlerContext.AuthId,
                 ProcessId = HandlerContext.ProcessId,
                 InnerException = ex.InnerException.ToDto(SalErrorCodes.Fatal)
@@ -143,6 +145,7 @@ namespace SAL.API
                 HandlerName = $"{HandlerContext.HandlerType}.{HandlerContext.HandlerName}",
                 SessionId = HandlerContext.SessionId,
                 CorrelationId = HandlerContext.CorrelationId,
+                OperationId = HandlerContext.OperationId,
                 AuthId = HandlerContext.AuthId,
                 ProcessId = HandlerContext.ProcessId
             };
@@ -163,6 +166,7 @@ namespace SAL.API
                 HandlerName = $"{HandlerContext.HandlerType}.{HandlerContext.HandlerName}",
                 SessionId = HandlerContext.SessionId,
                 CorrelationId = HandlerContext.CorrelationId,
+                OperationId = HandlerContext.OperationId,
                 AuthId = HandlerContext.AuthId,
                 ProcessId = HandlerContext.ProcessId
             };

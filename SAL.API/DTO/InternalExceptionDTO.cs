@@ -20,6 +20,7 @@
                 Properties = Properties.Clone(),
                 SessionId = SessionId,
                 CorrelationId = CorrelationId,
+                OperationId = OperationId,
                 ProcessId = ProcessId,
                 AuthId = AuthId,
                 StackTrace = StackTrace,
