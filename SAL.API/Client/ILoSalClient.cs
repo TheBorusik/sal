@@ -36,6 +36,7 @@ namespace SAL.API
             ExternalHttpRequest request,
             string routePath,
             TimeSpan ttl,
+            bool throwIfTimeout,
             string handlerAdapterType,
             string handlerAdapterName);
 

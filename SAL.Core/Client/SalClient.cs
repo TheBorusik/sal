@@ -465,6 +465,7 @@ namespace SAL.Core.Client
             ExternalHttpRequest request,
             string routePath,
             TimeSpan ttl,
+            bool throwIfTimeout,
             string handlerAdapterType,
             string handlerAdapterName)
         {
@@ -505,7 +506,7 @@ namespace SAL.Core.Client
                 ContextInfo = commandContext
             };
 
-            return await ExecuteCommandAsync(commandPayload, routingKey, true);
+            return await ExecuteCommandAsync(commandPayload, routingKey, throwIfTimeout);
         }
 
 
