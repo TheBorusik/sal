@@ -463,13 +463,14 @@ namespace SAL.Core.Client
 
         public async Task<SimpleCommandResult> ExecuteExternalHttp(
             ExternalHttpRequest request,
+            string routePath,
             TimeSpan ttl,
             string handlerAdapterType,
             string handlerAdapterName)
         {
             var correlationId = Guid.NewGuid().ToString("N");
 
-            var routingKey = request.Path;
+            var routingKey = routePath;
 
 
             var commandDescriptor = new CommandDescriptor

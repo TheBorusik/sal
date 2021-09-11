@@ -34,6 +34,7 @@ namespace SAL.API
         
         Task<SimpleCommandResult> ExecuteExternalHttp(
             ExternalHttpRequest request,
+            string routePath,
             TimeSpan ttl,
             string handlerAdapterType,
             string handlerAdapterName);
