@@ -290,7 +290,7 @@ namespace SAL.Core.Processors
 
             var externalHttpRequest = commandPayload.Payload.ConvertValue<ExternalHttpRequest>();
 
-            if (handlers.TryGetValue(externalHttpRequest.Path.ToLower(), out var commandHandlerInfo))
+            if (handlers.TryGetValue(externalHttpRequest.BasePath.ToLower(), out var commandHandlerInfo))
             {
                 HandlerContext.Update(handlerName: commandHandlerInfo.HandlerType.Name);
                 salLogger.LogHandler(commandPayload, commandHandlerInfo.HandlerType.Name);

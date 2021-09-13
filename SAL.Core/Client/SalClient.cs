@@ -472,7 +472,7 @@ namespace SAL.Core.Client
             var correlationId = Guid.NewGuid().ToString("N");
 
             var routingKey = routePath;
-
+            request.BasePath = routePath;
 
             var commandDescriptor = new CommandDescriptor
             {
