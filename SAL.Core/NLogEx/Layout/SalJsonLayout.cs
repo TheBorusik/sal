@@ -19,8 +19,6 @@ namespace SAL.Core.NLogEx.Layout
         public string AdapterVersion { get; set; }
         public int SalVersion { get; set; }
         public Contour AdatpterContour { get; set; }
-        public string AdapterHostName { get; set; }
-        public string[] AdapterHostIp { get; set; }
         public string HandlerType { get; set; }
         public string HandlerName { get; set; }
         public string SessionId { get; set; }
@@ -33,7 +31,7 @@ namespace SAL.Core.NLogEx.Layout
         public string Level { get; set; }
         public string Logger { get; set; }
         public string Message { get; set; }
-        public InternalExceptionDTO Exception { get; set; }
+        public LogExceptionDTO Exception { get; set; }
     }
 
     public class LogEventInfoProperty
@@ -96,7 +94,7 @@ namespace SAL.Core.NLogEx.Layout
             };
 
             if (logEvent.Exception != null)
-                salLogEvent.Exception = logEvent.Exception.ToDto();
+                salLogEvent.Exception = logEvent.Exception.ToLogDto();
 
             
             return JsonConvert.SerializeObject(salLogEvent, jSettings);

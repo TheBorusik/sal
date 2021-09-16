@@ -1,4 +1,7 @@
-﻿namespace SAL.API
+﻿using System;
+using Newtonsoft.Json.Linq;
+
+namespace SAL.API
 {
     public class InternalExceptionDTO : ExceptionDTO
     {
@@ -35,5 +38,17 @@
             StackTrace = null;
             return this;
         }
+    }
+
+
+    public class LogExceptionDTO
+    {
+        public string Code { get; set; }
+        public DateTime TimeStamp { get; set; }
+        public string Message { get; set; }
+        public JObject Properties { get; set; }
+        public string StackTrace { get; set; }
+        public string ExceptionType { get; set; }
+        public LogExceptionDTO InnerException { get; set; }
     }
 }

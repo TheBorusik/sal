@@ -92,7 +92,47 @@ namespace SAL.API
             return dto;
         }
 
-
+        public static LogExceptionDTO ToLogDto(this Exception ex)
+        {
+            if (ex == null)
+                return null;
+            
+            if (ex is SalException sex)
+            {
+                return sex.Dto.ToLogDto();
+            }
+ 
+            return new LogExceptionDTO
+            {
+                Code = SalErrorCodes.Fatal,
+                TimeStamp = DateTime.UtcNow,
+                Message = ex.Message,
+                ExceptionType = ex.GetType().Name,
+                Properties = null,
+                StackTrace = ex.StackTrace,
+                InnerException = ex.InnerException.ToLogDto()
+            };
+        }
+        
+        public static LogExceptionDTO ToLogDto(this SalException ex)
+        {
+            return ex.Dto.ToLogDto();
+        }
+        
+        public static LogExceptionDTO ToLogDto(this InternalExceptionDTO dto)
+        {
+            return new LogExceptionDTO
+            {
+                Code = dto.Code,
+                TimeStamp = dto.TimeStamp,
+                Message = dto.Message,
+                ExceptionType = dto.ExceptionType,
+                Properties = dto.Properties.Clone(),
+                StackTrace = dto.StackTrace,
+                InnerException = dto.InnerException.ToLogDto()
+            };
+        }
+        
         public static InternalExceptionDTO ToDto(this SalException ex)
         {
             return ex.Dto.Clone();
