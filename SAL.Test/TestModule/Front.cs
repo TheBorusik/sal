@@ -1,5 +1,7 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.IO;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
@@ -7,6 +9,7 @@ using Autofac;
 using Newtonsoft.Json.Linq;
 using Newtonsoft.Json.Schema;
 using SAL.API;
+using SAL.Core.S3;
 using SAL.Infrastructure;
 
 // ReSharper disable once CheckNamespace
@@ -26,7 +29,7 @@ namespace SAL.Test.Front
             
            // builder.RegisterSalHandler<TestCommandResultHandler1>();
         //    builder.RegisterSalHandler<TestCommandResultHandler3>();
-            builder.RegisterSalHandler<SendCommandResultHandler>();
+          //  builder.RegisterSalHandler<SendCommandResultHandler>();
 
             
             builder.RegisterProcessor<TestFront>();
@@ -54,11 +57,14 @@ namespace SAL.Test.Front
          
          using var scope = lifetimeScope.BeginLifetimeScope();
 
-         var front = scope.ResolveKeyed<ISalClient>(Contour.Front);
-         var back = scope.ResolveKeyed<ISalClient>(Contour.Back);
-         var back2 = scope.Resolve<ISalClient>();
+         var s3Store = scope.Resolve<IS3Store>();
 
-         back.PublishCommandAsync("Observer.SendCommandResult1", new { });
+         var fileId = "a3008e1bc13d43f99a530c5c4a912a48";
+
+         s3Store.DownloadFileAsync("a3008e1bc13d43f99a530c5c4a912a48", "H:\\temp\\a3008e1bc13d43f99a530c5c4a912a48");
+
+
+
 
         }
 

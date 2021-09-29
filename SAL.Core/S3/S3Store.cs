@@ -1,4 +1,7 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.IO;
+using System.Net;
+using System.Threading.Tasks;
 using Amazon;
 using Amazon.S3;
 using Amazon.S3.Model;
@@ -21,43 +24,37 @@ namespace SAL.Core.S3
             logger = loggerProvider.CreateLogger("S3Store");
         }
 
-        public async Task UploadFileAsync(string filePath, string bucketName, string fileId)
+        public async Task UploadFileAsync(string filePath, string fileId)
         {
             if (config == null)
                 throw new SalNotConfiguredException(sectionName);
             
-            bucketName = bucketName.ToLower();
 
             var s3Client = CreateClient();
 
             var listBuckets = await s3Client.ListBucketsAsync();
-            if (!listBuckets.Buckets.Exists(m => m.BucketName == bucketName))
+            if (!listBuckets.Buckets.Exists(m => m.BucketName == config.BucketName))
             {
-                logger.Debug($"Create Bucket {bucketName}");
-                await s3Client.PutBucketAsync(new PutBucketRequest
-                {
-                    BucketName = bucketName
-                });
+                throw new Exception($"Bucket '{config.BucketName}' Not exist ");
             }
 
             var fileTransferUtility = new TransferUtility(s3Client);
-            logger.Debug($"Upload file {fileId} in {bucketName}");
-            await fileTransferUtility.UploadAsync(filePath, bucketName, fileId);
+            await fileTransferUtility.UploadAsync(filePath, config.BucketName, fileId);
         }
 
-        public async Task DownloadFileAsync(string bucketName, string fileId, string filePath)
+        public async Task DownloadFileAsync(string fileId, string filePath)
         {
             if (config == null)
                 throw new SalNotConfiguredException(sectionName);
-            
-            bucketName = bucketName.ToLower();
+
 
             var s3Client = CreateClient();
 
             var fileTransferUtility = new TransferUtility(s3Client);
-            logger.Debug($"Download file {fileId} in {bucketName}");
-            await fileTransferUtility.DownloadAsync(filePath, bucketName, fileId);
+            await fileTransferUtility.DownloadAsync(filePath, config.BucketName, fileId);
         }
+
+
 
         private AmazonS3Client CreateClient()
         {
@@ -80,11 +77,14 @@ namespace SAL.Core.S3
 
             throw new SalNotConfiguredException("S3");
         }
+        
+        
     }
 
     public interface IS3Store
     {
-        Task UploadFileAsync(string filePath, string bucketName, string fileId);
-        Task DownloadFileAsync(string bucketName, string fileId, string filePath);
+        Task UploadFileAsync(string filePath, string fileId);
+        Task DownloadFileAsync(string fileId, string filePath);
+        
     }
 }
