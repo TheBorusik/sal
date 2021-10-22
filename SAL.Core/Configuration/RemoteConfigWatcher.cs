@@ -177,8 +177,7 @@ namespace SAL.Core.Configuration
         private async Task<string> GetAdapterName(Func<Error, Task<string>> onError)
         {
             var correlationId = Guid.NewGuid().ToString("N");
-
-            var nodeHostName = Environment.GetEnvironmentVariable("X_NODE_HOSTNAME");
+            
             var taskSlot =  Environment.GetEnvironmentVariable("X_TASK_SLOT");
 
             var message = new ConfigMessage
@@ -193,7 +192,6 @@ namespace SAL.Core.Configuration
                     AdapterType = AdapterConfiguration.AdapterType,
                     MachineName = AdapterConfiguration.MachineName,
                     InDocker = AdapterConfiguration.InDocker,
-                    NodeHostName = nodeHostName,
                     TaskSlot = taskSlot
                 })
             };

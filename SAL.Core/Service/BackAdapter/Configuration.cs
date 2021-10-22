@@ -36,6 +36,9 @@ namespace SAL.Core.Service
 
             AdapterConfiguration.InDocker = Environment.GetEnvironmentVariable("DOTNET_RUNNING_IN_CONTAINER") == "true";
             AdapterConfiguration.MachineName = Environment.MachineName;
+            var value = Environment.GetEnvironmentVariable("X_NODE_HOSTNAME");
+            if (!string.IsNullOrEmpty(value))
+                AdapterConfiguration.MachineName = value;
             
             if(string.IsNullOrWhiteSpace(AdapterConfiguration.AdapterType))
                 throw new ConfigurationErrorException("Не заданно значение AdapterType в переменных окружения");
