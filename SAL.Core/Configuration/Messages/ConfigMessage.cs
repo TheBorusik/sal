@@ -35,7 +35,9 @@ namespace SAL.Core.Configuration.Messages
     {
         public string AdapterType { get; set; }
         public string MachineName { get; set; }
-        public bool InDocker { get; set; } 
+        public bool InDocker { get; set; }
+        public string NodeHostName { get; set; }
+        public string TaskSlot { get; set; }
     }
 
     public class GetAdapterNameRes

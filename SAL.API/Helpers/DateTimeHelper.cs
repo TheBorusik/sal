@@ -11,13 +11,17 @@ namespace SAL.API
         }
         public static DateTime ToUtc(this DateTime value)
         {
-            return value switch
+            switch (value)
             {
-                { Kind: DateTimeKind.Unspecified } => DateTime.SpecifyKind(value, DateTimeKind.Utc),
-                { Kind: DateTimeKind.Utc } => value,
-                { Kind: DateTimeKind.Local } => value.ToUniversalTime(),
-                _ => throw new ArgumentOutOfRangeException(nameof(value), value, null)
-            };
+                case { Kind: DateTimeKind.Unspecified }:
+                    return DateTime.SpecifyKind(value, DateTimeKind.Utc);
+                case { Kind: DateTimeKind.Utc }:
+                    return value;
+                case { Kind: DateTimeKind.Local }:
+                    return value.ToUniversalTime();
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(value), value, null);
+            }
         }
         
 
