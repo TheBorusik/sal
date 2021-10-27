@@ -62,17 +62,17 @@ namespace SAL.API
             return Handle(command);
         }
 
-        public JSchema GetCommandSchema(string commandName)
+        public virtual JSchema GetCommandSchema(string commandName)
         {
             return SalSchema.Generate(typeof(TCommand));
         }
 
-        public JSchema GetResultSchema(string commandName)
+        public virtual JSchema GetResultSchema(string commandName)
         {
             return SalSchema.Generate(typeof(TCommandResult));
         }
 
-        public string Resolve(Type handlerInterfaceType)
+        public virtual string Resolve(Type handlerInterfaceType)
         {
             return  GetType().GetAttribute<BackCommandNameAttribute>()?.CommandName;
         }
