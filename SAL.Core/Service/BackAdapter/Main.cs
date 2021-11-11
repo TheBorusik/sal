@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Net;
 using System.Reflection;
 using System.Text;
@@ -75,7 +76,6 @@ namespace SAL.Core.Service
         {
             HandlerContext.Set(HandlerTypes.System, "Start");
             logger.Trace("Запуск...");
-            StartWatchDog();
             StartProcessors();
             StartTransport();
             logger.Trace("Основные системы запущены.");
@@ -89,7 +89,6 @@ namespace SAL.Core.Service
             HandlerContext.Set(HandlerTypes.System, "Stop");
             logger.Trace("Остановка...");
             stoping = true;
-            StopWatchDog();
             StopProcessors();
             StopTransport();
             logger.Trace("Сервис остановлен.");
@@ -101,17 +100,10 @@ namespace SAL.Core.Service
             logger.Trace("Init Unhandled Exception Handler");
             AppDomain.CurrentDomain.UnhandledException += (sender, args) =>
             {
-                logger.Fatal((Exception) args.ExceptionObject, $"AppDomain.UnhandledException:\r\n");
-
-                try
-                {
-                    // var eventBus = Container.Resolve<IEventBus>();
-                    //  eventBus.RaiseExceptionDetectEvent((Exception)args.ExceptionObject);
-                }
-                catch (Exception ex)
-                {
-                    logger.Fatal(ex, $"TaskScheduler.UnobservedTaskException: При RaiseExceptionDetectEvent произошла ошибка ");
-                }
+                var ex = (Exception)args.ExceptionObject;
+                Console.WriteLine($"UnhandledException: {ex.Message}\r{ex.StackTrace}");
+             //   logger.Fatal(ex, $"AppDomain.UnhandledException:");
+                
             };
 
             TaskScheduler.UnobservedTaskException += (_, args) =>

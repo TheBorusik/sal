@@ -2,7 +2,7 @@
 
 namespace SAL.Core.Rabbit.Topology
 {
-    internal class Queue
+    public class Queue
     {
         public string Name { get; set; }
 

@@ -15,7 +15,7 @@ namespace SAL.Core.Service
         protected override void AdapterConfigureContainer(ContainerBuilder builder)
         {
 
-            builder.RegisterType<RabbitMQTransport>()
+            builder.RegisterType<RabbitMQTransportSync>()
                 .Keyed<ITransport>(Contour.Front)
                 .WithParameter("contour", Contour.Front)
                 .SingleInstance();

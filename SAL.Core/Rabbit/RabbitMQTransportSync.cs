@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using RabbitMQ.Client;
 using SAL.API;
@@ -14,14 +15,14 @@ using SAL.Core.Rabbit.EventArgs;
 using SAL.Core.Rabbit.Helpers;
 using SAL.Core.Rabbit.Interfaces;
 using SAL.Core.Rabbit.Topology;
+using SAL.Core.Service;
 using SAL.Infrastructure;
 
 namespace SAL.Core.Rabbit
 {
-    public class RabbitMQTransport : ITransport, IRMQTransport
+    public class RabbitMQTransportSync : ITransport , IRMQTransport
     {
-
-        private readonly RabbitMQConnectionManager rabbitMQConnectionManager;
+        private readonly RabbitMQConnectionManagerSync rabbitMQConnectionManager;
 
 
         private readonly ISubscriptionFactory subscriptionFactory;
@@ -30,9 +31,8 @@ namespace SAL.Core.Rabbit
         public event EventHandler<ConnectionRestoreEventArgs> ConnectionRestore;
         public event EventHandler<ConnectionFailureEventArgs> ConnectionFailure;
 
-        public bool IsConnected { get; private set; }
+        public bool IsConnected => true;
         public string CounterName => rabbitMQConnectionManager.ContourName;
-        public bool TopologyInited { get; private set; }
         public ILoggerProvider LoggerProvider { get; private set; }
 
         //topology
@@ -42,14 +42,13 @@ namespace SAL.Core.Rabbit
 
         private readonly ILogger logger;
         private readonly Contour contour;
-
-        private CancellationTokenSource tokenSource;
-        private Task restoreTask = Task.CompletedTask;
-
-        public RabbitMQTransport(IConfigWatcher configWatcher, ILoggerProvider loggerProvider, Contour contour)
+        private readonly IHostApplicationLifetime lifeTime;
+        
+        public RabbitMQTransportSync(IHostApplicationLifetime lifeTime, IConfigWatcher configWatcher, ILoggerProvider loggerProvider, Contour contour)
         {
 
             this.contour = contour;
+            this.lifeTime = lifeTime;
             LoggerProvider = loggerProvider;
 
             var loggerName = $"RMQ.Transport.{contour}";
@@ -67,9 +66,9 @@ namespace SAL.Core.Rabbit
             }
 
 
-            rabbitMQConnectionManager = new RabbitMQConnectionManager(rabbitConfig, loggerProvider);
+            rabbitMQConnectionManager = new RabbitMQConnectionManagerSync(rabbitConfig, loggerProvider);
             rabbitMQConnectionManager.ConnectionFailure += (sender, args) => OnConnectionFailure(args);
-            rabbitMQConnectionManager.ConnectionRestore += (sender, args) => OnConnectionRestore(args);
+
 
 
             subscriptionFactory = new RabbitMQAsyncSubscriptionFactory(this);
@@ -102,12 +101,9 @@ namespace SAL.Core.Rabbit
 
         public IModel CreateModel()
         {
-            if (IsConnected && TopologyInited)
+            if (IsConnected)
                 return rabbitMQConnectionManager.CreateModel();
-
-            if (!TopologyInited)
-                throw new TopologyException();
-
+            
             throw new NoConnectionException();
         }
 
@@ -119,62 +115,16 @@ namespace SAL.Core.Rabbit
 
         }
         
-        private void OnConnectionRestore(ConnectionRestoreEventArgs e)
-        {
-            if (restoreTask.Status != TaskStatus.RanToCompletion) return;
-            tokenSource = new CancellationTokenSource();
-            restoreTask = Task.Run(async () =>
-            {
-
-                while (true)
-                {
-                    if(tokenSource.IsCancellationRequested)
-                        return;
-
-                    try
-                    {
-                        RestoreTopology();
-                        IsConnected = true;
-                        break;
-                    }
-                    catch (Exception ex)
-                    {
-                        logger.Error("RestoreTopology : ", ex);
-                    }
-
-                    try
-                    {
-                        await Task.Delay(TimeSpan.FromSeconds(5), tokenSource.Token);
-                    }
-                    catch (Exception)
-                    {
-                        return;
-                    }
-
-                }
-
-
-                var handler = ConnectionRestore;
-                handler?.Invoke(this, e);
-            });
-
-        }
-
         private void OnConnectionFailure(ConnectionFailureEventArgs e)
         {
-            IsConnected = false;
-            var handler = ConnectionFailure;
-            handler?.Invoke(this, e);
+            lifeTime.StopApplication();
+        //    salService.Stop();
         }
 
         private void RestoreTopology()
         {
-            if (TopologyInited)
-                return;
             exchanges.ForEach(CreateExchange);
             queues.ForEach(CreateQueue);
-            TopologyInited = true;
-
         }
 
         private void CreateExchange(Exchange exch)
@@ -222,12 +172,12 @@ namespace SAL.Core.Rabbit
         public void Start()
         {
             rabbitMQConnectionManager.Start();
+            RestoreTopology();
         }
 
         public void Stop()
         {
             rabbitMQConnectionManager.Stop();
-            tokenSource?.Cancel();
         }
 
         public ISubscriptionFactory CreateMessageSubscription()

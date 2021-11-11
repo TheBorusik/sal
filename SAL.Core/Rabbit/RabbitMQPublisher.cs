@@ -9,10 +9,10 @@ namespace SAL.Core.Rabbit
     public class RabbitMQPublisher : IPublisher
     {
 
-        private readonly RabbitMQTransport transport;
+        private readonly IRMQTransport transport;
         private readonly ILogger logger;
 
-        public RabbitMQPublisher(RabbitMQTransport transport, ILoggerProvider loggerProvider)
+        public RabbitMQPublisher(IRMQTransport transport, ILoggerProvider loggerProvider)
         {
             this.transport = transport;
             this.logger = loggerProvider.CreateLogger("RMQ.Publisher");

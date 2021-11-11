@@ -20,11 +20,11 @@ namespace SAL.Core.Rabbit.Subscription
 
 
 
-        public MultiConsumerSubscription(RabbitMQTransport transport, string subscriptionName, ushort globalPrefetchCount, QueueInfo[] queueInfos, Func<RabbitMessage, Action, Action, Task> handler)
+        public MultiConsumerSubscription(IRMQTransport transport, string subscriptionName, ushort globalPrefetchCount, QueueInfo[] queueInfos, Func<RabbitMessage, Action, Action, Task> handler)
             : base(transport, subscriptionName, handler)
         {
 
-            logger = transport.LoggerProvider.CreateLogger($"RMQ.{SubscriptionName}");
+            logger = transport.CreateLogger($"RMQ.{SubscriptionName}");
             this.globalPrefetchCount = globalPrefetchCount;
 
             this.queueDatas = queueInfos.Select(s => new QueueData

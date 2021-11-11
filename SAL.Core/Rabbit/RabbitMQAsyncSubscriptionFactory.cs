@@ -10,11 +10,11 @@ using SAL.Core.Rabbit.Topology;
 
 namespace SAL.Core.Rabbit
 {
-    public class RabbitMQAsyncSubscriptionFactory : ISubscriptionFactory
+    internal class RabbitMQAsyncSubscriptionFactory : ISubscriptionFactory
     {
-        private readonly RabbitMQTransport transport;
+        private readonly IRMQTransport transport;
 
-        public RabbitMQAsyncSubscriptionFactory(RabbitMQTransport transport)
+        public RabbitMQAsyncSubscriptionFactory(IRMQTransport transport)
         {
             this.transport = transport;
         }

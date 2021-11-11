@@ -51,8 +51,17 @@ namespace SAL.Core.Service
                 Console.WriteLine($"Adapter Initialization error: {e.Message}");
                 return;
             }
-
-
+            try
+            {
+                adapter.Start();
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine($"Starting error: {e.Message}");
+                return;
+            }
+            
+            
             try
             {
                 await host.RunAsync();
@@ -61,7 +70,6 @@ namespace SAL.Core.Service
             {
                 //
             }
-            
             adapter.Done();
 
         }

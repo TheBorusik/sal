@@ -38,7 +38,26 @@ namespace SAL.Core.Service
                 .UseNlog(adapter.LogFactory)
                 .Build();
 
-            adapter.Initialization();
+            try
+            {
+                adapter.Initialization();
+            }
+            catch (ConfigurationErrorException e)
+            {
+                Console.WriteLine($"Adapter Initialization error: {e.Message}");
+                return;
+            }
+            
+            try
+            {
+                adapter.Start();
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine($"Starting error: {e.Message}");
+                return;
+            }
+            
             try
             {
                 await host.RunAsync();

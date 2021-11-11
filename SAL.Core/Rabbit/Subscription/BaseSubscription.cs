@@ -14,7 +14,7 @@ namespace SAL.Core.Rabbit.Subscription
         protected ILogger logger;
 
         public string SubscriptionName { get; private set; }
-        protected readonly RabbitMQTransport Transport;
+        protected readonly IRMQTransport Transport;
         protected int CurrentThread;
         protected IModel Model;
         protected object ModelLocker = new object();
@@ -23,7 +23,7 @@ namespace SAL.Core.Rabbit.Subscription
 
 
         protected BaseSubscription(
-            RabbitMQTransport transport,
+            IRMQTransport transport,
             string subscriptionName,
             Func<T, Action, Action, Task> handler
         )

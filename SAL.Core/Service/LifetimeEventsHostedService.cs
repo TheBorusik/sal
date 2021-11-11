@@ -11,34 +11,30 @@ namespace SAL.Core.Service
         private readonly ILogger logger;
         private readonly IHostApplicationLifetime appLifetime;
         private readonly ISalService salService;
+        private IWatchDog watchDog;
 
         public LifetimeEventsHostedService(
             ILogger<LifetimeEventsHostedService> logger,
             IHostApplicationLifetime appLifetime,
-            ISalService salService)
+            ISalService salService, 
+            IWatchDog watchDog)
         {
             this.logger = logger;
             this.appLifetime = appLifetime;
             this.salService = salService;
+            this.watchDog = watchDog;
         }
 
         public Task StartAsync(CancellationToken cancellationToken)
         {
-            salService.Start();
+            watchDog.Start();
             return Task.CompletedTask;
         }
 
         public Task StopAsync(CancellationToken cancellationToken)
         {
-            try
-            {
-                salService.Stop();
-            }
-            catch (Exception e)
-            {
-                logger.LogError(e, "Error on stop");
-            }
-
+            watchDog.Stop();
+            salService.Stop();
             return Task.CompletedTask;
         }
     }
