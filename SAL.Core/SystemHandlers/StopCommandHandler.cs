@@ -6,6 +6,7 @@ using SAL.Infrastructure;
 namespace SAL.Core.SystemHandlers
 {
     [BackCommandName("System.StopAdapter")]
+    [SalInstanceHandler]
     class StopAdapterCommandHandler : BaseBackCommandHandlerAsync<Nothing, Nothing>
     {
         private readonly IHostApplicationLifetime lifeTime;
