@@ -10,6 +10,7 @@ namespace SAL.Test
     {
         public static async Task Main(string[] args)
         {
+            Environment.SetEnvironmentVariable("AdapterType","SalTest");
             var back = new FrontAdapterRunner();
            await back.RunAsync();
         }

@@ -66,14 +66,23 @@ namespace SAL.Core.Configuration
             if (inited)
                 return;
            
-            var busHost = Environment.GetEnvironmentVariable("ConfBus") ?? "configurationBus";
-            Console.WriteLine($"Connect to configurationBus ({busHost})...");
+            var confBusStr = Environment.GetEnvironmentVariable("ConfBus") ?? "configurationBus";
+            
+            var confBusSplit = confBusStr.Split("#");
+            var busHost = confBusSplit.First();
 
+            if (!int.TryParse(confBusSplit.Last(), out var busPort))
+            {
+                busPort = 6379;
+            }
+            
+            Console.WriteLine($"Connect to configurationBus (host:{busHost} port:{busPort} )...");
+            
             var options = new ConfigurationOptions
             {
                 EndPoints = 
                 {
-                    { busHost, 6379}
+                    { busHost, busPort}
                 },
                 Ssl = false,
                 DefaultDatabase = 0
