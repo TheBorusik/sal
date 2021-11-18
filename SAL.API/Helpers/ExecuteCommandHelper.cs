@@ -77,7 +77,7 @@ namespace SAL.API
         public static async Task<bool> ProcessCommandResultAsync<TCommandResult>(this Task<CommandResult<TCommandResult>> commandResult,
             Func<TCommandResult, Task> success,
             Func<CommonCommandResult, Task> others)
-            where TCommandResult : class, ICommandResult, new()
+            where TCommandResult : class, new()
         {
 
             var result = await commandResult;
