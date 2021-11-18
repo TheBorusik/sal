@@ -73,6 +73,25 @@ namespace SAL.API
             throw SalError.CreateException(SalErrorCodes.NotSuccess);
         }
 
+
+        public static async Task ProcessCommandResultAsync<TCommandResult>(this Task<CommandResult<TCommandResult>> commandResult,
+            Func<TCommandResult, Task> success,
+            Func<CommonCommandResult, Task> others)
+            where TCommandResult : class, ICommandResult, new()
+        {
+
+            var result = await commandResult;
+
+            if (result.ResultCode == ResultCodes.Success)
+            {
+                await success(result.GetResult<TCommandResult>());
+                return;
+            }
+            if(others != null)
+                await others(result.ToCommon());
+        }
+        
+
         public static Task ProcessCommandResult<TCommandResult>(this CommandResult<TCommandResult> commandResult,
             Func<TCommandResult, Task> success,
             Func<InternalExceptionDTO, Task> error = null,
