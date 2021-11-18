@@ -74,7 +74,7 @@ namespace SAL.API
         }
 
 
-        public static async Task ProcessCommandResultAsync<TCommandResult>(this Task<CommandResult<TCommandResult>> commandResult,
+        public static async Task<bool> ProcessCommandResultAsync<TCommandResult>(this Task<CommandResult<TCommandResult>> commandResult,
             Func<TCommandResult, Task> success,
             Func<CommonCommandResult, Task> others)
             where TCommandResult : class, ICommandResult, new()
@@ -85,10 +85,11 @@ namespace SAL.API
             if (result.ResultCode == ResultCodes.Success)
             {
                 await success(result.GetResult<TCommandResult>());
-                return;
+                return true;
             }
             if(others != null)
                 await others(result.ToCommon());
+            return false;
         }
         
 
