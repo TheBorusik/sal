@@ -417,12 +417,15 @@ namespace SAL.Core.Client
 
             var correlationId = Guid.NewGuid().ToString("N");
 
-            var routingKey = "";
-            if (string.IsNullOrWhiteSpace(handlerAdapterType) && string.IsNullOrWhiteSpace(handlerAdapterName))
+
+
+            string routingKey;
+            if (string.IsNullOrWhiteSpace(handlerAdapterType))
                 routingKey = commandName;
+            else if (string.IsNullOrWhiteSpace(handlerAdapterName))
+                routingKey = handlerAdapterType;
             else
                 routingKey = $"{handlerAdapterType}#{handlerAdapterName}";
-
 
             var commandDescriptor = new CommandDescriptor
             {
