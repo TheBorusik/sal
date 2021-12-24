@@ -81,6 +81,7 @@ namespace SAL.Test.Front
         IEventHandler2<IAmOffline>, 
         IEventHandler2<HeartbeatEvent>
     {
+        [SalEventName("System.sss")]
         public Task Handle(IAmOffline evnt, EventContext eventContext, ExecutingContext executingContext)
         {
             return Task.CompletedTask;

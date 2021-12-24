@@ -15,7 +15,7 @@ namespace SAL.API
         {
             var underlyingType = Nullable.GetUnderlyingType(type);
 
-            if (jToken == null)
+            if (jToken == null || jToken.Type is JTokenType.Null or JTokenType.None)
             {
                 if (underlyingType != null || type.IsClass)
                     return null;
