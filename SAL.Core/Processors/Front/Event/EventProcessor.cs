@@ -390,6 +390,8 @@ namespace SAL.Core.Processors
             var eventName = eventPayload.Descriptor.EventName;
             HandlerContext.Update(HandlerTypes.FrontEventHandler, eventName);
 
+            using var scope = container.BeginLifetimeScope();
+
             if (eventHandlers.TryGetValue(eventName, out var eventHandlerInfos))
             {
                 var handlerTasks = new List<Task>();
@@ -397,7 +399,7 @@ namespace SAL.Core.Processors
                 foreach(var eventHandlerInfo in eventHandlerInfos)
                 {
                     salLogger.LogHandler(eventPayload, eventHandlerInfo.HandlerType.Name);
-                    handlerTasks.Add(ExecuteEventHandlerAsync(eventHandlerInfo, transportMessage, eventPayload, eventLogger));
+                    handlerTasks.Add(ExecuteEventHandlerAsync(scope, eventHandlerInfo, transportMessage, eventPayload, eventLogger));
                 }
 
                 await Task.WhenAll(handlerTasks.ToArray());
@@ -409,9 +411,9 @@ namespace SAL.Core.Processors
             }
         }
 
-        public Task ExecuteEventHandlerAsync(EventHandlerInfo ehi, TransportMessage transportMessage, EventPayload eventPayload, ILogger eventLogger)
+        public Task ExecuteEventHandlerAsync(ILifetimeScope scope, EventHandlerInfo ehi, TransportMessage transportMessage, EventPayload eventPayload, ILogger eventLogger)
         {
-            using var scope = container.BeginLifetimeScope();
+
 
 
             var executingContext = new ExecutingContext
@@ -432,7 +434,6 @@ namespace SAL.Core.Processors
                     OperationId = HandlerContext.OperationId
                 }
             };
-
 
             var handler = (IEventHandler2) scope.Resolve(ehi.HandlerType);
 
