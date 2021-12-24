@@ -424,7 +424,22 @@ namespace SAL.API
 
         public static JObject ToJObjectSafe(this string json)
         {
-            return string.IsNullOrWhiteSpace(json) ? new JObject() : JObject.Parse(json);
+            if(string.IsNullOrWhiteSpace(json))
+                return  new JObject();
+
+            try
+            {
+                var jt = JToken.Parse(json);
+                if (jt.Type is JTokenType.Object)
+                    return jt as JObject;
+                return new JObject();
+
+            }
+            catch (Exception e)
+            {
+                return new JObject();
+            }
+
         }
 
         public static JObject ToJObjectSafe(this object obj)
