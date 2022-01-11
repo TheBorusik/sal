@@ -51,7 +51,7 @@ namespace SAL.API.Helpers
 			return returnArray;
 		}
 
-		public static string ToBase32String(byte[] input)
+		public static string ToBase32String(this byte[] input)
 		{
 			if (input == null || input.Length == 0)
 			{
