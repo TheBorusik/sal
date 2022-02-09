@@ -2,7 +2,7 @@
 
 namespace SAL.Infrastructure
 {
-    [AttributeUsage( AttributeTargets.Class | AttributeTargets.Method, AllowMultiple = true, Inherited = false)]
+    [AttributeUsage( AttributeTargets.Class | AttributeTargets.Method, AllowMultiple = true)]
     public class SalCommandNameAttribute : Attribute
     {
         public string Name { get; private set; }
