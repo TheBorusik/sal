@@ -125,6 +125,8 @@ namespace SAL.Core.DB
                 }
             });
 
+            builder["ApplicationName"] = AdapterConfiguration.AdapterFullName;
+
             return (builder.ToString(), fact);
         }
 

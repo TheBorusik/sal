@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.Data.Common;
 using System.IO;
 using System.Security.Cryptography;
 using System.Text;
@@ -8,6 +9,7 @@ using System.Threading.Tasks;
 using Autofac;
 using Newtonsoft.Json.Linq;
 using Newtonsoft.Json.Schema;
+using Npgsql;
 using SAL.API;
 using SAL.Core.S3;
 using SAL.Infrastructure;
@@ -33,6 +35,7 @@ namespace SAL.Test.Front
 
             
             builder.RegisterProcessor<TestFront>();
+            builder.RegisterInstance(NpgsqlFactory.Instance).Named<DbProviderFactory>("npgsql");
 
         }
     }
@@ -53,15 +56,22 @@ namespace SAL.Test.Front
 
         public void Online()
         {
+            using var scope = lifetimeScope.BeginLifetimeScope();
 
-         
-         using var scope = lifetimeScope.BeginLifetimeScope();
+            var dbC = scope.Resolve<IDbConnectionCreator>();
 
-         var s3Store = scope.Resolve<IS3Store>();
+            using var db =  dbC.GetConnection("wfm");
 
-         var fileId = "a3008e1bc13d43f99a530c5c4a912a48";
 
-         s3Store.DownloadFileAsync("a3008e1bc13d43f99a530c5c4a912a48", "H:\\temp\\a3008e1bc13d43f99a530c5c4a912a48");
+            db.Open();
+
+
+
+//         var s3Store = scope.Resolve<IS3Store>();
+
+            //   var fileId = "a3008e1bc13d43f99a530c5c4a912a48";
+
+            //    s3Store.DownloadFileAsync("a3008e1bc13d43f99a530c5c4a912a48", "H:\\temp\\a3008e1bc13d43f99a530c5c4a912a48");
 
 
 
