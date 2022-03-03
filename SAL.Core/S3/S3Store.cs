@@ -42,19 +42,18 @@ namespace SAL.Core.S3
             await fileTransferUtility.UploadAsync(filePath, config.BucketName, fileId);
         }
 
-        public async Task DownloadFileAsync(string fileId, string filePath)
+        public async Task DownloadFileAsync(string fileId, string filePath, long? byteLimit = null)
         {
             if (config == null)
                 throw new SalNotConfiguredException(sectionName);
 
-
             var s3Client = CreateClient();
+            if (!await CheckSizeLimitAsync(s3Client, fileId, byteLimit))
+                throw new SizeLimitException(byteLimit.Value);
 
             var fileTransferUtility = new TransferUtility(s3Client);
             await fileTransferUtility.DownloadAsync(filePath, config.BucketName, fileId);
         }
-
-
 
         private AmazonS3Client CreateClient()
         {
@@ -77,14 +76,36 @@ namespace SAL.Core.S3
 
             throw new SalNotConfiguredException("S3");
         }
-        
-        
+
+        public async Task<bool> CheckSizeLimitAsync(AmazonS3Client s3Client, string fileId, long? byteLimit)
+        {
+            if (!byteLimit.HasValue)
+                return true;
+
+            var fileMetaData = await s3Client.GetObjectMetadataAsync(config.BucketName, fileId);
+            var filesize = fileMetaData.Headers.ContentLength;
+            if (filesize > byteLimit)
+                return false;
+
+            return true;
+        }
+
+        public async Task DeleteFileAsync(string fileId)
+        {
+            if (config == null)
+                throw new SalNotConfiguredException(sectionName);
+
+            var s3Client = CreateClient();
+            await s3Client.DeleteObjectAsync(config.BucketName, fileId);
+        }
+
     }
 
     public interface IS3Store
     {
         Task UploadFileAsync(string filePath, string fileId);
-        Task DownloadFileAsync(string fileId, string filePath);
-        
+        Task DownloadFileAsync(string fileId, string filePath, long? byteLimit = null);
+        Task DeleteFileAsync(string fileId);
+        Task<bool> CheckSizeLimitAsync(AmazonS3Client s3Client, string fileId, long? byteLimit);
     }
 }
