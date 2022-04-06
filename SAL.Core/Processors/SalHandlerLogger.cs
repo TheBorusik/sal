@@ -72,7 +72,7 @@ namespace SAL.Core.Processors
 
             var sb = new StringBuilder();
             sb.Append("[CRP <- BUS] ");
-            sb.Append($"({commandResultPayload.Descriptor.ProcessingDuration:F3} c) ");
+            sb.Append($"({commandResultPayload.Descriptor.ProcessingDuration?.TotalSeconds:F3} c) ");
             sb.Append($"| P:{commandResultPayload.Descriptor.Priority} ");
             sb.Append($"| PTS:{commandResultPayload.Descriptor.PublishTimeStamp:O} ");
             sb.Append($"| HTS:{commandResultPayload.Descriptor.HandlerTimeStamp:O} ");

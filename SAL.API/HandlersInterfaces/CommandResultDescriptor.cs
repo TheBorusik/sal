@@ -9,8 +9,7 @@ namespace SAL.API
         public string HandlerAdatpterName { get; set; }
         public TimeSpan HandlerDuration { get; set; }
         public TimeSpan? ProcessingDuration { get; set; }
-        
-        public DateTime ResultTimeStamp { get; set; }
+        public DateTime? ResultTimeStamp { get; set; }
         
 
         public CommandResultDescriptor(CommandResultDescriptor src) :base(src)
