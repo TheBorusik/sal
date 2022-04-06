@@ -305,6 +305,8 @@ namespace SAL.Core.Processors
                 HandlerContext.Set(HandlerTypes.Processor, "FrontCommandResultProcessor", rabbitMessage.CorrelationId);
                 var transportMessage = ExtractMessage(rabbitMessage);
                 var commandResultPayload = ExtractCommandResultPayload(transportMessage);
+                commandResultPayload.Descriptor.ResultTimeStamp = DateTime.UtcNow;
+                commandResultPayload.Descriptor.ProcessingDuration = commandResultPayload.Descriptor.ResultTimeStamp - commandResultPayload.Descriptor.PublishTimeStamp;
                 HandlerContext.Update(commandResultPayload.ContextInfo);
                 salLogger.LogIncoming(commandResultPayload);
                 await Processing(transportMessage, commandResultPayload);
@@ -373,6 +375,11 @@ namespace SAL.Core.Processors
                 HandlerContext.Set(HandlerTypes.Processor, "SyncFrontCommandResultProcessor", rabbitMessage.CorrelationId);
                 var transportMessage = ExtractMessage(rabbitMessage);
                 var commandResultPayload = ExtractCommandResultPayload(transportMessage);
+                
+                commandResultPayload.Descriptor.ResultTimeStamp = DateTime.UtcNow;
+                commandResultPayload.Descriptor.ProcessingDuration = commandResultPayload.Descriptor.ResultTimeStamp - commandResultPayload.Descriptor.PublishTimeStamp;
+
+                
                 HandlerContext.Update(commandResultPayload.ContextInfo);
 
                 salLogger.LogIncoming(commandResultPayload);

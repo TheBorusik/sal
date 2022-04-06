@@ -69,10 +69,10 @@ namespace SAL.Core.Processors
             if (loggerSettings.Ignore)
                 return;
 
-            var pt = DateTime.UtcNow - commandResultPayload.Descriptor.PublishTimeStamp;
+
             var sb = new StringBuilder();
             sb.Append("[CRP <- BUS] ");
-            sb.Append($"({pt.TotalSeconds:F3} c) ");
+            sb.Append($"({commandResultPayload.Descriptor.ProcessingDuration:F3} c) ");
             sb.Append($"| P:{commandResultPayload.Descriptor.Priority} ");
             sb.Append($"| PTS:{commandResultPayload.Descriptor.PublishTimeStamp:O} ");
             sb.Append($"| HTS:{commandResultPayload.Descriptor.HandlerTimeStamp:O} ");

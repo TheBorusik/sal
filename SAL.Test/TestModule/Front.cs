@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Data.Common;
 using System.IO;
+using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
@@ -21,22 +22,8 @@ namespace SAL.Test.Front
     {
         public void Configure(ContainerBuilder builder, IConfigWatcher config)
         {
-
-         //   builder.RegisterSalHandler<TestExternal>();
-         //   builder.RegisterSalHandler<FrontTestCommandHandler>();
-         //   builder.RegisterSalHandler<GateEventHandler>();
-     //       builder.RegisterSalHandler<BackTestCommandHandler>();
-     
-     
-            
-           // builder.RegisterSalHandler<TestCommandResultHandler1>();
-        //    builder.RegisterSalHandler<TestCommandResultHandler3>();
-          //  builder.RegisterSalHandler<SendCommandResultHandler>();
-
-            
-            builder.RegisterProcessor<TestFront>();
-            builder.RegisterInstance(NpgsqlFactory.Instance).Named<DbProviderFactory>("npgsql");
-
+            builder.RegisterSalHandler<CommandResultHandler>();
+            //builder.RegisterProcessor<TestFront>();
         }
     }
 
@@ -58,24 +45,47 @@ namespace SAL.Test.Front
         {
             using var scope = lifetimeScope.BeginLifetimeScope();
 
-            var dbC = scope.Resolve<IDbConnectionCreator>();
+            var client = scope.Resolve<ISalClient>();
 
-            using var db =  dbC.GetConnection("wfm");
+            if (true)
+            {
+                for (var ii = 0; ii < 10; ii++)
+                    Task.Run(async () =>
+                    {
+                        var payload = new string('*', 1*1024);
+                        //var payload = "";
 
+                        for (int i = 0; i < 100000; i++)
+                        {
+                            var cContext = new CommandContext
+                            {
+                                ContextInfo = new ContextInfo
+                                {
+                                    AuthId = 0,
+                                    OperationId = "Test",
+                                },
+                                Descriptor = new CommandDescriptor
+                                {
+                                    Contour = Contour.Back.ToString(),
+                                    Priority = CommandPriority.Normal,
+                                    CommandName = "SalTester.TestCommand",
+                                    CorrelationId = Guid.NewGuid().ToString("N"),
+                                    IsSync = false,
+                                    ResultAdapterType = "SalTest",
+                                    PublishTimeStamp = DateTime.UtcNow,
+                                    HandlerTimeStamp = DateTime.UtcNow,
+                                    SourceAdapterType = AdapterConfiguration.AdapterType,
+                                    SourceAdapterName = AdapterConfiguration.AdapterName,
+                                }
+                            };
 
-            db.Open();
-
-
-
-//         var s3Store = scope.Resolve<IS3Store>();
-
-            //   var fileId = "a3008e1bc13d43f99a530c5c4a912a48";
-
-            //    s3Store.DownloadFileAsync("a3008e1bc13d43f99a530c5c4a912a48", "H:\\temp\\a3008e1bc13d43f99a530c5c4a912a48");
-
-
-
-
+                            await client.PublishResultAsync(CommonCommandResult.Create(new CommandResult
+                            {
+                                Payload = payload,
+                            }), cContext);
+                        }
+                    });
+            }
         }
 
         public void Offline()
@@ -86,74 +96,22 @@ namespace SAL.Test.Front
         {
         }
     }
-    
-    internal class GateEventHandler : 
-        IEventHandler2<IAmOffline>, 
-        IEventHandler2<HeartbeatEvent>
+
+
+    public class CommandResult
     {
-        [SalEventName("System.sss")]
-        public Task Handle(IAmOffline evnt, EventContext eventContext, ExecutingContext executingContext)
-        {
-            return Task.CompletedTask;
-        }
-        
-        public Task Handle(HeartbeatEvent evnt, EventContext eventContext, ExecutingContext executingContext)
-        {
-            return Task.CompletedTask;
-        }
+        public string Payload { get; set; }
     }
 
-    
-    public class SendCommandResultCommand : IHaveResult<Nothing>
-    {
-        public string CorrelationId { get; set; }
-        public CommonCommandResult CommandResult { get; set; }       
-    }
-    
-    
-    
-    [FrontCommandName("Observer.SendCommandResult1")]
-    [BackCommandName("Observer.SendCommandResultCom1")]
-    public class SendCommandResultHandler : BaseFrontBackCommandHandlerAsync<SendCommandResultCommand, Nothing>
-    {
-        public override  Task Handle(SendCommandResultCommand command)
-        {
-            return Task.CompletedTask;
-        }
-    }
-    
-    
-    
-    [SalExternalHttpPath("/api/ehtest")]
-    public class TestExternal : FrontExternalHttpMethod
-    {
-        public override async Task Handle(ExternalHttpRequest request)
-        {
-            var t = request.FormData.GetSafeValue("TermUrl", "");
-            var returnHtml = $@"
-<!DOCTYPE html>
-<html lang=""en"">
-<head>
-<meta charset=""UTF-8"">
-</head>
-<body>
-<form name=""postform"" action=""{t}"" method=""POST"">
-<input type=""hidden"" name=""MD"" value=""My_Md"">
-<input type=""hidden"" name=""PaRes"" value=""My_PaRes"">
-<center>Please click Submit to continue.<br>
-<input type=""submit"" name=""submit"" value=""Submit""/></center>
-</form>
-</body>
-</html>
-";
 
-            //     SessionManager.Current.AddOrUpdate("Test", "Test");
-            await PublishResult(new ExternalHttpResponse
-            {
-                ContentType = "text/html;charset=UTF-8",
-                Body = Encoding.UTF8.GetBytes(returnHtml),
-                StatusCode = 200
-            });
+    [SalContourHandler(Contour.Back)]
+    public class CommandResultHandler : ICommandResultHandle2Async<CommandResult>
+    {
+        [SalCommandName("SalTester.TestCommand")]
+        public async Task<bool> ResultHandle(CommandResult<CommandResult> result, CommandResultContext commandContext, ExecutingContext executingContext)
+        {
+            await Task.Delay(0);
+            return true;
         }
     }
 }

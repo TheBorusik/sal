@@ -61,7 +61,7 @@ namespace SAL.Core.Service
 
             builder.RegisterSalHandler<StopAdapterCommandHandler>();
 
-            builder.RegisterType<RabbitMQTransportSync>()
+            builder.RegisterType<RabbitMQTransportAsync>()
                 .As<ITransport>()
                 .Keyed<ITransport>(Contour.Back)
                 .WithParameter("contour", Contour.Back)

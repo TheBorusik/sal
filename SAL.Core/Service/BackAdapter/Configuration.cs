@@ -135,7 +135,7 @@ namespace SAL.Core.Service
                 File.WriteAllText(fn, "Тест");
                 File.Delete(fn);
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 throw new ConfigurationErrorException($"DiskStore - Ошибка конфигурации. Проверте  доступность \"{AdapterConfiguration.DiskStorePath}\".");
             }

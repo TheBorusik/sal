@@ -8,7 +8,7 @@ using SAL.Core.Rabbit.EventArgs;
 
 namespace SAL.Core.Rabbit
 {
-    public class RabbitMQConnectionManagerSync : IDisposable
+    public class RabbitMQConnectionManagerAsync : IDisposable
     {
         private IConnection connection;
         
@@ -20,7 +20,7 @@ namespace SAL.Core.Rabbit
         private readonly ConnectionFactory factory;
 
 
-        public RabbitMQConnectionManagerSync(RabbitConfig rabbitConfig, ILoggerProvider loggerProvider)
+        public RabbitMQConnectionManagerAsync(RabbitConfig rabbitConfig, ILoggerProvider loggerProvider)
         {
             if (rabbitConfig == null)
                 throw new ArgumentNullException(nameof(rabbitConfig));
@@ -42,7 +42,8 @@ namespace SAL.Core.Rabbit
                 HostName = config.Host,
                 Port = config.Port,
                 AutomaticRecoveryEnabled = false,
-                TopologyRecoveryEnabled = false
+                TopologyRecoveryEnabled = false,
+                DispatchConsumersAsync = true,
             };
             ContourName = config.VirtualHost.ToUpper();
         }
@@ -61,7 +62,7 @@ namespace SAL.Core.Rabbit
                 connection?.Dispose();
 
             }
-            catch (Exception)
+            catch (Exception )
             {
                 //
             }
