@@ -303,8 +303,8 @@ namespace SAL.Core.Processors
                 HandlerContext.Set(HandlerTypes.Processor, "CommandResultProcessor", rabbitMessage.CorrelationId);
                 var transportMessage = ExtractMessage(rabbitMessage);
                 var commandResultPayload = ExtractCommandResultPayload(transportMessage);
-                commandResultPayload.Descriptor.ResultTimeStamp = DateTime.UtcNow;
-                commandResultPayload.Descriptor.ProcessingDuration = commandResultPayload.Descriptor.ResultTimeStamp - commandResultPayload.Descriptor.PublishTimeStamp;
+                commandResultPayload.Descriptor.HandleResultTimeStamp = DateTime.UtcNow;
+                commandResultPayload.Descriptor.ProcessingDuration = commandResultPayload.Descriptor.HandleResultTimeStamp - commandResultPayload.Descriptor.PublishTimeStamp;
                 HandlerContext.Update(commandResultPayload.ContextInfo);
                 salLogger.LogIncoming(commandResultPayload);
                 
@@ -376,8 +376,8 @@ namespace SAL.Core.Processors
                 HandlerContext.Set(HandlerTypes.Processor, "SyncCommandResultProcessor", rabbitMessage.CorrelationId);
                 var transportMessage = ExtractMessage(rabbitMessage);
                 var commandResultPayload = ExtractCommandResultPayload(transportMessage);
-                commandResultPayload.Descriptor.ResultTimeStamp = DateTime.UtcNow;
-                commandResultPayload.Descriptor.ProcessingDuration = commandResultPayload.Descriptor.ResultTimeStamp - commandResultPayload.Descriptor.PublishTimeStamp;
+                commandResultPayload.Descriptor.HandleResultTimeStamp = DateTime.UtcNow;
+                commandResultPayload.Descriptor.ProcessingDuration = commandResultPayload.Descriptor.HandleResultTimeStamp - commandResultPayload.Descriptor.PublishTimeStamp;
                 HandlerContext.Update(commandResultPayload.ContextInfo);
                 salLogger.LogIncoming(commandResultPayload);
                 await SyncProcessing(transportMessage, commandResultPayload);

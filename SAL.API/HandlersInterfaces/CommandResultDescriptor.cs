@@ -6,17 +6,21 @@ namespace SAL.API
     {
 
         public string HandlerAdapterType { get; set; }
-        public string HandlerAdatpterName { get; set; }
+        public string HandlerAdapterName { get; set; }
+        
+        public DateTime? PublishResultTimeStamp { get; set; }
         public TimeSpan HandlerDuration { get; set; }
+        public DateTime? HandleResultTimeStamp { get; set; }
         public TimeSpan? ProcessingDuration { get; set; }
-        public DateTime? ResultTimeStamp { get; set; }
         
 
         public CommandResultDescriptor(CommandResultDescriptor src) :base(src)
         {
             HandlerAdapterType = src.HandlerAdapterType;
-            HandlerAdatpterName = src.HandlerAdatpterName;
+            HandlerAdapterName = src.HandlerAdapterName;
+            PublishResultTimeStamp = src.PublishResultTimeStamp;
             HandlerDuration = src.HandlerDuration;
+            HandleResultTimeStamp = src.HandleResultTimeStamp;
             ProcessingDuration = src.ProcessingDuration;
         }
 

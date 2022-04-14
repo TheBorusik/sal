@@ -580,7 +580,7 @@ namespace SAL.Core.Client
             var commandResultContext = new CommandResultContext(commandContext);
 
             commandResultContext.Descriptor.HandlerAdapterType = AdapterConfiguration.AdapterType;
-            commandResultContext.Descriptor.HandlerAdatpterName = AdapterConfiguration.AdapterName;
+            commandResultContext.Descriptor.HandlerAdapterName = AdapterConfiguration.AdapterName;
             commandResultContext.Descriptor.Contour = Contour.ToString();
 
             return PublishResultAsync(commandResultContext, result);
@@ -597,10 +597,7 @@ namespace SAL.Core.Client
 
             if (ttl == null || ttl > TimeSpan.Zero)
             {
-                if (commandResultContext.Descriptor.HandlerTimeStamp.HasValue)
-                    commandResultContext.Descriptor.HandlerDuration = DateTime.UtcNow - commandResultContext.Descriptor.HandlerTimeStamp.Value;
-
-
+                        
                 var routingKey = "";
 
                 if (commandResultContext.Descriptor.IsSync)
@@ -620,6 +617,12 @@ namespace SAL.Core.Client
                     
                 };
 
+                commandResultContext.Descriptor.PublishResultTimeStamp = DateTime.UtcNow;
+                
+                if (commandResultContext.Descriptor.HandlerTimeStamp.HasValue)
+                    commandResultContext.Descriptor.HandlerDuration = commandResultContext.Descriptor.PublishResultTimeStamp.Value - commandResultContext.Descriptor.HandlerTimeStamp.Value;
+
+                
                 salLogger.LogOutgoing(commandResultPayload);
 
                 var transportMessage = new TransportMessage
@@ -628,7 +631,7 @@ namespace SAL.Core.Client
                     Payload = JObject.FromObject(commandResultPayload, SalSerializer.Create()),
                     Source = $"{AdapterConfiguration.AdapterType}.{AdapterConfiguration.AdapterName}",
                     Priority = (byte) commandResultContext.Descriptor.Priority,
-                    TimeStamp = commandResultContext.Descriptor.PublishTimeStamp,
+                    TimeStamp = commandResultContext.Descriptor.PublishResultTimeStamp.Value,
                     Destination = routingKey,
                     TTL = ttl,
                     CorrelationId = commandResultContext.Descriptor.CorrelationId,
