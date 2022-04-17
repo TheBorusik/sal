@@ -96,15 +96,15 @@ namespace SAL.Core.Client
             return correlationId;
         }
         
-        public async Task<CommandResult<TCommandResult>> ExecuteCommandAsync<TCommandResult>(
+        
+                public Task<SimpleCommandResult> ExecuteCommandAsync(
             string commandName,
             object commandBody,
             CommandPriority priority = CommandPriority.Normal,
             TimeSpan? ttl = null,
             string handlerAdapterType = null,
             string handlerAdapterName = null,
-            bool throwIfTimeout = true
-        ) where TCommandResult : class, new()
+            bool throwIfTimeout = true)
         {
             ttl ??= TimeSpan.FromSeconds(60);
             
@@ -140,11 +140,32 @@ namespace SAL.Core.Client
                     Contour = Contour.ToString()
                 }
             };
-            
-            var result = await LoExecuteAsync(commandContext, commandBody, throwIfTimeout);
+            return LoExecuteAsync(commandContext, commandBody, throwIfTimeout);
+        }
+        
+        public async Task<CommandResult<TCommandResult>> ExecuteCommandAsync<TCommandResult>(
+            string commandName,
+            object commandBody,
+            CommandPriority priority = CommandPriority.Normal,
+            TimeSpan? ttl = null,
+            string handlerAdapterType = null,
+            string handlerAdapterName = null,
+            bool throwIfTimeout = true
+        ) where TCommandResult : class, new()
+        {
 
+            var result = await ExecuteCommandAsync(
+                commandName,
+                commandBody,
+                priority,
+                ttl,
+                handlerAdapterType,
+                handlerAdapterName,
+                throwIfTimeout);
             return new CommandResult<TCommandResult>(result.CommandResult);
         }
+
+
 
 
         public Task PublishResultAsync(CommonCommandResult result, CommandContext commandContext)
