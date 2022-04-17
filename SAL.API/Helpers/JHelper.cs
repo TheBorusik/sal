@@ -435,7 +435,7 @@ namespace SAL.API
                 return new JObject();
 
             }
-            catch (Exception e)
+            catch (Exception)
             {
                 return new JObject();
             }
