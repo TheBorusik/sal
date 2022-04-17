@@ -339,7 +339,7 @@ namespace SAL.Core.Client
         {
             var transportMessage = new TransportMessage
             {
-                Type = MessageTypes.CommandResult,
+                Type = MessageTypes.Event,
                 Payload = JObject.FromObject(eventPayload, SalSerializer.Create()),
             };
 
