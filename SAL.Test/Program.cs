@@ -8,9 +8,10 @@ namespace SAL.Test
     {
         public static async Task Main(string[] args)
         {
-            Environment.SetEnvironmentVariable("AdapterType","SalTest");
-            var back = new BackAdapterRunner();
-           await back.RunAsync();
+           Environment.SetEnvironmentVariable("AdapterType","SalTest");
+          //Environment.SetEnvironmentVariable("AdapterType","AuthAdapter");
+          var back = new BackAdapterRunner();
+          await back.RunAsync();
         }
     }
 }
