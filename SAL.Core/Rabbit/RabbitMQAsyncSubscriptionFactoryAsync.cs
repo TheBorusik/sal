@@ -28,7 +28,7 @@ namespace SAL.Core.Rabbit
             var bindings = eventNames.Select(s => new QueueBinding
             {
                 ExchangeName = ExchangeNames.EventExchange,
-                RoutingKey = "!{s}"
+                RoutingKey = $"!{s}"
             }).ToList();
 
             bindings.Add(new QueueBinding
