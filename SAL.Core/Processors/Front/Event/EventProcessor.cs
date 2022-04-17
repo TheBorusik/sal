@@ -102,7 +102,7 @@ namespace SAL.Core.Processors
             subscription.Stop();
             systemSubscription.Stop();
         }
-        
+
         private void RegisterEventHandler(Type handlerType)
         {
             try
@@ -115,7 +115,7 @@ namespace SAL.Core.Processors
                 throw;
             }
         }
-        
+
         private void RegisterCommonEventHandler(Type handlerType)
         {
             try
@@ -132,28 +132,28 @@ namespace SAL.Core.Processors
         private void RegisterEventHandler2(Type handlerType)
         {
             var contourAttr = handlerType.GetAttribute<SalContourHandlerAttribute>();
-            if(contourAttr == null)
+            if (contourAttr == null)
                 return;
             if (contourAttr.Contour == Contour.Back)
                 return;
 
             var handlerInterfaces = handlerType.GetInterfaces()
                 .Where(i => i.IsAssignableTo<IEventHandler2>() && i.IsGenericType).ToArray();
-            
+
             IEventSchemeCreator schemeCreator = null;
             if (handlerType.IsAssignableTo<IEventSchemeCreator>())
-                schemeCreator = (IEventSchemeCreator) container.Resolve(handlerType);
+                schemeCreator = (IEventSchemeCreator)container.Resolve(handlerType);
 
             foreach(var handlerInterface in handlerInterfaces)
             {
                 var eventType = handlerInterface.GetGenericArguments()[0];
-                
+
                 var interfaceMethodInfo = handlerInterface.GetMethod("Handle");
                 var handleMethod = handlerType.GetMethodByInterfaceMethodInfo(interfaceMethodInfo);
-                
-                
+
+
                 var eventName = eventType.GetSalName();
-                
+
                 var enAttr = handleMethod.GetAttribute<SalEventNameAttribute>()?.Name;
 
                 if (string.IsNullOrWhiteSpace(enAttr) && handlerInterfaces.Length == 1)
@@ -163,12 +163,12 @@ namespace SAL.Core.Processors
 
                 if (string.IsNullOrWhiteSpace(enAttr) && string.IsNullOrWhiteSpace(eventName))
                     throw new Exception($"Для {eventType.Name} в {handlerType.Name}  не заданно имя Event (SalEventNameAttribute)");
-                
+
                 if (!string.IsNullOrWhiteSpace(enAttr))
                     eventName = enAttr;
 
                 var isSystem = string.Equals(eventName.Split(".").First(), "System", StringComparison.InvariantCultureIgnoreCase);
-                    
+
                 var eventHandlerInfo = new EventHandlerInfo
                 {
                     HandlerType = handlerType,
@@ -206,16 +206,16 @@ namespace SAL.Core.Processors
         private void RegisterCommonEventHandler2(Type handlerType)
         {
             var contourAttr = handlerType.GetAttribute<SalContourHandlerAttribute>();
-            if(contourAttr == null)
+            if (contourAttr == null)
                 return;
-            if(contourAttr.Contour == Contour.Back)
+            if (contourAttr.Contour == Contour.Back)
                 return;
 
             var attrs = handlerType.GetAttributes<SalEventNameAttribute>().ToArray();
 
             IEventSchemeCreator schemeCreator = null;
             if (handlerType.IsAssignableTo<IEventSchemeCreator>())
-                schemeCreator = (IEventSchemeCreator) container.Resolve(handlerType);
+                schemeCreator = (IEventSchemeCreator)container.Resolve(handlerType);
 
             attrs.ForEach(a =>
             {
@@ -267,10 +267,10 @@ namespace SAL.Core.Processors
             {
                 HandlerContext.Set(HandlerTypes.Processor, "FrontEventProcessor", rabbitMessage.CorrelationId);
                 var transportMessage = ExtractMessage(rabbitMessage);
-                var eventPayload = ExtractEventPayload(transportMessage);
-                HandlerContext.Update(eventPayload.ContextInfo);
+                var eventPayload = ExtractEventPayload(transportMessage, rabbitMessage.CorrelationId);
+                HandlerContext.Update(eventPayload.Context.ContextInfo);
                 salLogger.LogIncoming(eventPayload);
-                await Processing(transportMessage, eventPayload);
+                await Processing(eventPayload);
                 ack();
             }
             catch (JsonReaderException ex)
@@ -345,49 +345,37 @@ namespace SAL.Core.Processors
             return transportMessage;
         }
 
-        protected EventPayload ExtractEventPayload(TransportMessage transportTransportMessage)
+        protected EventPayload ExtractEventPayload(TransportMessage transportTransportMessage, string cid)
         {
             var eventPayload = transportTransportMessage.Payload.ConvertValue<EventPayload>();
 
-            if (eventPayload.Descriptor == null)
-                throw new Exception($"Отсутствует eventPayload.Descriptor | CorrelationId:{transportTransportMessage.CorrelationId}");
+            if (eventPayload.Context == null)
+                throw new Exception($"Отсутствует EventPayload.Context | CorrelationId:{cid}");
 
-            if (string.IsNullOrWhiteSpace(eventPayload.Descriptor.EventName))
-                throw new Exception($"Пустой eventPayload.Descriptor.EventName | CorrelationId:{transportTransportMessage.CorrelationId}");
+            if (eventPayload.Context.Descriptor == null)
+                throw new Exception($"Отсутствует EventPayload.Context.Descriptor | CorrelationId:{cid}");
+
+            if (string.IsNullOrWhiteSpace(eventPayload.Context.Descriptor.EventName))
+                throw new Exception($"Пустой eventPayload.Context.Descriptor.EventName | CorrelationId:{cid}");
 
             if (eventPayload.Payload == null)
-                throw new Exception($"Отсутствует eventPayload.Payload | CorrelationId:{transportTransportMessage.CorrelationId}");
+                throw new Exception($"Отсутствует eventPayload.Payload | CorrelationId:{cid}");
 
             return eventPayload;
         }
 
-        private async Task Processing(TransportMessage transportMessage, EventPayload eventPayload)
+        private async Task Processing(EventPayload eventPayload)
         {
             var eventLogger = salLogger.GetLogger(eventPayload);
 
-            if (eventPayload.Descriptor.TTL.HasValue &&
-                eventPayload.Descriptor.PublishTimeStamp + eventPayload.Descriptor.TTL.Value <= DateTime.UtcNow)
+            if (eventPayload.Context.Descriptor.TTL.HasValue &&
+                eventPayload.Context.Descriptor.PublishTimeStamp + eventPayload.Context.Descriptor.TTL.Value <= DateTime.UtcNow)
             {
                 eventLogger.Trace("Event - протух");
                 return;
             }
-
-            if (!string.IsNullOrWhiteSpace(eventPayload.Descriptor.DestinationAdapterType) &&
-                !string.Equals(eventPayload.Descriptor.DestinationAdapterType, AdapterConfiguration.AdapterType, StringComparison.InvariantCultureIgnoreCase))
-            {
-                eventLogger.Trace("Event - не соответсвие DestinationAdapterType");
-                return;
-            }
-
-            if (!string.IsNullOrWhiteSpace(eventPayload.Descriptor.DestinationAdapterName) &&
-                !string.Equals(eventPayload.Descriptor.DestinationAdapterName, AdapterConfiguration.AdapterName, StringComparison.InvariantCultureIgnoreCase))
-            {
-                eventLogger.Trace("Event - не соответсвие DestinationAdapterName");
-                return;
-            }
-
-
-            var eventName = eventPayload.Descriptor.EventName;
+            
+            var eventName = eventPayload.Context.Descriptor.EventName;
             HandlerContext.Update(HandlerTypes.FrontEventHandler, eventName);
 
             using var scope = container.BeginLifetimeScope();
@@ -399,23 +387,20 @@ namespace SAL.Core.Processors
                 foreach(var eventHandlerInfo in eventHandlerInfos)
                 {
                     salLogger.LogHandler(eventPayload, eventHandlerInfo.HandlerType.Name);
-                    handlerTasks.Add(ExecuteEventHandlerAsync(scope, eventHandlerInfo, transportMessage, eventPayload, eventLogger));
+                    handlerTasks.Add(ExecuteEventHandlerAsync(scope, eventHandlerInfo, eventPayload, eventLogger));
                 }
 
                 await Task.WhenAll(handlerTasks.ToArray());
             }
             else
             {
-                var dto = SalError.CreateDto(SalErrorCodes.Fatal, "Евент не обрабатываеться", properties: new {eventName});
+                var dto = SalError.CreateDto(SalErrorCodes.Fatal, "Евент не обрабатываеться", properties: new { eventName });
                 throw dto.ToException();
             }
         }
 
-        public Task ExecuteEventHandlerAsync(ILifetimeScope scope, EventHandlerInfo ehi, TransportMessage transportMessage, EventPayload eventPayload, ILogger eventLogger)
+        public Task ExecuteEventHandlerAsync(ILifetimeScope scope, EventHandlerInfo ehi,  EventPayload eventPayload, ILogger eventLogger)
         {
-
-
-
             var executingContext = new ExecutingContext
             {
                 Scope = scope,
@@ -423,19 +408,9 @@ namespace SAL.Core.Processors
                 Logger = eventLogger
             };
 
-            var context = new EventContext()
-            {
-                Descriptor = eventPayload.Descriptor,
-                ContextInfo = new ContextInfo
-                {
-                    SessionId = HandlerContext.SessionId,
-                    AuthId = HandlerContext.AuthId,
-                    ProcessId = HandlerContext.ProcessId,
-                    OperationId = HandlerContext.OperationId
-                }
-            };
-
-            var handler = (IEventHandler2) scope.Resolve(ehi.HandlerType);
+            var context = eventPayload.Context;
+            
+            var handler = (IEventHandler2)scope.Resolve(ehi.HandlerType);
 
             if (ehi.IsCommon)
             {
@@ -445,14 +420,14 @@ namespace SAL.Core.Processors
                 }
                 else
                 {
-                    var dto = SalError.CreateDto(SalErrorCodes.Fatal, "Обработчик не являеться общим", properties: new {handlerType = handler.GetType().Name});
+                    var dto = SalError.CreateDto(SalErrorCodes.Fatal, "Обработчик не являеться общим", properties: new { handlerType = handler.GetType().Name });
                     throw dto.ToException();
                 }
             }
             else
             {
                 var evnt = eventPayload.Payload.ConvertValue(ehi.EventType);
-                return (Task) ehi.HandleMethod.Invoke(handler, new[] {evnt, context, executingContext});
+                return (Task)ehi.HandleMethod.Invoke(handler, new[] { evnt, context, executingContext });
             }
         }
     }

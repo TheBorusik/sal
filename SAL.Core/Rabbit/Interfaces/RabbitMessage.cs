@@ -1,5 +1,4 @@
 ﻿using System;
-using Newtonsoft.Json.Linq;
 
 namespace SAL.Core.Rabbit.Interfaces
 {
@@ -7,6 +6,8 @@ namespace SAL.Core.Rabbit.Interfaces
     {
         
         // для отправки
+        public string Exchange { get; set; }
+
         public string RoutingKey { get; set; }
 
         public string CorrelationId { get; set; }
@@ -19,16 +20,5 @@ namespace SAL.Core.Rabbit.Interfaces
         // доп поля при получении
 
         public string QueueName { get; set; }
-
-        // заполняеться при использовании того или иного метода
-        public string Exchange { get; set; }
-
-    }
-
-    public class RabbitMessageEx : RabbitMessage
-    {
-        public JObject Headers { get; set; }
-        public bool Redelivered { get; set; }
-
     }
 }

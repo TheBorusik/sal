@@ -85,7 +85,7 @@ namespace SAL.Core.Processors
                 throw;
             }
         }
-        
+
         private void RegisterCommandResultHandler(Type handlerType)
         {
             try
@@ -98,7 +98,7 @@ namespace SAL.Core.Processors
                 throw;
             }
         }
-        
+
         private void RegisterCommonCommandResultHandler(Type handlerType)
         {
             try
@@ -115,23 +115,23 @@ namespace SAL.Core.Processors
         private void RegisterCommandResultHandler2(Type handlerType)
         {
             var contourAttr = handlerType.GetAttribute<SalContourHandlerAttribute>();
-            if(contourAttr?.Contour == Contour.Back)
+            if (contourAttr?.Contour == Contour.Back)
                 return;
-            
+
             ICommandSchemeCreator schemaCreater = null;
             if (handlerType.IsAssignableTo<ICommandSchemeCreator>())
-                schemaCreater = (ICommandSchemeCreator) container.Resolve(handlerType);
-            
+                schemaCreater = (ICommandSchemeCreator)container.Resolve(handlerType);
+
             var handlerInterfaces = handlerType.GetInterfaces()
                 .Where(i => i.IsAssignableTo<ICommandResultHandler2>() && i.IsGenericType).ToArray();
 
             foreach(var handlerInterface in handlerInterfaces)
             {
                 var resultType = handlerInterface.GetGenericArguments()[0];
-                
+
                 var interfaceMethodInfo = handlerInterface.GetMethod("ResultHandle");
                 var handleMethod = handlerType.GetMethodByInterfaceMethodInfo(interfaceMethodInfo);
-                
+
                 var commandName = handleMethod.GetAttribute<SalCommandNameAttribute>()?.Name;
 
                 if (string.IsNullOrWhiteSpace(commandName) && handlerInterfaces.Length == 1)
@@ -141,7 +141,7 @@ namespace SAL.Core.Processors
 
                 if (string.IsNullOrWhiteSpace(commandName))
                     throw new Exception($"Для {resultType.Name} в {handlerType.Name}  не заданно имя команды (SalCommandNameAttribute)");
-                
+
                 var commandResultHandlerInfo = new CommandResultHandlerInfo
                 {
                     CommandName = commandName,
@@ -151,7 +151,7 @@ namespace SAL.Core.Processors
                     IsCommon = false,
                     ResultSchema = schemaCreater == null ? SalSchema.Generate(resultType) : schemaCreater.GetResultSchema(commandName)
                 };
-                
+
                 if (resultHandlers.TryGetValue(commandName, out var handlers))
                 {
                     handlers.AddLast(commandResultHandlerInfo);
@@ -162,13 +162,12 @@ namespace SAL.Core.Processors
                     handlers.AddLast(commandResultHandlerInfo);
                     resultHandlers.Add(commandName, handlers);
 
-                    
+
                     salService.AddFrontCommandResultHandler(new API.CommandResultHandlerInfo
                     {
                         IsCommon = commandResultHandlerInfo.IsCommon,
                         CommandName = commandResultHandlerInfo.CommandName,
                         ResultSchema = commandResultHandlerInfo.ResultSchema
-
                     });
                 }
 
@@ -179,24 +178,24 @@ namespace SAL.Core.Processors
         private void RegisterCommonCommandResultHandler2(Type handlerType)
         {
             var contourAttr = handlerType.GetAttribute<SalContourHandlerAttribute>();
-            if(contourAttr == null)
+            if (contourAttr == null)
                 return;
-            if(contourAttr.Contour == Contour.Back)
+            if (contourAttr.Contour == Contour.Back)
                 return;
-            
-            
+
+
             ICommandSchemeCreator schemaCreater = null;
             if (handlerType.IsAssignableTo<ICommandSchemeCreator>())
-                schemaCreater = (ICommandSchemeCreator) container.Resolve(handlerType);
-            
-            
+                schemaCreater = (ICommandSchemeCreator)container.Resolve(handlerType);
+
+
             var attrs = handlerType.GetAttributes<SalCommandNameAttribute>().ToArray();
             if (attrs.Any())
             {
                 attrs.ForEach(a =>
                 {
                     var commandName = a.Name;
-                    
+
                     var commandResultHandlerInfo = new CommandResultHandlerInfo
                     {
                         CommandName = commandName,
@@ -205,7 +204,7 @@ namespace SAL.Core.Processors
                         HandleMethod = null,
                         IsCommon = true,
                     };
-                    
+
                     if (schemaCreater != null)
                     {
                         commandResultHandlerInfo.ResultSchema = schemaCreater.GetResultSchema(commandName);
@@ -228,7 +227,7 @@ namespace SAL.Core.Processors
                             CommandName = commandName,
                             ResultSchema = commandResultHandlerInfo.ResultSchema
                         };
-                        
+
                         salService.AddFrontCommandResultHandler(handlerInfo);
                     }
 
@@ -304,10 +303,8 @@ namespace SAL.Core.Processors
             {
                 HandlerContext.Set(HandlerTypes.Processor, "FrontCommandResultProcessor", rabbitMessage.CorrelationId);
                 var transportMessage = ExtractMessage(rabbitMessage);
-                var commandResultPayload = ExtractCommandResultPayload(transportMessage);
-                commandResultPayload.Descriptor.HandleResultTimeStamp = DateTime.UtcNow;
-                commandResultPayload.Descriptor.ProcessingDuration = commandResultPayload.Descriptor.HandleResultTimeStamp - commandResultPayload.Descriptor.PublishTimeStamp;
-                HandlerContext.Update(commandResultPayload.ContextInfo);
+                var commandResultPayload = ExtractCommandResultPayload(transportMessage, rabbitMessage.CorrelationId);
+                HandlerContext.Update(commandResultPayload.Context.ContextInfo);
                 salLogger.LogIncoming(commandResultPayload);
                 await Processing(transportMessage, commandResultPayload);
                 ack();
@@ -374,16 +371,12 @@ namespace SAL.Core.Processors
                 //todo проверить надобность
                 HandlerContext.Set(HandlerTypes.Processor, "SyncFrontCommandResultProcessor", rabbitMessage.CorrelationId);
                 var transportMessage = ExtractMessage(rabbitMessage);
-                var commandResultPayload = ExtractCommandResultPayload(transportMessage);
+                var commandResultPayload = ExtractCommandResultPayload(transportMessage,rabbitMessage.CorrelationId);
                 
-                commandResultPayload.Descriptor.HandleResultTimeStamp = DateTime.UtcNow;
-                commandResultPayload.Descriptor.ProcessingDuration = commandResultPayload.Descriptor.HandleResultTimeStamp - commandResultPayload.Descriptor.PublishTimeStamp;
-
-                
-                HandlerContext.Update(commandResultPayload.ContextInfo);
+                HandlerContext.Update(commandResultPayload.Context.ContextInfo);
 
                 salLogger.LogIncoming(commandResultPayload);
-                await SyncProcessing(transportMessage, commandResultPayload);
+                await SyncProcessing(commandResultPayload);
                 ack();
             }
             catch (JsonReaderException ex)
@@ -458,27 +451,25 @@ namespace SAL.Core.Processors
             return transportMessage;
         }
 
-        protected CommandResultPayload ExtractCommandResultPayload(TransportMessage transportTransportMessage)
+        protected CommandResultPayload ExtractCommandResultPayload(TransportMessage transportTransportMessage, string cid)
         {
             var commandResultPayload = transportTransportMessage.Payload.ConvertValue<CommandResultPayload>();
 
-            if (commandResultPayload.Descriptor == null)
-                throw new Exception($"Отсутствует commandPayload.Descriptor | CorrelationId:{transportTransportMessage.CorrelationId}");
+            if (commandResultPayload.Context == null)
+                throw new Exception($"Отсутствует CommandResultPayload.Descriptor | CorrelationId:{cid}");
 
-            if (string.IsNullOrWhiteSpace(commandResultPayload.Descriptor.CommandName))
-                throw new Exception($"Пустой commandPayload.Descriptor.CommandName | CorrelationId:{transportTransportMessage.CorrelationId}");
+            if (commandResultPayload.Context.Descriptor == null)
+                throw new Exception($"Отсутствует CommandResultPayload.Context.Descriptor | CorrelationId:{cid}");
+
+            if (string.IsNullOrWhiteSpace(commandResultPayload.Context.Descriptor.CommandName))
+                throw new Exception($"Пустой CommandResultPayload.Context.Descriptor.CommandName | CorrelationId:{cid}");
 
             if (commandResultPayload.Payload == null)
-                throw new Exception($"Отсутствует commandPayload.Payload | CorrelationId:{transportTransportMessage.CorrelationId}");
+                throw new Exception($"Отсутствует CommandResultPayload.Payload | CorrelationId:{cid}");
 
+            commandResultPayload.Context.Descriptor.HandleResultTimeStamp = DateTime.UtcNow;
+            commandResultPayload.Context.Descriptor.ProcessingDuration = commandResultPayload.Context.Descriptor.HandleResultTimeStamp - commandResultPayload.Context.Descriptor.PublishTimeStamp;
 
-            if (commandResultPayload.Descriptor.ResultAdapterType != AdapterConfiguration.AdapterType)
-                throw new Exception($"Не соответствие Descriptor.ResultAdapterType и AdapterType для результата CorrelationId:{transportTransportMessage.CorrelationId}");
-
-
-            if (!string.IsNullOrWhiteSpace(commandResultPayload.Descriptor.ResultAdapterName) &&
-                !string.Equals(commandResultPayload.Descriptor.ResultAdapterName, AdapterConfiguration.AdapterName, StringComparison.InvariantCultureIgnoreCase))
-                throw new Exception($"Не соответствие Descriptor.ResultAdapterName и AdapterName для результата CorrelationId:{transportTransportMessage.CorrelationId}");
 
             return commandResultPayload;
         }
@@ -487,15 +478,15 @@ namespace SAL.Core.Processors
         {
             var commandResLogger = salLogger.GetLogger(commandResultPayload);
 
-            if (commandResultPayload.Descriptor.TTL.HasValue &&
-                commandResultPayload.Descriptor.PublishTimeStamp + commandResultPayload.Descriptor.TTL.Value <= DateTime.UtcNow)
+            if (commandResultPayload.Context.Descriptor.TTL.HasValue &&
+                commandResultPayload.Context.Descriptor.PublishTimeStamp + commandResultPayload.Context.Descriptor.TTL.Value <= DateTime.UtcNow)
             {
                 commandResLogger.Trace("Результат команды - протух");
                 return;
             }
 
 
-            HandlerContext.Update(HandlerTypes.FrontCommandResultHandler, commandResultPayload.Descriptor.CommandName);
+            HandlerContext.Update(HandlerTypes.FrontCommandResultHandler, commandResultPayload.Context.Descriptor.CommandName);
 
             using var scope = container.BeginLifetimeScope();
 
@@ -507,22 +498,11 @@ namespace SAL.Core.Processors
                 Logger = commandResLogger
             };
 
-            var context = new CommandResultContext
-            {
-                Descriptor = commandResultPayload.Descriptor,
-                ContextInfo = new ContextInfo
-                {
-                    SessionId = HandlerContext.SessionId,
-                    AuthId = HandlerContext.AuthId,
-                    ProcessId = HandlerContext.ProcessId,
-                    OperationId = HandlerContext.OperationId
-                }
-            };
-
+            var context = commandResultPayload.Context;
 
             var isHandled = false;
 
-            if (resultHandlers.TryGetValue(commandResultPayload.Descriptor.CommandName, out var resultCommandHandlersInfo))
+            if (resultHandlers.TryGetValue(commandResultPayload.Context.Descriptor.CommandName, out var resultCommandHandlersInfo))
             {
                 foreach(var rchi in resultCommandHandlersInfo)
                 {
@@ -551,27 +531,16 @@ namespace SAL.Core.Processors
 
             if (!isHandled)
             {
-                HandlerContext.Update(handlerName: commandResultPayload.Descriptor.CommandName);
+                HandlerContext.Update(handlerName: commandResultPayload.Context.Descriptor.CommandName);
                 throw SalError.CreateException(SalErrorCodes.NotHandledCommandResult);
             }
         }
 
-        private Task SyncProcessing(TransportMessage transportMessage, CommandResultPayload commandResultPayload)
+        private Task SyncProcessing(CommandResultPayload commandResultPayload)
         {
-            if (simpleCommandResultHandlers.TryRemove(commandResultPayload.Descriptor.CorrelationId, out var simpleCommandResultHandler))
+            if (simpleCommandResultHandlers.TryRemove(commandResultPayload.Context.Descriptor.CorrelationId, out var simpleCommandResultHandler))
             {
-                var context = new CommandResultContext
-                {
-                    Descriptor = commandResultPayload.Descriptor,
-                    ContextInfo = new ContextInfo
-                    {
-                        SessionId = HandlerContext.SessionId,
-                        AuthId = HandlerContext.AuthId,
-                        ProcessId = HandlerContext.ProcessId,
-                        OperationId = HandlerContext.OperationId
-                    }
-                };
-
+                var context = commandResultPayload.Context;
 
                 var setValue = simpleCommandResultHandler.CompletionSource.TrySetResult(new SimpleCommandResult
                 {
@@ -590,26 +559,24 @@ namespace SAL.Core.Processors
 
         public Task<bool> ExecuteResultHandlerAsync(ILifetimeScope scope, CommandResultHandlerInfo rchi, CommonCommandResult result, CommandResultContext context, ExecutingContext executingContext)
         {
-            var handler = (ICommandResultHandler2) scope.Resolve(rchi.HandlerType);
-
+            var handler = (ICommandResultHandler2)scope.Resolve(rchi.HandlerType);
 
 
             if (rchi.IsCommon)
             {
                 if (handler is ICommonCommandResultHandler2 ccrha)
                 {
-                    return ccrha.ResultHandle(result,  context, executingContext);
+                    return ccrha.ResultHandle(result, context, executingContext);
                 }
                 else
                 {
-                    throw SalError.CreateException(SalErrorCodes.Fatal, "Обработчик не являеться общим", properties: new {handlerType = handler.GetType().Name});
+                    throw SalError.CreateException(SalErrorCodes.Fatal, "Обработчик не являеться общим", properties: new { handlerType = handler.GetType().Name });
                 }
             }
 
             var commandResultType = typeof(CommandResult<>).MakeGenericType(rchi.ResultType);
             var commandResult = result.ConvertValue(commandResultType);
-            return (Task<bool>) rchi.HandleMethod.Invoke(handler, new[] {commandResult, context, executingContext});
+            return (Task<bool>)rchi.HandleMethod.Invoke(handler, new[] { commandResult, context, executingContext });
         }
-        
     }
 }

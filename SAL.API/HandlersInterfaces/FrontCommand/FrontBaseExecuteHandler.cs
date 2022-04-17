@@ -5,6 +5,7 @@ using SAL.Infrastructure;
 
 namespace SAL.API
 {
+    [Obsolete]
     public abstract class FrontBaseExecuteHandler<TExternalCommand, TExternalCommandResult, TInternalCommand, TInternalCommandResult> 
         : IFrontCommandHandler2Async<TExternalCommand>
         where TInternalCommand : class, IHaveResult<TInternalCommandResult>, new()
@@ -41,7 +42,9 @@ namespace SAL.API
             {
                 var internalCommand = await Transform(command);
 
-                var internalResult = await backClient.ExecuteCommandAsync<TInternalCommand, TInternalCommandResult>(internalCommand, commandContext.Descriptor.Priority, commandContext.Descriptor.TTL);
+                var internalCommandName = typeof(TInternalCommand).GetAttribute<SalCommandNameAttribute>()?.Name;
+
+                var internalResult = await backClient.ExecuteCommandAsync<TInternalCommandResult>(internalCommandName, internalCommand, commandContext.Descriptor.Priority, commandContext.Descriptor.TTL);
 
                 var externalResult = await Transform(internalResult);
 

@@ -1,12 +1,12 @@
 ﻿namespace SAL.Core.Rabbit.Consts
 {
-    internal class ExchangeNames
+    public class ExchangeNames
     {
-        internal const string NotHandledExchange = "NotHandledExchange";
+        public const string NotHandledExchange = "NotHandledExchange";
 
-        internal const string CommandExchange = "CommandExchange";
-        internal const string CommandResultExchange = "CommandResultExchange";
-        internal const string EventExchange = "EventExchange";
-        internal const string CEventExchange = "CEventExchange";
+        public const string CommandExchange = "CommandExchange";
+        public const string CommandResultExchange = "CommandResultExchange";
+        public const string EventExchange = "EventExchange";
+        public const string CEventExchange = "CEventExchange";
     }
 }

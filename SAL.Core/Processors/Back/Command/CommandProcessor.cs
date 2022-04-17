@@ -332,10 +332,10 @@ namespace SAL.Core.Processors
             {
                 HandlerContext.Set(HandlerTypes.Processor, "CommandProcessor", rabbitMessage.CorrelationId);
                 var transportMessage = ExtractMessage(rabbitMessage);
-                var commandPayload = ExtractCommandPayload(transportMessage);
-                HandlerContext.Update(commandPayload.ContextInfo);
+                var commandPayload = ExtractCommandPayload(transportMessage, rabbitMessage.CorrelationId);
+                HandlerContext.Update(commandPayload.Context.ContextInfo);
                 salLogger.LogIncoming(commandPayload);
-                if (commandPayload.Descriptor.CommandName == "WFM.Result")
+                if (commandPayload.Context.Descriptor.CommandName == "WFM.Result")
                     await ProcessingWfmResult(transportMessage, commandPayload);
                 else
                     await Processing(transportMessage, commandPayload);
@@ -414,30 +414,23 @@ namespace SAL.Core.Processors
             return transportMessage;
         }
 
-        protected CommandPayload ExtractCommandPayload(TransportMessage transportTransportMessage)
+        protected CommandPayload ExtractCommandPayload(TransportMessage transportTransportMessage, string cid)
         {
             var commandPayload = transportTransportMessage.Payload.ConvertValue<CommandPayload>();
 
-            if (commandPayload.Descriptor == null)
-                throw new Exception($"Отсутствует commandPayload.Descriptor | CorrelationId:{transportTransportMessage.CorrelationId}");
+            if (commandPayload.Context == null)
+                throw new Exception($"Отсутствует CommandPayload.Context | CorrelationId:{cid}");
+            
+            if (commandPayload.Context.Descriptor == null)
+                throw new Exception($"Отсутствует CommandPayload.Context.Descriptor | CorrelationId:{cid}");
 
-            if (string.IsNullOrWhiteSpace(commandPayload.Descriptor.CommandName))
-                throw new Exception($"Пустой commandPayload.Descriptor.CommandName | CorrelationId:{transportTransportMessage.CorrelationId}");
+            if (string.IsNullOrWhiteSpace(commandPayload.Context.Descriptor.CommandName))
+                throw new Exception($"Пустой CommandPayload.Context.Descriptor.CommandName | CorrelationId:{cid}");
 
             if (commandPayload.Payload == null)
-                throw new Exception($"Отсутствует commandPayload.Payload | CorrelationId:{transportTransportMessage.CorrelationId}");
+                throw new Exception($"Отсутствует CommandPayload.Payload | CorrelationId:{cid}");
 
-
-            if (!string.IsNullOrWhiteSpace(commandPayload.Descriptor.DestinationAdapterType)
-                && commandPayload.Descriptor.DestinationAdapterType != AdapterConfiguration.AdapterType)
-                throw new Exception($"Не соответствие Descriptor.DestinationAdapterType и AdapterType для команды CorrelationId:{transportTransportMessage.CorrelationId}");
-
-            if (!string.IsNullOrWhiteSpace(commandPayload.Descriptor.DestinationAdapterName)
-                && commandPayload.Descriptor.DestinationAdapterName != AdapterConfiguration.AdapterName)
-                throw new Exception($"Не соответствие Descriptor.DestinationAdapterType и AdapterType для команды CorrelationId:{transportTransportMessage.CorrelationId}");
-
-
-            commandPayload.Descriptor.HandlerTimeStamp = DateTime.UtcNow;
+            commandPayload.Context.Descriptor.HandlerTimeStamp = DateTime.UtcNow;
 
             return commandPayload;
         }
@@ -446,17 +439,17 @@ namespace SAL.Core.Processors
         {
             var commandLogger = salLogger.GetLogger(commandPayload);
 
-            if (commandPayload.Descriptor.TTL.HasValue &&
-                commandPayload.Descriptor.PublishTimeStamp + commandPayload.Descriptor.TTL.Value <= DateTime.UtcNow)
+            if (commandPayload.Context.Descriptor.TTL.HasValue &&
+                commandPayload.Context.Descriptor.PublishTimeStamp + commandPayload.Context.Descriptor.TTL.Value <= DateTime.UtcNow)
             {
                 commandLogger.Trace("Команда - протухла");
                 return;
             }
 
-            HandlerContext.Update(HandlerTypes.CommandHandler, commandPayload.Descriptor.CommandName);
+            HandlerContext.Update(HandlerTypes.CommandHandler, commandPayload.Context.Descriptor.CommandName);
 
 
-            if (commandHandlers.TryGetValue(commandPayload.Descriptor.CommandName, out var commandHandlerInfo))
+            if (commandHandlers.TryGetValue(commandPayload.Context.Descriptor.CommandName, out var commandHandlerInfo))
             {
                 var handlerName = commandHandlerInfo.HandlerType.Name;
 
@@ -472,18 +465,8 @@ namespace SAL.Core.Processors
                     Logger = commandLogger
                 };
 
-                var commandContext = new CommandContext
-                {
-                    Descriptor = commandPayload.Descriptor,
-                    ContextInfo = new ContextInfo
-                    {
-                        SessionId = HandlerContext.SessionId,
-                        AuthId = HandlerContext.AuthId,
-                        ProcessId = HandlerContext.ProcessId,
-                        OperationId = HandlerContext.OperationId
-                    }
-                };
-
+                var commandContext = commandPayload.Context;
+                
                if(!await Validate(commandHandlerInfo, commandPayload))
                    return;
 
@@ -509,7 +492,7 @@ namespace SAL.Core.Processors
             }
             else
             {
-                throw SalError.CreateException(SalErrorCodes.Fatal, $"Обработчик команды {commandPayload.Descriptor.CommandName} не найден");
+                throw SalError.CreateException(SalErrorCodes.Fatal, $"Обработчик команды {commandPayload.Context.Descriptor.CommandName} не найден");
             }
         }
 
@@ -521,16 +504,12 @@ namespace SAL.Core.Processors
                 IList<string> messages;
                 if (!commandPayload.Payload.IsValid(handlerInfo.CommandSchema, out messages))
                 {
-                    await salClient.PublishResultAsync(messages.Select(m => new FieldError
-                        {
-                            Description = m,
-                            Path = String.Empty
-                        }).ToArray(),
-                        new CommandContext
-                        {
-                            Descriptor = commandPayload.Descriptor,
-                            ContextInfo = commandPayload.ContextInfo
-                        });
+                    var validationError = SalError.CreateValidationDto(messages.Select(m => new FieldError
+                    {
+                        Description = m,
+                        Path = String.Empty
+                    }));
+                    await salClient.PublishResultAsync(validationError, commandPayload.Context);
                     return false;
                 }
             }
@@ -542,24 +521,16 @@ namespace SAL.Core.Processors
         {
             var commandLogger = salLogger.GetLogger(commandPayload);
 
-            if (commandPayload.Descriptor.TTL.HasValue &&
-                commandPayload.Descriptor.PublishTimeStamp + commandPayload.Descriptor.TTL.Value <= DateTime.UtcNow)
+            if (commandPayload.Context.Descriptor.TTL.HasValue &&
+                commandPayload.Context.Descriptor.PublishTimeStamp + commandPayload.Context.Descriptor.TTL.Value <= DateTime.UtcNow)
             {
                 commandLogger.Trace("Команда - протухла");
                 return;
             }
 
 
-            HandlerContext.Update(HandlerTypes.CommandHandler, commandPayload.Descriptor.CommandName);
-
-            /*
-            IList<string> messages;
-            if (!commandPayload.Payload.IsValid(wfmProcessResultCommandSchema, out messages))
-            {
-                
-            }
-            */
-
+            HandlerContext.Update(HandlerTypes.CommandHandler, commandPayload.Context.Descriptor.CommandName);
+            
             var wfmProcessResultCommand = commandPayload.Payload.ConvertValue<WfmProcessResultCommand>();
 
             var wfmResultHandlerName = "default";

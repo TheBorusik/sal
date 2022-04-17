@@ -4,7 +4,7 @@ using SAL.Infrastructure;
 
 namespace SAL.API
 {
-    [SalEventName("System.HeartBit")]
+    [SalEventName("System.HeartbeatEvent")]
     public class HeartbeatEvent : IEvent
     {
         public string Type { get; set; }

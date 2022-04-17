@@ -21,7 +21,4 @@
   <ItemGroup>
     <ProjectReference Include="..\SAL.Infrastructure\SAL.Infrastructure.csproj" />
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="SystemCommand" />
-  </ItemGroup>
 </Project>

@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
@@ -79,11 +78,11 @@ namespace SAL.Core.Processors
                 var config = configWatcher.GetSection(ConfigurationSectionNames.FrontExternalHttpProcessor);
                 if (config != null)
                 {
-                    baseJsonConfig.Merge(config, new JsonMergeSettings {MergeArrayHandling = MergeArrayHandling.Merge});
+                    baseJsonConfig.Merge(config, new JsonMergeSettings { MergeArrayHandling = MergeArrayHandling.Merge });
                 }
 
                 processorConfig = baseJsonConfig.ToObject<ExternalHttpProcessorConfig>();
-                
+
 
                 var transport = container.ResolveKeyed<ITransport>(Contour.Front);
 
@@ -119,7 +118,7 @@ namespace SAL.Core.Processors
                 throw;
             }
         }
-        
+
         private void RegisterHandler2(Type handlerType)
         {
             var externalPathMethod = handlerType.GetCustomAttributes(typeof(SalExternalHttpPathAttribute))
@@ -168,10 +167,10 @@ namespace SAL.Core.Processors
             {
                 HandlerContext.Set(HandlerTypes.Processor, "FrontExternalHttpProcessor", rabbitMessage.CorrelationId);
                 var transportMessage = ExtractMessage(rabbitMessage);
-                var commandPayload = ExtractCommandPayload(transportMessage);
-                HandlerContext.Update(commandPayload.ContextInfo);
+                var commandPayload = ExtractCommandPayload(transportMessage, rabbitMessage.CorrelationId);
+                HandlerContext.Update(commandPayload.Context.ContextInfo);
                 salLogger.LogIncoming(commandPayload);
-                await Processing(transportMessage, commandPayload);
+                await Processing(commandPayload);
                 ack();
             }
             catch (JsonReaderException ex)
@@ -196,8 +195,8 @@ namespace SAL.Core.Processors
                 nack();
                 if (ex.InnerException is SalException sex)
                 {
-                    logger.Error("При обработке произошла ошибка", ex);
-                    await salClient.RaiseExceptionDetectEvent(rabbitMessage.CorrelationId, ex.ToDto());
+                    logger.Error("При обработке произошла ошибка", sex);
+                    await salClient.RaiseExceptionDetectEvent(rabbitMessage.CorrelationId, sex.ToDto());
                 }
                 else
                 {
@@ -246,46 +245,40 @@ namespace SAL.Core.Processors
             return transportMessage;
         }
 
-        protected CommandPayload ExtractCommandPayload(TransportMessage transportTransportMessage)
+        protected CommandPayload ExtractCommandPayload(TransportMessage transportTransportMessage, string cid)
         {
             var commandPayload = transportTransportMessage.Payload.ConvertValue<CommandPayload>();
 
-            if (commandPayload.Descriptor == null)
-                throw new Exception($"Отсутствует commandPayload.Descriptor | CorrelationId:{transportTransportMessage.CorrelationId}");
+            if (commandPayload.Context == null)
+                throw new Exception($"Отсутствует CommandPayload.Context | CorrelationId:{cid}");
 
-            if (string.IsNullOrWhiteSpace(commandPayload.Descriptor.CommandName))
-                throw new Exception($"Пустой commandPayload.Descriptor.CommandName | CorrelationId:{transportTransportMessage.CorrelationId}");
+            if (commandPayload.Context.Descriptor == null)
+                throw new Exception($"Отсутствует CommandPayload.Context.Descriptor | CorrelationId:{cid}");
+
+            if (string.IsNullOrWhiteSpace(commandPayload.Context.Descriptor.CommandName))
+                throw new Exception($"Пустой CommandPayload.Context.Descriptor.CommandName | CorrelationId:{cid}");
 
             if (commandPayload.Payload == null)
-                throw new Exception($"Отсутствует commandPayload.Payload | CorrelationId:{transportTransportMessage.CorrelationId}");
+                throw new Exception($"Отсутствует commandPayload.Payload | CorrelationId:{cid}");
 
-
-            if (!string.IsNullOrWhiteSpace(commandPayload.Descriptor.DestinationAdapterType) &&
-                !string.Equals(commandPayload.Descriptor.DestinationAdapterType, AdapterConfiguration.AdapterType, StringComparison.InvariantCultureIgnoreCase))
-                throw new Exception($"Не соответствие Descriptor.DestinationAdapterType и AdapterType для команды CorrelationId:{transportTransportMessage.CorrelationId}");
-
-            if (!string.IsNullOrWhiteSpace(commandPayload.Descriptor.DestinationAdapterName) &&
-                !string.Equals(commandPayload.Descriptor.DestinationAdapterName, AdapterConfiguration.AdapterName, StringComparison.InvariantCultureIgnoreCase))
-                throw new Exception($"Не соответствие Descriptor.DestinationAdapterName и AdapterName для команды CorrelationId:{transportTransportMessage.CorrelationId}");
-
-            commandPayload.Descriptor.HandlerTimeStamp = DateTime.UtcNow;
+            commandPayload.Context.Descriptor.HandlerTimeStamp = DateTime.UtcNow;
 
             return commandPayload;
         }
 
-        protected virtual async Task Processing(TransportMessage transportMessage, CommandPayload commandPayload)
+        protected virtual async Task Processing(CommandPayload commandPayload)
         {
             var commandLogger = salLogger.GetLogger(commandPayload);
 
-            if (commandPayload.Descriptor.TTL.HasValue &&
-                commandPayload.Descriptor.PublishTimeStamp + commandPayload.Descriptor.TTL.Value <= DateTime.UtcNow)
+            if (commandPayload.Context.Descriptor.TTL.HasValue &&
+                commandPayload.Context.Descriptor.PublishTimeStamp + commandPayload.Context.Descriptor.TTL.Value <= DateTime.UtcNow)
             {
                 commandLogger.Trace("Команда - протухла");
                 return;
             }
 
 
-            HandlerContext.Update(HandlerTypes.FrontExternalHttp, commandPayload.Descriptor.CommandName);
+            HandlerContext.Update(HandlerTypes.FrontExternalHttp, commandPayload.Context.Descriptor.CommandName);
 
 
             var externalHttpRequest = commandPayload.Payload.ConvertValue<ExternalHttpRequest>();
@@ -296,7 +289,7 @@ namespace SAL.Core.Processors
                 salLogger.LogHandler(commandPayload, commandHandlerInfo.HandlerType.Name);
 
                 using var scope = container.BeginLifetimeScope();
-                var handler = (IFrontExternalHttpMethod) scope.Resolve(commandHandlerInfo.HandlerType);
+                var handler = (IFrontExternalHttpMethod)scope.Resolve(commandHandlerInfo.HandlerType);
 
                 var executingContext = new ExecutingContext
                 {
@@ -305,19 +298,7 @@ namespace SAL.Core.Processors
                     Logger = commandLogger
                 };
 
-                var commandContext = new CommandContext
-                {
-                    Descriptor = commandPayload.Descriptor,
-                    ContextInfo = new ContextInfo
-                    {
-                        SessionId = HandlerContext.SessionId,
-                        AuthId = HandlerContext.AuthId,
-                        ProcessId = HandlerContext.ProcessId,
-                        OperationId = HandlerContext.OperationId
-                    }
-                };
-
-
+                var commandContext = commandPayload.Context;
                 await handler.Handle(externalHttpRequest, commandContext, executingContext);
             }
             else

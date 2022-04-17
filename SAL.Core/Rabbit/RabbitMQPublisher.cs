@@ -1,73 +1,69 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using System;
+using System.Threading;
+using System.Threading.Channels;
+using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 using RabbitMQ.Client;
+using SAL.Core.Exceptions.Rabbit;
 using SAL.Core.Rabbit.Consts;
 using SAL.Core.Rabbit.Helpers;
 using SAL.Core.Rabbit.Interfaces;
 
 namespace SAL.Core.Rabbit
 {
+
+    
     public class RabbitMQPublisher : IPublisher
     {
-
         private readonly IRMQTransport transport;
         private readonly ILogger logger;
-
+        
+        private IModel rmqChannel;
+        
         public RabbitMQPublisher(IRMQTransport transport, ILoggerProvider loggerProvider)
         {
             this.transport = transport;
-            this.logger = loggerProvider.CreateLogger("RMQ.Publisher");
-        }
-        public void PublishEvent(RabbitMessage msg)
-        {
-
-            msg.Priority = 0;
-            msg.Exchange = ExchangeNames.EventExchange;
-
-            Publish(msg);
+            logger = loggerProvider.CreateLogger("RMQ.Publisher");
         }
         
-        public void PublishCEvent(RabbitMessage msg)
+        public  Task PublishAsync(RabbitMessage msg)
         {
-
-            msg.Priority = 0;
-            msg.Exchange = ExchangeNames.CEventExchange;
-
-            Publish(msg);
+            if(rmqChannel == null)
+                throw new NoConnectionException();
+            
+            var props = rmqChannel.CreateBasicProperties();
+            props.DeliveryMode = 2;
+            props.CorrelationId = msg.CorrelationId;
+            props.Priority = msg.Priority;
+            props.Timestamp = msg.TimeStamp.ToAmqp();
+            rmqChannel.BasicPublish(msg.Exchange, msg.RoutingKey, props, msg.Payload);
+            
+            return Task.CompletedTask;
+            
         }
 
-        public void PublishCommand(RabbitMessage msg)
+
+        public void Start()
         {
+            if (rmqChannel != null)
+                Stop();
 
-            msg.Exchange = ExchangeNames.CommandExchange;
+            rmqChannel = transport.CreateModel();
 
-            Publish(msg);
+        
+
         }
-        public void PublishCommandResult(RabbitMessage msg)
+        
+        
+        
+        public void Stop()
         {
-
-            msg.Exchange = ExchangeNames.CommandResultExchange;
-
-            Publish(msg);
+            rmqChannel.Dispose();
+            rmqChannel = null;
         }
-        private void Publish(RabbitMessage msg)
-        {
 
-            using (var model = transport.CreateModel())
-            {
-                var routingKey = msg.RoutingKey ?? string.Empty;
 
-                var props = model.CreateBasicProperties();
 
-                props.DeliveryMode = 2;
 
-                props.CorrelationId = msg.CorrelationId;
-
-                props.Priority = msg.Priority;
-
-                props.Timestamp = msg.TimeStamp.ToAmqp();
-
-                model.BasicPublish(msg.Exchange, routingKey, props, msg.Payload);
-            }
-        }
     }
 }

@@ -8,11 +8,11 @@ namespace SAL.API
 {
     public class BaseAuthServerEventConvertor : ICommonEventHandler2
     {
-        private ILoSalClient frontClient;
+        private ISalClient frontClient;
 
         public BaseAuthServerEventConvertor(ILifetimeScope scope)
         {
-            frontClient = scope.ResolveKeyed<ILoSalClient>(Contour.Front);
+            frontClient = scope.ResolveKeyed<ISalClient>(Contour.Front);
         }
 
         private ExecutingContext executingContext;
@@ -23,7 +23,7 @@ namespace SAL.API
             this.eventContext = eventContext;
             this.executingContext = executingContext;
             var notifyEvent  = await Convert(eventContext.Descriptor, evnt);
-            await frontClient.PublishEventAsync("AuthServer.ClientNotify", notifyEvent, eventContext.Descriptor.CorrelationId, TimeSpan.FromSeconds(30), null, null, false);
+            await frontClient.PublishEventAsync("AuthServer.ClientNotify", notifyEvent, ttl:TimeSpan.FromSeconds(30));
 
         }
         protected virtual async Task<NotifyEvent> Convert(EventDescriptor eventDescriptor, JObject evnt)

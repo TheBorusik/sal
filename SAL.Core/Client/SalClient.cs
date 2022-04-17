@@ -1,12 +1,11 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 using Autofac;
 using Newtonsoft.Json.Linq;
 using SAL.API;
-using SAL.Core.Helpers;
 using SAL.Core.Processors;
+using SAL.Core.Rabbit.Consts;
 using SAL.Core.Rabbit.Interfaces;
 using SAL.Infrastructure;
 using MessageTypes = SAL.API.MessageTypes;
@@ -43,601 +42,470 @@ namespace SAL.Core.Client
             this.salLogger = salLogger;
         }
 
-
-        public async Task<string> PublishCommandAsync<TCommand>(
-            TCommand command,
+        
+        public async Task<string> PublishCommandAsync(
+            string commandName,
+            object commandBody,
             string correlationId = null,
             CommandPriority priority = CommandPriority.Normal,
             TimeSpan? ttl = null,
-            string handlerServiceType = null,
-            string handlerServiceName = null,
-            bool typeHandler = false)
+            string handlerAdapterType = null,
+            string handlerAdapterName = null,
+            string resultAdapterType = null,
+            string resultAdapterName = null)
+        {
+            if (string.IsNullOrWhiteSpace(correlationId))
+                correlationId = Guid.NewGuid().ToString("N");
+
+            var commandExchangeName = ExchangeNames.CommandExchange;
+            var resultExchangeName = ExchangeNames.CommandResultExchange;
+
+            var commandRoutingKey = commandName;
+            var resultRoutingKey = $"{AdapterConfiguration.AdapterType}@{AdapterConfiguration.AdapterName}";
+
+            if (!string.IsNullOrWhiteSpace(handlerAdapterType))
+            {
+                commandRoutingKey = $"{handlerAdapterType}@{handlerAdapterName}";
+            }
+
+            if (!string.IsNullOrWhiteSpace(resultAdapterType))
+            {
+                resultRoutingKey = $"{resultAdapterType}@{resultAdapterName}";
+            }
+            
+            var commandContext = new CommandContext
+            {
+                ContextInfo = new ContextInfo(HandlerContext.SessionId, HandlerContext.AuthId, HandlerContext.ProcessId, HandlerContext.OperationId),
+                Descriptor = new CommandDescriptor
+                {
+                    CorrelationId = correlationId,
+                    CommandName = commandName,
+                    CommandExchangeName = commandExchangeName,
+                    CommandRoutingKey = commandRoutingKey,
+                    Priority = priority,
+                    SourceAdapterType = AdapterConfiguration.AdapterType,
+                    SourceAdapterName = AdapterConfiguration.AdapterName,
+                    ResultExchangeName = resultExchangeName,
+                    ResultRoutingKey = resultRoutingKey,
+                    PublishTimeStamp = DateTime.UtcNow,
+                    TTL = ttl,
+                    Contour = Contour.ToString()
+                }
+            };
+            await LoPublishAsync(commandContext, commandBody);
+            return correlationId;
+        }
         
-            where TCommand : class, new()
-        {
-            if (Contour == Contour.Front)
-                throw new ContourNotSupportedException();
-            
-            if (string.IsNullOrWhiteSpace(correlationId))
-                correlationId = Guid.NewGuid().ToString("N");
-
-            var commandType = command.GetType();
-
-            var resultServiceType = AdapterConfiguration.AdapterType;
-            var resultServiceName = typeHandler ? null : AdapterConfiguration.AdapterName;
-            
-            await PublishCommandAsync(
-                commandType.GetSalName(),
-                command,
-                correlationId,
-                priority,
-                ttl,
-                handlerServiceType,
-                handlerServiceName,
-                resultServiceType,
-                resultServiceName
-            );
-
-            return correlationId;
-        }
-
-        public async Task<string> PublishCommandAsync(
-            string commandName, 
-            object command, 
-            string correlationId = null, 
-            CommandPriority priority = CommandPriority.Normal, 
-            TimeSpan? ttl = null, 
-            string handlerServiceType = null, 
-            string handlerServiceName = null, 
-            bool typeHandler = false)
-        {
-            if (string.IsNullOrWhiteSpace(correlationId))
-                correlationId = Guid.NewGuid().ToString("N");
-
-
-            
-            var resultServiceType = AdapterConfiguration.AdapterType;
-            var resultServiceName = typeHandler ? null : AdapterConfiguration.AdapterName;
-            
-            await PublishCommandAsync(
-                commandName,
-                command,
-                correlationId,
-                priority,
-                ttl,
-                handlerServiceType,
-                handlerServiceName,
-                resultServiceType,
-                resultServiceName
-            );
-
-            return correlationId;
-        }
-
-        public async Task<CommandResult<TCommandResult>> ExecuteCommandAsync<TCommand, TCommandResult>(
-            TCommand command,
+        public async Task<CommandResult<TCommandResult>> ExecuteCommandAsync<TCommandResult>(
+            string commandName,
+            object commandBody,
             CommandPriority priority = CommandPriority.Normal,
             TimeSpan? ttl = null,
-            string handlerServiceType = null,
-            string handlerServiceName = null
-        ) where TCommand : class, IHaveResult<TCommandResult>, new() where TCommandResult : class, ICommandResult, new()
+            string handlerAdapterType = null,
+            string handlerAdapterName = null,
+            bool throwIfTimeout = true
+        ) where TCommandResult : class, new()
         {
             ttl ??= TimeSpan.FromSeconds(60);
+            
+            var correlationId = Guid.NewGuid().ToString("N");
 
-            var commandType = command.GetType();
-            var result = await ExecuteCommandAsync(
-                commandType.GetSalName(),
-                command,
-                priority,
-                ttl.Value,
-                true,
-                handlerServiceType,
-                handlerServiceName
-            );
+            var commandExchangeName = ExchangeNames.CommandExchange;
+            var resultExchangeName = ExchangeNames.CommandResultExchange;
+
+            var commandRoutingKey = commandName;
+            var resultRoutingKey = $"!{AdapterConfiguration.AdapterType}@{AdapterConfiguration.AdapterName}";
+
+            if (!string.IsNullOrWhiteSpace(handlerAdapterType))
+            {
+                commandRoutingKey = $"{handlerAdapterType}@{handlerAdapterName}";
+            }
+            
+            var commandContext = new CommandContext
+            {
+                ContextInfo = new ContextInfo(HandlerContext.SessionId, HandlerContext.AuthId, HandlerContext.ProcessId, HandlerContext.OperationId),
+                Descriptor = new CommandDescriptor
+                {
+                    CorrelationId = correlationId,
+                    CommandName = commandName,
+                    CommandExchangeName = commandExchangeName,
+                    CommandRoutingKey = commandRoutingKey,
+                    Priority = priority,
+                    SourceAdapterType = AdapterConfiguration.AdapterType,
+                    SourceAdapterName = AdapterConfiguration.AdapterName,
+                    ResultExchangeName = resultExchangeName,
+                    ResultRoutingKey = resultRoutingKey,
+                    PublishTimeStamp = DateTime.UtcNow,
+                    TTL = ttl,
+                    Contour = Contour.ToString()
+                }
+            };
+            
+            var result = await LoExecuteAsync(commandContext, commandBody, throwIfTimeout);
 
             return new CommandResult<TCommandResult>(result.CommandResult);
         }
 
-        public async Task<CommandResult<TCommandResult>> ExecuteCommandAsync<TCommandResult>(
-            string commandName, 
-            object command, 
-            CommandPriority priority = CommandPriority.Normal, 
-            TimeSpan? ttl = null,
-            bool throwIfTimeout = true,
-            string handlerServiceType = null, 
-            string handlerServiceName = null) where TCommandResult : class, new()
+
+        public Task PublishResultAsync(CommonCommandResult result, CommandContext commandContext)
         {
-            ttl ??= TimeSpan.FromSeconds(60);
-            
-            var result = await ExecuteCommandAsync(
-                commandName,
-                command,
-                priority,
-                ttl.Value,
-                throwIfTimeout,
-                handlerServiceType,
-                handlerServiceName
-            );
-            
-            return new CommandResult<TCommandResult>(result.CommandResult);
+            return LoPublishResultAsync(commandContext, result);
         }
-
-
-        public Task PublishResultAsync(ICommandResult result, CommandContext commandContext)
+        public Task PublishResultAsync(object result, CommandContext commandContext)
         {
-            return PublishResultAsync(new CommonCommandResult
+            return LoPublishResultAsync(commandContext, new CommonCommandResult
             {
                 Error = null,
                 Result = JObject.FromObject(result, SalSerializer.Create()),
                 ResultCode = ResultCodes.Success
-            }, commandContext);
+            });
         }
-
         public Task PublishResultAsync(object result, string resultCode, CommandContext commandContext)
         {
             if (resultCode == ResultCodes.Error)
-            {
                 throw new Exception("ResultCode should not matter 'Error'");
-            }
             
-            return PublishResultAsync(new CommonCommandResult
+            return LoPublishResultAsync(commandContext, new CommonCommandResult
             {
                 Error = null,
                 Result = JObject.FromObject(result, SalSerializer.Create()),
                 ResultCode = resultCode
-            }, commandContext);
+            });
         }
-
-        public Task PublishResultAsync(InternalExceptionDTO exceptionDTO, CommandContext commandContext)
+        public Task PublishResultAsync(InternalExceptionDTO exceptionDto, CommandContext commandContext)
         {
+            return LoPublishResultAsync(commandContext, new CommonCommandResult
+            {
+                Error = exceptionDto,
+                Result = null,
+                ResultCode = ResultCodes.Error
+            });
+        }
+        public Task PublishResultAsync(Exception exception, string errorCode, CommandContext commandContext)
+        {
+            if (string.IsNullOrWhiteSpace(errorCode))
+                errorCode = SalErrorCodes.Fatal;
             return PublishResultAsync(new CommonCommandResult
             {
-                Error = exceptionDTO,
+                Error = exception.ToDto(errorCode),
                 Result = null,
                 ResultCode = ResultCodes.Error
             }, commandContext);
         }
 
-        public Task PublishResultAsync(Exception exception, string code , CommandContext commandContext)
+
+        public Task PublishEventAsync(
+            string eventName,
+            object eventBody,
+            bool isSystem = false,
+            TimeSpan? ttl = null,
+            string handlerAdapterType = null,
+            string handlerAdapterName = null)
         {
-            if (string.IsNullOrWhiteSpace(code))
-                code = SalErrorCodes.Fatal;
-            return PublishResultAsync(new CommonCommandResult
+            var correlationId = Guid.NewGuid().ToString("N");
+            var exchangeName = ExchangeNames.EventExchange;
+            var routingKey = new StringBuilder();
+            if (isSystem)
+                routingKey.Append("!");
+            if (string.IsNullOrWhiteSpace(handlerAdapterType))
+                routingKey.Append(eventName);
+            else
             {
-                Error = exception.ToDto(code),
-                Result = null,
-                ResultCode = ResultCodes.Error
-            }, commandContext);
-        }
-
-        public Task PublishResultAsync(IList<FieldError> validationErrors, CommandContext commandContext)
-        {
-            return PublishResultAsync(new CommonCommandResult
+                routingKey.Append(handlerAdapterType).Append("@");
+                if(!string.IsNullOrWhiteSpace(handlerAdapterName))
+                    routingKey.Append(handlerAdapterName);
+            }
+            
+            var eventContext = new EventContext
             {
-                Error = SalError.CreateValidationDto(validationErrors),
-                Result = null,
-                ResultCode = ResultCodes.Error
-            }, commandContext);
+                ContextInfo = new ContextInfo(HandlerContext.SessionId, HandlerContext.AuthId, HandlerContext.ProcessId, HandlerContext.OperationId),
+                Descriptor = new EventDescriptor
+                {
+                    CorrelationId = correlationId,
+                    EventName = eventName,
+                    ExchangeName = exchangeName,
+                    RoutingKey = routingKey.ToString(),
+                    SourceAdapterType = AdapterConfiguration.AdapterType,
+                    SourceAdapterName = AdapterConfiguration.AdapterName,
+                    PublishTimeStamp = DateTime.UtcNow,
+                    TTL = ttl,
+                    Contour = Contour.ToString()
+                }
+            };
+            return LoPublishAsync(eventContext, eventBody);
         }
 
-        public Task PublishResultAsync<TCommandResult>(CommandResult<TCommandResult> result, CommandContext commandContext) where TCommandResult : class, ICommandResult, new()
+        public Task PublishCEventAsync(string eventName, object eventBody, string handlerAdapterType, TimeSpan? ttl = null)
         {
-            if (typeof(TCommandResult) == typeof(None))
-                return Task.CompletedTask;
-
-            return PublishResultAsync(new CommonCommandResult
+            var correlationId = Guid.NewGuid().ToString("N");
+            var exchangeName = ExchangeNames.CEventExchange;
+            var routingKey = $"{handlerAdapterType}@";
+            
+            
+            var eventContext = new EventContext
             {
-                Error = result.Error,
-                Result = result.Result.Clone(),
-                ResultCode = result.ResultCode
-            }, commandContext);
+                ContextInfo = new ContextInfo(HandlerContext.SessionId, HandlerContext.AuthId, HandlerContext.ProcessId, HandlerContext.OperationId),
+                Descriptor = new EventDescriptor
+                {
+                    CorrelationId = correlationId,
+                    EventName = eventName,
+                    ExchangeName = exchangeName,
+                    RoutingKey = routingKey,
+                    SourceAdapterType = AdapterConfiguration.AdapterType,
+                    SourceAdapterName = AdapterConfiguration.AdapterName,
+                    PublishTimeStamp = DateTime.UtcNow,
+                    TTL = ttl,
+                    Contour = Contour.ToString()
+                }
+            };
+            return LoPublishAsync(eventContext, eventBody);
         }
 
-
-        public Task PublishEventAsync(IEvent evnt, TimeSpan? ttl = null, string handlerServiceType = null, string handlerServiceName = null)
+        public Task RaiseExceptionDetectEvent(string cid, InternalExceptionDTO exceptionDto)
         {
-            if (evnt == null)
-                return Task.CompletedTask;
-
-            return PublishEventAsync(
-                evnt.GetType().GetSalName(),
-                evnt,
-                Guid.NewGuid().ToString("N"),
-                ttl,
-                handlerServiceType,
-                handlerServiceName, 
-                false
-            );
-        }
-
-        public Task PublishCEventAsync(IEvent evnt, string handlerServiceType, TimeSpan? ttl = null)
-        {
-            if (evnt == null)
-                return Task.CompletedTask;
-
-            return PublishEventAsync(
-                evnt.GetType().GetSalName(),
-                evnt,
-                Guid.NewGuid().ToString("N"),
-                ttl,
-                handlerServiceType,
-                null, 
-                true
-            );
-        }
-
-        public Task PublishEventAsync(string eventName, object evnt,  TimeSpan? ttl = null, string handlerServiceType = null, string handlerServiceName = null)
-        {
-            if (evnt == null)
-                return Task.CompletedTask;
-
-            return PublishEventAsync(
-                eventName,
-                evnt,
-                Guid.NewGuid().ToString("N"),
-                ttl,
-                handlerServiceType,
-                handlerServiceName,
-                false);
-        }
-
-        public Task PublishCEventAsync(string eventName, object evnt, string handlerServiceType, TimeSpan? ttl = null)
-        {
-            if (evnt == null)
-                return Task.CompletedTask;
-
-            return PublishEventAsync(
-                eventName,
-                evnt,
-                Guid.NewGuid().ToString("N"),
-                ttl,
-                handlerServiceType,
-                null, 
-                true
-            );
-        }
-
-
-        public Task RaiseExceptionDetectEvent(string cid, InternalExceptionDTO exceptionDTO)
-        {
-            return PublishEventAsync(new ExceptionDetectedEvent
+            return PublishEventAsync("System.ExceptionDetected",new ExceptionDetectedEvent
             {
                 CorrelationId = cid,
-                ExceptionDto = exceptionDTO,
+                ExceptionDto = exceptionDto,
                 AdapterType = AdapterConfiguration.AdapterType,
                 AdapterName = AdapterConfiguration.AdapterName
             });
         }
+        
+        // lo
 
-        public Task RaiseExceptionDetectEvent(string cid, Exception ex)
+        # region private CreateRmqMessage
+
+        private RabbitMessage CreateRmqMessage(CommandPayload commandPayload)
         {
-            return PublishEventAsync(new ExceptionDetectedEvent
+            var transportMessage = new TransportMessage
             {
-                CorrelationId = cid,
-                ExceptionDto = ex.ToDto(),
-                AdapterType = AdapterConfiguration.AdapterType,
-                AdapterName = AdapterConfiguration.AdapterName
-            });
-        }
+                Type = MessageTypes.Command,
+                Payload = JObject.FromObject(commandPayload, SalSerializer.Create()),
+            };
 
-        //lo
-
-        private RabbitMessage Pack(TransportMessage transportTransportMessage)
-        {
             return new RabbitMessage
             {
-                Priority = transportTransportMessage.Priority,
-                Payload = SalSerializer.BinarySerialize(transportTransportMessage),
-                CorrelationId = transportTransportMessage.CorrelationId,
-                TimeStamp = transportTransportMessage.TimeStamp,
-                RoutingKey = transportTransportMessage.Destination
+                Exchange = commandPayload.Context.Descriptor.CommandExchangeName,
+                RoutingKey = commandPayload.Context.Descriptor.CommandRoutingKey,
+                Priority = (byte)commandPayload.Context.Descriptor.Priority,
+                Payload = SalSerializer.BinarySerialize(transportMessage),
+                CorrelationId = commandPayload.Context.Descriptor.CorrelationId,
+                TimeStamp = commandPayload.Context.Descriptor.PublishTimeStamp,
             };
         }
 
-        public async Task<string> PublishCommandAsync(string commandName, object commandBody)
+        private RabbitMessage CreateRmqMessage(CommandResultPayload commandResultPayload)
         {
-            var correlationId = Guid.NewGuid().ToString("N");
-            await PublishCommandAsync(commandName, commandBody, correlationId,
-                CommandPriority.Normal, null,
-                null, null,
-                AdapterConfiguration.AdapterType, AdapterConfiguration.AdapterName);
+            var transportMessage = new TransportMessage
+            {
+                Type = MessageTypes.CommandResult,
+                Payload = JObject.FromObject(commandResultPayload, SalSerializer.Create()),
+            };
 
-            return correlationId;
+            return new RabbitMessage
+            {
+                Exchange = commandResultPayload.Context.Descriptor.ResultExchangeName,
+                RoutingKey = commandResultPayload.Context.Descriptor.ResultRoutingKey,
+                Priority = (byte)commandResultPayload.Context.Descriptor.Priority,
+                Payload = SalSerializer.BinarySerialize(transportMessage),
+                CorrelationId = commandResultPayload.Context.Descriptor.CorrelationId,
+                TimeStamp = commandResultPayload.Context.Descriptor.PublishResultTimeStamp ?? DateTime.UtcNow,
+            };
         }
 
-        public Task PublishCommandAsync(
+        private RabbitMessage CreateRmqMessage(EventPayload eventPayload)
+        {
+            var transportMessage = new TransportMessage
+            {
+                Type = MessageTypes.CommandResult,
+                Payload = JObject.FromObject(eventPayload, SalSerializer.Create()),
+            };
+
+            return new RabbitMessage
+            {
+                Exchange = eventPayload.Context.Descriptor.ExchangeName,
+                RoutingKey = eventPayload.Context.Descriptor.RoutingKey,
+                Priority = 0,
+                Payload = SalSerializer.BinarySerialize(transportMessage),
+                CorrelationId = eventPayload.Context.Descriptor.CorrelationId,
+                TimeStamp = eventPayload.Context.Descriptor.PublishTimeStamp,
+            };
+        }
+
+        #endregion
+
+        #region public LoPublish
+        public Task LoPublishCommandAsync(
             string commandName,
             object commandBody,
             string correlationId,
             CommandPriority priority,
             TimeSpan? ttl,
-            string handlerAdapterType,
-            string handlerAdapterName,
-            string resultAdapterType,
-            string resultAdapterName)
+            string commandExchangeName,
+            string commandRoutingKey,
+            string resultExchangeName,
+            string resultRoutingKey)
         {
-            if (string.IsNullOrWhiteSpace(commandName))
-                throw new ArgumentNullException(nameof(commandName));
-
-            if (string.IsNullOrWhiteSpace(correlationId))
-                throw new ArgumentNullException(nameof(correlationId));
-
-            if (string.IsNullOrWhiteSpace(resultAdapterType))
-                throw new ArgumentNullException(nameof(resultAdapterType));
-
-
-            if (commandBody == null)
-                throw new ArgumentNullException(nameof(commandBody));
-
+            if (string.IsNullOrWhiteSpace(commandExchangeName))
+                throw new ArgumentNullException(nameof(commandExchangeName));
 
             var commandContext = new CommandContext
             {
-                ContextInfo = new ContextInfo
-                {
-                    SessionId = HandlerContext.SessionId,
-                    AuthId = HandlerContext.AuthId,
-                    ProcessId = HandlerContext.ProcessId,
-                    OperationId = HandlerContext.OperationId
-                },
+                ContextInfo = new ContextInfo(HandlerContext.SessionId, HandlerContext.AuthId, HandlerContext.ProcessId, HandlerContext.OperationId),
                 Descriptor = new CommandDescriptor
                 {
                     CorrelationId = correlationId,
                     CommandName = commandName,
+                    CommandExchangeName = commandExchangeName,
+                    CommandRoutingKey = commandRoutingKey,
                     Priority = priority,
                     SourceAdapterType = AdapterConfiguration.AdapterType,
                     SourceAdapterName = AdapterConfiguration.AdapterName,
-                    DestinationAdapterType = handlerAdapterType,
-                    DestinationAdapterName = handlerAdapterName,
-                    ResultAdapterType = resultAdapterType,
-                    ResultAdapterName = resultAdapterName,
+                    ResultExchangeName = resultExchangeName,
+                    ResultRoutingKey = resultRoutingKey,
                     PublishTimeStamp = DateTime.UtcNow,
                     TTL = ttl,
-                    IsSync = false,
                     Contour = Contour.ToString()
                 }
             };
-            
-
-
-            return PublishCommandAsync(commandContext, JObject.FromObject(commandBody, SalSerializer.Create()));
+            return LoPublishAsync(commandContext, commandBody);
         }
 
-        public async Task<SimpleCommandResult> ExecuteCommandAsync(
+
+        public Task<SimpleCommandResult> LoExecuteCommandAsync(
             string commandName,
             object commandBody,
             CommandPriority priority,
             TimeSpan ttl,
-            bool throwIfTimeout,
-            string handlerAdapterType,
-            string handlerAdapterName)
+            string commandExchangeName,
+            string commandRoutingKey,
+            bool throwIfTimeout
+        )
         {
-            if (string.IsNullOrWhiteSpace(commandName))
-                throw new ArgumentNullException(nameof(commandName));
-
+            if (string.IsNullOrWhiteSpace(commandExchangeName))
+                throw new ArgumentNullException(nameof(commandExchangeName));
 
             var correlationId = Guid.NewGuid().ToString("N");
+            var resultExchangeName = ExchangeNames.CommandResultExchange;
+            var resultRoutingKey = $"!{AdapterConfiguration.AdapterType}@{AdapterConfiguration.AdapterName}";
 
 
-
-            string routingKey;
-            if (string.IsNullOrWhiteSpace(handlerAdapterType))
-                routingKey = commandName;
-            else if (string.IsNullOrWhiteSpace(handlerAdapterName))
-                routingKey = handlerAdapterType;
-            else
-                routingKey = $"{handlerAdapterType}#{handlerAdapterName}";
-
-            var commandDescriptor = new CommandDescriptor
+            var commandContext = new CommandContext
             {
-                CorrelationId = correlationId,
-                CommandName = commandName,
-                Priority = priority,
-                DestinationAdapterType = handlerAdapterType,
-                DestinationAdapterName = handlerAdapterName,
-                SourceAdapterType = AdapterConfiguration.AdapterType,
-                SourceAdapterName = AdapterConfiguration.AdapterName,
-                ResultAdapterType = AdapterConfiguration.AdapterType,
-                ResultAdapterName = AdapterConfiguration.AdapterName,
-                PublishTimeStamp = DateTime.UtcNow,
-                TTL = ttl,
-                IsSync = true,
-                Contour = Contour.ToString()
+                ContextInfo = new ContextInfo(HandlerContext.SessionId, HandlerContext.AuthId, HandlerContext.ProcessId, HandlerContext.OperationId),
+                Descriptor = new CommandDescriptor
+                {
+                    CorrelationId = correlationId,
+                    CommandName = commandName,
+                    CommandExchangeName = commandExchangeName,
+                    CommandRoutingKey = commandRoutingKey,
+                    Priority = priority,
+                    SourceAdapterType = AdapterConfiguration.AdapterType,
+                    SourceAdapterName = AdapterConfiguration.AdapterName,
+                    ResultExchangeName = resultExchangeName,
+                    ResultRoutingKey = resultRoutingKey,
+                    PublishTimeStamp = DateTime.UtcNow,
+                    TTL = ttl,
+                    Contour = Contour.ToString()
+                }
             };
-
-
-            var commandContext = new ContextInfo
-            {
-                SessionId = HandlerContext.SessionId,
-                AuthId = HandlerContext.AuthId,
-                ProcessId = HandlerContext.ProcessId,
-                OperationId = HandlerContext.OperationId
-            };
-            
-            var commandPayload = new CommandPayload
-            {
-                Descriptor = commandDescriptor,
-                Payload = JObject.FromObject(commandBody, SalSerializer.Create()),
-                ContextInfo = commandContext
-
-            };
-
-            return await ExecuteCommandAsync(commandPayload, routingKey, throwIfTimeout);
-        }
-
-        public async Task<SimpleCommandResult> ExecuteExternalHttp(
-            ExternalHttpRequest request,
-            string routePath,
-            TimeSpan ttl,
-            bool throwIfTimeout,
-            string handlerAdapterType,
-            string handlerAdapterName)
-        {
-            var correlationId = Guid.NewGuid().ToString("N");
-
-            var routingKey = routePath;
-            request.BasePath = routePath;
-
-            var commandDescriptor = new CommandDescriptor
-            {
-                CorrelationId = correlationId,
-                CommandName = "ExternalHttp",
-                Priority = CommandPriority.Normal,
-                DestinationAdapterType = handlerAdapterType,
-                DestinationAdapterName = handlerAdapterName,
-                SourceAdapterType = AdapterConfiguration.AdapterType,
-                SourceAdapterName = AdapterConfiguration.AdapterName,
-                ResultAdapterType = AdapterConfiguration.AdapterType,
-                ResultAdapterName = AdapterConfiguration.AdapterName,
-                PublishTimeStamp = DateTime.UtcNow,
-                TTL = ttl,
-                IsSync = true,
-                Contour = Contour.ToString()
-            };
-            
-            var commandContext = new ContextInfo
-            {
-                SessionId = HandlerContext.SessionId,
-                AuthId = HandlerContext.AuthId,
-                ProcessId = HandlerContext.ProcessId,
-                OperationId = HandlerContext.OperationId
-            };
-
-            var commandPayload = new CommandPayload
-            {
-                Descriptor = commandDescriptor,
-                Payload = JObject.FromObject(request, SalSerializer.Create()),
-                ContextInfo = commandContext
-            };
-
-            return await ExecuteCommandAsync(commandPayload, routingKey, throwIfTimeout);
+            return LoExecuteAsync(commandContext, commandBody, throwIfTimeout);
         }
 
 
-        public async Task<SimpleCommandResult> ExecuteCommandAsync(CommandPayload commandPayload, string routingKey, bool throwIfTimeout)
+        public Task LoPublishEventAsync(
+            string eventName,
+            object eventBody,
+            string correlationId,
+            TimeSpan? ttl,
+            string exchangeName,
+            string routingKey)
         {
-            commandPayload.Descriptor.TTL ??= TimeSpan.FromMinutes(1);
+            if (string.IsNullOrWhiteSpace(exchangeName))
+                throw new ArgumentNullException(nameof(exchangeName));
 
-            salLogger.LogOutgoing(commandPayload);
 
-            var transportMessage = new TransportMessage
+            var eventContext = new EventContext
             {
-                Type = MessageTypes.Command,
-                Payload = JObject.FromObject(commandPayload, SalSerializer.Create()),
-                Source = $"{commandPayload.Descriptor.SourceAdapterType}.{commandPayload.Descriptor.SourceAdapterName}",
-                Priority = (byte) commandPayload.Descriptor.Priority,
-                TimeStamp = commandPayload.Descriptor.PublishTimeStamp,
-                Destination = routingKey,
-                TTL = commandPayload.Descriptor.TTL,
-                CorrelationId = commandPayload.Descriptor.CorrelationId,
+                ContextInfo = new ContextInfo(HandlerContext.SessionId, HandlerContext.AuthId, HandlerContext.ProcessId, HandlerContext.OperationId),
+                Descriptor = new EventDescriptor
+                {
+                    CorrelationId = correlationId,
+                    EventName = eventName,
+                    ExchangeName = exchangeName,
+                    RoutingKey = routingKey,
+                    SourceAdapterType = AdapterConfiguration.AdapterType,
+                    SourceAdapterName = AdapterConfiguration.AdapterName,
+                    PublishTimeStamp = DateTime.UtcNow,
+                    TTL = ttl,
+                    Contour = Contour.ToString()
+                }
             };
+            return LoPublishAsync(eventContext, eventBody);
+        }
+
+        public async Task<SimpleCommandResult> LoExecuteAsync(CommandContext commandContext, object commandBody, bool throwIfTimeout)
+        {
+            if (!commandContext.Descriptor.TTL.HasValue)
+                throw new ArgumentNullException(nameof(commandContext.Descriptor.TTL));
 
             var completionSource = new TaskCompletionSource<SimpleCommandResult>();
+            commandResultProcessor.RegisterSimpleCommandResultHandler(commandContext.Descriptor.CorrelationId, completionSource,
+                commandContext.Descriptor.TTL.Value, throwIfTimeout);
 
-            commandResultProcessor.RegisterSimpleCommandResultHandler(commandPayload.Descriptor.CorrelationId, completionSource,
-                commandPayload.Descriptor.TTL.Value, throwIfTimeout);
-
-            publisher.PublishCommand(Pack(transportMessage));
-
+            await LoPublishAsync(commandContext, commandBody);
             return await completionSource.Task;
         }
 
-        public Task PublishCommandAsync(CommandContext commandContext, JObject commandBody)
+        public Task LoPublishResultAsync(CommandContext commandContext, CommonCommandResult result)
         {
-            var routingKey = "";
-            if (string.IsNullOrWhiteSpace(commandContext.Descriptor.DestinationAdapterType))
-                routingKey = commandContext.Descriptor.CommandName;
-            else if (string.IsNullOrWhiteSpace(commandContext.Descriptor.DestinationAdapterName))
-                routingKey = commandContext.Descriptor.DestinationAdapterType;
-            else
-                routingKey = $"{commandContext.Descriptor.DestinationAdapterType}#{commandContext.Descriptor.DestinationAdapterName}";
+            var commandResultContext = new CommandResultContext
+            {
+                ContextInfo = commandContext.ContextInfo with { },
+                Descriptor = new CommandResultDescriptor(commandContext.Descriptor)
+                {
+                    HandlerAdapterType = AdapterConfiguration.AdapterType,
+                    HandlerAdapterName = AdapterConfiguration.AdapterName,
+                    Contour = Contour.ToString()
+                }
+            };
+            return LoPublishAsync(commandResultContext, result);
+        }
 
+        public Task LoPublishAsync(CommandContext commandContext, object commandBody)
+        {
             var commandPayload = new CommandPayload
             {
-                Descriptor = commandContext.Descriptor,
-                Payload = commandBody.Clone(),
-                ContextInfo = commandContext.ContextInfo
+                Context = commandContext,
+                Payload = JObject.FromObject(commandBody, SalSerializer.Create())
             };
 
             salLogger.LogOutgoing(commandPayload);
 
-            var transportMessage = new TransportMessage
-            {
-                Type = MessageTypes.Command,
-                Payload = JObject.FromObject(commandPayload, SalSerializer.Create()),
-                Source = $"{commandContext.Descriptor.SourceAdapterType}.{commandContext.Descriptor.SourceAdapterName}",
-                Priority = (byte) commandContext.Descriptor.Priority,
-                TimeStamp = commandContext.Descriptor.PublishTimeStamp,
-                Destination = routingKey,
-                TTL = commandContext.Descriptor.TTL,
-                CorrelationId = commandContext.Descriptor.CorrelationId,
-            };
-            publisher.PublishCommand(Pack(transportMessage));
-            return Task.CompletedTask;
+            return publisher.PublishAsync(CreateRmqMessage(commandPayload));
         }
 
-        public Task PublishResultAsync(CommonCommandResult result, CommandContext commandContext)
-        {
-            var commandResultContext = new CommandResultContext(commandContext);
-
-            commandResultContext.Descriptor.HandlerAdapterType = AdapterConfiguration.AdapterType;
-            commandResultContext.Descriptor.HandlerAdapterName = AdapterConfiguration.AdapterName;
-            commandResultContext.Descriptor.Contour = Contour.ToString();
-
-            return PublishResultAsync(commandResultContext, result);
-        }
-
-        public Task PublishResultAsync(CommandResultContext commandResultContext, CommonCommandResult result)
+        public Task LoPublishAsync(CommandResultContext commandResultContext, CommonCommandResult result)
         {
             TimeSpan? ttl = null;
+            ttl = commandResultContext.Descriptor.PublishTimeStamp + commandResultContext.Descriptor.TTL - DateTime.UtcNow;
 
-            if (commandResultContext.Descriptor.TTL.HasValue && commandResultContext.Descriptor.IsSync)
+            if (ttl is null || ttl > TimeSpan.Zero && !string.IsNullOrEmpty(commandResultContext.Descriptor.ResultExchangeName))
             {
-                ttl = commandResultContext.Descriptor.PublishTimeStamp + commandResultContext.Descriptor.TTL.Value - DateTime.UtcNow;
-            }
-
-            if (ttl == null || ttl > TimeSpan.Zero)
-            {
-                        
-                var routingKey = "";
-
-                if (commandResultContext.Descriptor.IsSync)
-                {
-                    routingKey = $"{commandResultContext.Descriptor.ResultAdapterType}#{commandResultContext.Descriptor.ResultAdapterName}#Sync";
-                }
-                else
-                {
-                    routingKey = string.IsNullOrWhiteSpace(commandResultContext.Descriptor.ResultAdapterName) ? commandResultContext.Descriptor.ResultAdapterType : $"{commandResultContext.Descriptor.ResultAdapterType}#{commandResultContext.Descriptor.ResultAdapterName}";
-                }
-
-                var commandResultPayload = new CommandResultPayload
-                {
-                    Descriptor = commandResultContext.Descriptor,
-                    Payload = result,
-                    ContextInfo = commandResultContext.ContextInfo
-                    
-                };
-
                 commandResultContext.Descriptor.PublishResultTimeStamp = DateTime.UtcNow;
-                
                 if (commandResultContext.Descriptor.HandlerTimeStamp.HasValue)
                     commandResultContext.Descriptor.HandlerDuration = commandResultContext.Descriptor.PublishResultTimeStamp.Value - commandResultContext.Descriptor.HandlerTimeStamp.Value;
 
-                
-                salLogger.LogOutgoing(commandResultPayload);
-
-                var transportMessage = new TransportMessage
+                var commandResultPayload = new CommandResultPayload
                 {
-                    Type = MessageTypes.CommandResult,
-                    Payload = JObject.FromObject(commandResultPayload, SalSerializer.Create()),
-                    Source = $"{AdapterConfiguration.AdapterType}.{AdapterConfiguration.AdapterName}",
-                    Priority = (byte) commandResultContext.Descriptor.Priority,
-                    TimeStamp = commandResultContext.Descriptor.PublishResultTimeStamp.Value,
-                    Destination = routingKey,
-                    TTL = ttl,
-                    CorrelationId = commandResultContext.Descriptor.CorrelationId,
+                    Context = commandResultContext,
+                    Payload = result
                 };
 
-                publisher.PublishCommandResult(Pack(transportMessage));
+                salLogger.LogOutgoing(commandResultPayload);
+
+                return publisher.PublishAsync(CreateRmqMessage(commandResultPayload));
             }
             else
             {
@@ -647,90 +515,19 @@ namespace SAL.Core.Client
             return Task.CompletedTask;
         }
 
-
-        public Task PublishEventAsync(string eventName, object eventBody, string correlationId, TimeSpan? ttl, string handlerServiceType, string handlerServiceName, bool isCEvent)
-        {
-            var eventContext = new EventContext
-            {
-                ContextInfo = new ContextInfo
-                {
-                    SessionId = HandlerContext.SessionId,
-                    AuthId = HandlerContext.AuthId,
-                    ProcessId = HandlerContext.ProcessId,
-                    OperationId = HandlerContext.OperationId
-                },
-                Descriptor = new EventDescriptor
-                {
-                    CorrelationId = correlationId,
-                    EventName = eventName,
-                    DestinationAdapterType = handlerServiceType,
-                    DestinationAdapterName = handlerServiceName,
-                    SourceAdapterType = AdapterConfiguration.AdapterType,
-                    SourceAdapterName = AdapterConfiguration.AdapterName,
-                    PublishTimeStamp = DateTime.UtcNow,
-                    TTL = ttl,
-                    Contour = Contour.ToString(),
-                    IsSystem = string.Equals(eventName.Split('.').First(), "System", StringComparison.InvariantCultureIgnoreCase),
-                    IsCEvent = isCEvent
-                }
-            };
-
-
-            return PublishEventAsync(eventContext, JObject.FromObject(eventBody, SalSerializer.Create()));
-        }
-
-        public Task PublishEventAsync(EventContext eventContext, JObject eventBody)
+        public Task LoPublishAsync(EventContext eventContext, object eventBody)
         {
             var eventPayload = new EventPayload()
             {
-                Descriptor = eventContext.Descriptor,
-                Payload = eventBody,
-                ContextInfo = eventContext.ContextInfo
+                Context = eventContext,
+                Payload = JObject.FromObject(eventBody, SalSerializer.Create()),
             };
 
             salLogger.LogOutgoing(eventPayload);
 
-            string routingKey;
-
-
-            if (string.IsNullOrWhiteSpace(eventContext.Descriptor.DestinationAdapterType))
-                routingKey = eventContext.Descriptor.EventName;
-            else if (eventContext.Descriptor.IsCEvent)
-            {
-                routingKey = eventContext.Descriptor.DestinationAdapterType;
-            }
-            else
-            {
-                routingKey = string.IsNullOrWhiteSpace(eventContext.Descriptor.DestinationAdapterName)
-                    ? eventContext.Descriptor.DestinationAdapterType
-                    : $"{eventContext.Descriptor.DestinationAdapterType}#{eventContext.Descriptor.DestinationAdapterName}";
-
-                if (eventContext.Descriptor.IsSystem)
-                {
-                    routingKey = $"System#{routingKey}";
-                }
-            }
-            
-
-
-            var transportMessage = new TransportMessage
-            {
-                Type = MessageTypes.Event,
-                Payload = JObject.FromObject(eventPayload, SalSerializer.Create()),
-                Source = $"{eventContext.Descriptor.SourceAdapterType}.{eventContext.Descriptor.SourceAdapterName}",
-                Priority = 0,
-                TimeStamp = eventContext.Descriptor.PublishTimeStamp,
-                Destination = routingKey,
-                TTL = eventContext.Descriptor.TTL,
-                CorrelationId = eventContext.Descriptor.CorrelationId,
-            };
-
-            if(!string.IsNullOrWhiteSpace(eventContext.Descriptor.DestinationAdapterType) && eventContext.Descriptor.IsCEvent)
-                publisher.PublishCEvent(Pack(transportMessage));
-            else 
-                publisher.PublishEvent(Pack(transportMessage));
-
-            return Task.CompletedTask;
+            return publisher.PublishAsync(CreateRmqMessage(eventPayload));
         }
+
+        #endregion
     }
 }

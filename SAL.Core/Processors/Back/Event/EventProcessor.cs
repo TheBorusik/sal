@@ -284,10 +284,10 @@ namespace SAL.Core.Processors
             {
                 HandlerContext.Set(HandlerTypes.Processor, "EventProcessor", rabbitMessage.CorrelationId);
                 var transportMessage = ExtractMessage(rabbitMessage);
-                var eventPayload = ExtractEventPayload(transportMessage);
-                HandlerContext.Update(eventPayload.ContextInfo);
+                var eventPayload = ExtractEventPayload(transportMessage, rabbitMessage.CorrelationId);
+                HandlerContext.Update(eventPayload.Context.ContextInfo);
                 salLogger.LogIncoming(eventPayload);
-                await Processing(transportMessage, eventPayload);
+                await Processing(eventPayload);
                 ack();
             }
             catch (JsonReaderException ex)
@@ -362,49 +362,37 @@ namespace SAL.Core.Processors
             return transportMessage;
         }
 
-        protected EventPayload ExtractEventPayload(TransportMessage transportTransportMessage)
+        protected EventPayload ExtractEventPayload(TransportMessage transportTransportMessage, string cid)
         {
             var eventPayload = transportTransportMessage.Payload.ConvertValue<EventPayload>();
+            
+            if (eventPayload.Context == null)
+                throw new Exception($"Отсутствует EventPayload.Context | CorrelationId:{cid}");
 
-            if (eventPayload.Descriptor == null)
-                throw new Exception($"Отсутствует eventPayload.Descriptor | CorrelationId:{transportTransportMessage.CorrelationId}");
+            if (eventPayload.Context.Descriptor == null)
+                throw new Exception($"Отсутствует EventPayload.Context.Descriptor | CorrelationId:{cid}");
 
-            if (string.IsNullOrWhiteSpace(eventPayload.Descriptor.EventName))
-                throw new Exception($"Пустой eventPayload.Descriptor.EventName | CorrelationId:{transportTransportMessage.CorrelationId}");
+            if (string.IsNullOrWhiteSpace(eventPayload.Context.Descriptor.EventName))
+                throw new Exception($"Пустой eventPayload.Context.Descriptor.EventName | CorrelationId:{cid}");
 
             if (eventPayload.Payload == null)
-                throw new Exception($"Отсутствует eventPayload.Payload | CorrelationId:{transportTransportMessage.CorrelationId}");
-
+                throw new Exception($"Отсутствует eventPayload.Payload | CorrelationId:{cid}");
+            
             return eventPayload;
         }
 
-        private async Task Processing(TransportMessage transportMessage, EventPayload eventPayload)
+        private async Task Processing(EventPayload eventPayload)
         {
             var eventLogger = salLogger.GetLogger(eventPayload);
 
-            if (eventPayload.Descriptor.TTL.HasValue &&
-                eventPayload.Descriptor.PublishTimeStamp + eventPayload.Descriptor.TTL.Value <= DateTime.UtcNow)
+            if (eventPayload.Context.Descriptor.TTL.HasValue &&
+                eventPayload.Context.Descriptor.PublishTimeStamp + eventPayload.Context.Descriptor.TTL.Value <= DateTime.UtcNow)
             {
                 eventLogger.Trace("Event - протух");
                 return;
             }
-
-            if (!string.IsNullOrWhiteSpace(eventPayload.Descriptor.DestinationAdapterType) &&
-                !string.Equals(eventPayload.Descriptor.DestinationAdapterType, AdapterConfiguration.AdapterType, StringComparison.InvariantCultureIgnoreCase))
-            {
-                eventLogger.Trace("Event - не соответсвие DestinationAdapterType");
-                return;
-            }
-
-            if (!string.IsNullOrWhiteSpace(eventPayload.Descriptor.DestinationAdapterName) &&
-                !string.Equals(eventPayload.Descriptor.DestinationAdapterName, AdapterConfiguration.AdapterName, StringComparison.InvariantCultureIgnoreCase))
-            {
-                eventLogger.Trace("Event - не соответсвие DestinationAdapterName");
-                return;
-            }
-
-
-            var eventName = eventPayload.Descriptor.EventName;
+            
+            var eventName = eventPayload.Context.Descriptor.EventName;
 
             HandlerContext.Update(HandlerTypes.EventHandler, eventName);
 
@@ -415,7 +403,7 @@ namespace SAL.Core.Processors
             foreach (var eventHandlerInfo in anyEventHandlers)
             {
                 salLogger.LogHandler(eventPayload, eventHandlerInfo.HandlerType.Name);
-                handlerTasks.Add(ExecuteEventHandlerAsync(scope, eventHandlerInfo, transportMessage, eventPayload, eventLogger));
+                handlerTasks.Add(ExecuteEventHandlerAsync(scope, eventHandlerInfo, eventPayload, eventLogger));
             }
 
             if (eventHandlers.TryGetValue(eventName, out var eventHandlerInfos))
@@ -423,7 +411,7 @@ namespace SAL.Core.Processors
                 foreach(var eventHandlerInfo in eventHandlerInfos)
                 {
                     salLogger.LogHandler(eventPayload, eventHandlerInfo.HandlerType.Name);
-                    handlerTasks.Add(ExecuteEventHandlerAsync(scope, eventHandlerInfo, transportMessage, eventPayload, eventLogger));
+                    handlerTasks.Add(ExecuteEventHandlerAsync(scope, eventHandlerInfo, eventPayload, eventLogger));
                 }
             }
 
@@ -438,7 +426,7 @@ namespace SAL.Core.Processors
             }
         }
 
-        public Task ExecuteEventHandlerAsync(ILifetimeScope scope, EventHandlerInfo ehi, TransportMessage transportMessage, EventPayload eventPayload, ILogger eventLogger)
+        public Task ExecuteEventHandlerAsync(ILifetimeScope scope, EventHandlerInfo ehi,  EventPayload eventPayload, ILogger eventLogger)
         {
 
 
@@ -450,19 +438,8 @@ namespace SAL.Core.Processors
                 Logger = eventLogger
             };
 
-            var context = new EventContext()
-            {
-                Descriptor = eventPayload.Descriptor,
-                ContextInfo = new ContextInfo
-                {
-                    SessionId = HandlerContext.SessionId,
-                    AuthId = HandlerContext.AuthId,
-                    ProcessId = HandlerContext.ProcessId,
-                    OperationId = HandlerContext.OperationId
-                }
-            };
-
-
+            var context = eventPayload.Context;
+            
             var handler = (IEventHandler2) scope.Resolve(ehi.HandlerType);
 
             if (ehi.IsCommon)

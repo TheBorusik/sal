@@ -36,15 +36,14 @@ namespace SAL.Core.Processors
             var loggerSettings = GetHandlerLogger(commandPayload);
             if (loggerSettings.Ignore)
                 return;
-            var pt = DateTime.UtcNow - commandPayload.Descriptor.PublishTimeStamp;
+            var pt = DateTime.UtcNow - commandPayload.Context.Descriptor.PublishTimeStamp;
             var sb = new StringBuilder();
             sb.Append("[CP  <- BUS] ");
             sb.Append($"({pt.TotalSeconds:F3} c) ");
-            sb.Append($"| P:{commandPayload.Descriptor.Priority} ");
-            sb.Append($"| PTS:{commandPayload.Descriptor.PublishTimeStamp:O} ");
-            sb.Append($"| IS:{commandPayload.Descriptor.IsSync} ");
-            if (commandPayload.Descriptor.TTL.HasValue)
-                sb.Append($"| TTL:{commandPayload.Descriptor.TTL} ");
+            sb.Append($"| P:{commandPayload.Context.Descriptor.Priority} ");
+            sb.Append($"| PTS:{commandPayload.Context.Descriptor.PublishTimeStamp:O} ");
+            if (commandPayload.Context.Descriptor.TTL.HasValue)
+                sb.Append($"| TTL:{commandPayload.Context.Descriptor.TTL} ");
 
             if (loggerSettings.CropSize == 0)
             {
@@ -72,11 +71,10 @@ namespace SAL.Core.Processors
 
             var sb = new StringBuilder();
             sb.Append("[CRP <- BUS] ");
-            sb.Append($"({commandResultPayload.Descriptor.ProcessingDuration?.TotalSeconds:F3} c) ");
-            sb.Append($"| P:{commandResultPayload.Descriptor.Priority} ");
-            sb.Append($"| PTS:{commandResultPayload.Descriptor.PublishTimeStamp:O} ");
-            sb.Append($"| HTS:{commandResultPayload.Descriptor.HandlerTimeStamp:O} ");
-            sb.Append($"| IS:{commandResultPayload.Descriptor.IsSync} ");
+            sb.Append($"({commandResultPayload.Context.Descriptor.ProcessingDuration?.TotalSeconds:F3} c) ");
+            sb.Append($"| P:{commandResultPayload.Context.Descriptor.Priority} ");
+            sb.Append($"| PTS:{commandResultPayload.Context.Descriptor.PublishTimeStamp:O} ");
+            sb.Append($"| HTS:{commandResultPayload.Context.Descriptor.HandlerTimeStamp:O} ");
 
             if (loggerSettings.CropSize == 0)
             {
@@ -100,7 +98,7 @@ namespace SAL.Core.Processors
             var loggerSettings = GetHandlerLogger(eventPayload);
             if (loggerSettings.Ignore)
                 return;
-            var pt = DateTime.UtcNow - eventPayload.Descriptor.PublishTimeStamp;
+            var pt = DateTime.UtcNow - eventPayload.Context.Descriptor.PublishTimeStamp;
             var sb = new StringBuilder();
             sb.Append("[EP  <- BUS] ");
             sb.Append($"({pt.TotalSeconds:F3} c) ");
@@ -131,13 +129,11 @@ namespace SAL.Core.Processors
 
             var sb = new StringBuilder();
             sb.Append("[CMD -> BUS] ");
-            sb.Append($"| P:{commandPayload.Descriptor.Priority} ");
-            sb.Append($"| PTS:{commandPayload.Descriptor.PublishTimeStamp:O} ");
-            sb.Append($"| IS:{commandPayload.Descriptor.IsSync} ");
-            if (commandPayload.Descriptor.TTL.HasValue)
-                sb.Append($"| TTL:{commandPayload.Descriptor.TTL} ");
-            if (string.IsNullOrWhiteSpace(commandPayload.Descriptor.DestinationAdapterType))
-                sb.Append($"| DST:{commandPayload.Descriptor.DestinationAdapterType}.{commandPayload.Descriptor.DestinationAdapterName}");
+            sb.Append($"| P:{commandPayload.Context.Descriptor.Priority} ");
+            sb.Append($"| PTS:{commandPayload.Context.Descriptor.PublishTimeStamp:O} ");
+            if (commandPayload.Context.Descriptor.TTL.HasValue)
+                sb.Append($"| TTL:{commandPayload.Context.Descriptor.TTL} ");
+            sb.Append($"| Route:{commandPayload.Context.Descriptor.CommandExchangeName}->{commandPayload.Context.Descriptor.CommandRoutingKey}");
 
             if (loggerSettings.CropSize == 0)
             {
@@ -156,7 +152,7 @@ namespace SAL.Core.Processors
             }
 
             var old = HandlerContext.CorrelationId;
-            HandlerContext.UpdateCorrelationId(commandPayload.Descriptor.CorrelationId);
+            HandlerContext.UpdateCorrelationId(commandPayload.Context.Descriptor.CorrelationId);
             loggerSettings.logger.LogInformation(sb.ToString());
             HandlerContext.UpdateCorrelationId(old);
         }
@@ -168,15 +164,14 @@ namespace SAL.Core.Processors
 
             var sb = new StringBuilder();
             sb.Append("[RES -> BUS] ");
-            if (commandResultPayload.Descriptor.HandlerTimeStamp.HasValue)
+            if (commandResultPayload.Context.Descriptor.HandlerTimeStamp.HasValue)
             {
-                var pt = DateTime.UtcNow - commandResultPayload.Descriptor.HandlerTimeStamp.Value;
+                var pt = DateTime.UtcNow - commandResultPayload.Context.Descriptor.HandlerTimeStamp.Value;
                 sb.Append($"({pt.TotalSeconds:F3} c) ");
             }
             
-            sb.Append($"| P:{commandResultPayload.Descriptor.Priority} ");
-            sb.Append($"| PTS:{commandResultPayload.Descriptor.PublishTimeStamp:O} ");
-            sb.Append($"| IS:{commandResultPayload.Descriptor.IsSync} ");
+            sb.Append($"| P:{commandResultPayload.Context.Descriptor.Priority} ");
+            sb.Append($"| PTS:{commandResultPayload.Context.Descriptor.PublishTimeStamp:O} ");
 
             if (loggerSettings.CropSize == 0)
             {
@@ -195,7 +190,7 @@ namespace SAL.Core.Processors
             }
             
             var old = HandlerContext.CorrelationId;
-            HandlerContext.UpdateCorrelationId(commandResultPayload.Descriptor.CorrelationId);
+            HandlerContext.UpdateCorrelationId(commandResultPayload.Context.Descriptor.CorrelationId);
             loggerSettings.logger.LogInformation(sb.ToString());
             HandlerContext.UpdateCorrelationId(old);
             
@@ -212,7 +207,6 @@ namespace SAL.Core.Processors
             sb.Append($"| P:{commandDescriptor.Priority} ");
             sb.Append($"| PTS:{commandDescriptor.PublishTimeStamp:O} ");
             sb.Append($"| HTS:{commandDescriptor.HandlerTimeStamp:O} ");
-            sb.Append($"| IS:{commandDescriptor.IsSync} ");
 
             var old = HandlerContext.CorrelationId;
             HandlerContext.UpdateCorrelationId(commandDescriptor.CorrelationId);
@@ -226,17 +220,16 @@ namespace SAL.Core.Processors
             if (loggerSettings.Ignore)
                 return;
 
-            var pt = DateTime.UtcNow - commandResultPayload.Descriptor.PublishTimeStamp;
+            var pt = DateTime.UtcNow - commandResultPayload.Context.Descriptor.PublishTimeStamp;
             var sb = new StringBuilder();
             sb.Append("[CRP -> NUL] ");
             sb.Append($"({pt.TotalSeconds:F3} c) ");
-            sb.Append($"| P:{commandResultPayload.Descriptor.Priority} ");
-            sb.Append($"| PTS:{commandResultPayload.Descriptor.PublishTimeStamp:O} ");
-            sb.Append($"| HTS:{commandResultPayload.Descriptor.HandlerTimeStamp:O} ");
-            sb.Append($"| IS:{commandResultPayload.Descriptor.IsSync} ");
+            sb.Append($"| P:{commandResultPayload.Context.Descriptor.Priority} ");
+            sb.Append($"| PTS:{commandResultPayload.Context.Descriptor.PublishTimeStamp:O} ");
+            sb.Append($"| HTS:{commandResultPayload.Context.Descriptor.HandlerTimeStamp:O} ");
 
             var old = HandlerContext.CorrelationId;
-            HandlerContext.UpdateCorrelationId(commandResultPayload.Descriptor.CorrelationId);
+            HandlerContext.UpdateCorrelationId(commandResultPayload.Context.Descriptor.CorrelationId);
             loggerSettings.logger.LogInformation(sb.ToString());
             HandlerContext.UpdateCorrelationId(old);
         }
@@ -247,7 +240,7 @@ namespace SAL.Core.Processors
             if (loggerSettings.Ignore)
                 return;
 
-            var pt = DateTime.UtcNow - commandResultPayload.Descriptor.PublishTimeStamp;
+            var pt = DateTime.UtcNow - commandResultPayload.Context.Descriptor.PublishTimeStamp;
             var sb = new StringBuilder();
             sb.Append($"[CRP -> {handlerName}] ");
             sb.Append($"({pt.TotalSeconds:F3} c) ");
@@ -264,7 +257,7 @@ namespace SAL.Core.Processors
             if (loggerSettings.Ignore)
                 return;
 
-            var pt = DateTime.UtcNow - commandPayload.Descriptor.PublishTimeStamp;
+            var pt = DateTime.UtcNow - commandPayload.Context.Descriptor.PublishTimeStamp;
             var sb = new StringBuilder();
             sb.Append($"[CP  -> {handlerName}] ");
             sb.Append($"({pt.TotalSeconds:F3} c) ");
@@ -279,7 +272,7 @@ namespace SAL.Core.Processors
             var loggerSettings = GetHandlerLogger(eventPayload);
             if (loggerSettings.Ignore)
                 return;
-            var pt = DateTime.UtcNow - eventPayload.Descriptor.PublishTimeStamp;
+            var pt = DateTime.UtcNow - eventPayload.Context.Descriptor.PublishTimeStamp;
             var sb = new StringBuilder();
             sb.Append($"[EP  -> {handlerName}] ");
             sb.Append($"({pt.TotalSeconds:F3} c) ");
@@ -337,7 +330,7 @@ namespace SAL.Core.Processors
 
         private HandlerLogger GetHandlerLogger(CommandPayload commandPayload)
         {
-            var loggerName = $"{commandPayload.Descriptor.CommandName}.Command";
+            var loggerName = $"{commandPayload.Context.Descriptor.CommandName}.Command";
 
             return loggers.GetOrAdd(loggerName, s =>
             {
@@ -357,7 +350,7 @@ namespace SAL.Core.Processors
 
                     foreach (var loggingConfigItem in loggingItems)
                     {
-                        if (Regex.IsMatch(commandPayload.Descriptor.CommandName, loggingConfigItem.Key, RegexOptions.IgnoreCase))
+                        if (Regex.IsMatch(commandPayload.Context.Descriptor.CommandName, loggingConfigItem.Key, RegexOptions.IgnoreCase))
                         {
                             return new HandlerLogger
                             {
@@ -419,7 +412,7 @@ namespace SAL.Core.Processors
         private HandlerLogger GetHandlerLogger(CommandResultPayload commandResultPayload)
         {
 
-            var loggerName = $"{commandResultPayload.Descriptor.CommandName}.Command";
+            var loggerName = $"{commandResultPayload.Context.Descriptor.CommandName}.Command";
 
             return loggers.GetOrAdd(loggerName, s =>
             {
@@ -439,7 +432,7 @@ namespace SAL.Core.Processors
 
                     foreach (var loggingConfigItem in loggingItems)
                     {
-                        if (Regex.IsMatch(commandResultPayload.Descriptor.CommandName, loggingConfigItem.Key, RegexOptions.IgnoreCase))
+                        if (Regex.IsMatch(commandResultPayload.Context.Descriptor.CommandName, loggingConfigItem.Key, RegexOptions.IgnoreCase))
                         {
                             return new HandlerLogger
                             {
@@ -459,7 +452,7 @@ namespace SAL.Core.Processors
 
         private HandlerLogger GetHandlerLogger(EventPayload eventPayload)
         {
-            var eventName = $"{eventPayload.Descriptor.EventName}";
+            var eventName = $"{eventPayload.Context.Descriptor.EventName}";
             var loggerName = $"{eventName}.Event";
 
             return loggers.GetOrAdd(loggerName, s =>

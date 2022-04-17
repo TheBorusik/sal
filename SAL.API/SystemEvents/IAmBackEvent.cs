@@ -2,7 +2,7 @@
 
 namespace SAL.API
 {
-    [SalEventName("System.IAmBack")]
+    [SalEventName("System.IAmBackEvent")]
     public class IAmBackEvent : IEvent
     {
         public string Type { get; set; }

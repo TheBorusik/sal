@@ -6,59 +6,40 @@ namespace SAL.API
 {
     public interface ILoSalClient
     {
-
-        public Task<string> PublishCommandAsync(
-            string commandName,
-            object commandBody);
-        
-        Task PublishCommandAsync(
+        Task LoPublishCommandAsync(
             string commandName,
             object commandBody,
             string correlationId,
             CommandPriority priority,
             TimeSpan? ttl,
-            string handlerAdapterType,
-            string handlerAdapterName,
-            string resultAdapterType,
-            string resultAdapterName);
+            string commandExchangeName,
+            string commandRoutingKey,
+            string resultExchangeName,
+            string resultRoutingKey);
 
-        Task<SimpleCommandResult> ExecuteCommandAsync(
+        Task<SimpleCommandResult> LoExecuteCommandAsync(
             string commandName,
             object commandBody,
             CommandPriority priority,
             TimeSpan ttl,
-            bool throwIfTimeout,
-            string handlerAdapterType,
-            string handlerAdapterName
+            string commandExchangeName,
+            string commandRoutingKey,
+            bool throwIfTimeout
         );
-        
-        Task<SimpleCommandResult> ExecuteExternalHttp(
-            ExternalHttpRequest request,
-            string routePath,
-            TimeSpan ttl,
-            bool throwIfTimeout,
-            string handlerAdapterType,
-            string handlerAdapterName);
 
-
-        Task PublishResultAsync(
-            CommonCommandResult result, 
-            CommandContext commandContext);
-        
-        Task PublishEventAsync(
-            string eventName, 
+        Task LoPublishEventAsync(
+            string eventName,
             object eventBody,
             string correlationId,
             TimeSpan? ttl,
-            string handlerServiceType,
-            string handlerServiceName,
-            bool isCEvent);
+            string exchangeName,
+            string routingKey);
         
-        Task PublishCommandAsync(CommandContext commandContext, JObject commandBody);
-
-        Task PublishResultAsync(CommandResultContext commandResultContext, CommonCommandResult result);
-
-        Task PublishEventAsync(EventContext eventContext, JObject eventBody);
+        Task<SimpleCommandResult> LoExecuteAsync(CommandContext commandContext, object commandBody, bool throwIfTimeout);
+        Task LoPublishResultAsync(CommandContext commandContext, CommonCommandResult result);
+        Task LoPublishAsync(CommandContext commandContext, object commandBody);
+        Task LoPublishAsync(CommandResultContext commandResultContext, CommonCommandResult result);
+        Task LoPublishAsync(EventContext eventContext, object eventBody);
     }
     
 }

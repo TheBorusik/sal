@@ -12,7 +12,7 @@ namespace SAL.Core.Service
     internal partial class FrontAdapter
     {
         protected ISalClient frontClient;
-        
+
         public List<FrontCommandHandlerInfo> frontCommands = new();
         public List<CommandResultHandlerInfo> frontCommandResults = new();
         public List<EventHandlerInfo> frontEvents = new();
@@ -35,11 +35,11 @@ namespace SAL.Core.Service
             base.SendOffline();
             try
             {
-                frontClient.PublishEventAsync(new IAmOffline
+                frontClient.PublishEventAsync("System.IAmOfflineEvent", new IAmOfflineEvent
                 {
                     Type = AdapterConfiguration.AdapterType,
                     Name = AdapterConfiguration.AdapterName
-                }, SalConst.SystemEventTTL).Wait();
+                }, true, SalConst.SystemEventTTL).Wait();
             }
             catch (Exception)
             {
@@ -48,12 +48,11 @@ namespace SAL.Core.Service
         }
 
 
-        
         public override void AddExternalHttpHandler(ExternalHandlerInfo extInfo)
         {
             externalHttp.Add(extInfo);
         }
-        
+
 
         public override void AddFrontCommandHandler(FrontCommandHandlerInfo handlerInfo)
         {
@@ -76,8 +75,8 @@ namespace SAL.Core.Service
             base.SendIm(contour);
             try
             {
-                if(frontClient.Contour == contour)
-                    return frontClient.PublishEventAsync(new IAmFrontEvent
+                if (frontClient.Contour == contour)
+                    return frontClient.PublishEventAsync("System.IAmFrontEvent", new IAmFrontEvent
                     {
                         Type = AdapterConfiguration.AdapterType,
                         Name = AdapterConfiguration.AdapterName,
@@ -90,12 +89,13 @@ namespace SAL.Core.Service
                         CommandResultHandlers = frontCommandResults.ToArray(),
                         EventHandlers = frontEvents.ToArray(),
                         ExternalHandlers = externalHttp.ToArray(),
-                    }, SalConst.SystemEventTTL);
+                    }, true, SalConst.SystemEventTTL);
             }
             catch (Exception ex)
             {
                 logger.Error(ex, "Ошибка отправки сообщения IAmFrontEvent");
             }
+
             return Task.CompletedTask;
         }
     }

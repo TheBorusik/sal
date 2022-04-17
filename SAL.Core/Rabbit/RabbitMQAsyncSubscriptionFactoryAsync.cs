@@ -23,23 +23,23 @@ namespace SAL.Core.Rabbit
         {
             var queueList = new List<QueueInfo>();
 
-            var queueName = $"#{AdapterConfiguration.AdapterType}#{AdapterConfiguration.AdapterName}" + "#SystemEvent";
+            var queueName = $"#{AdapterConfiguration.AdapterType}@{AdapterConfiguration.AdapterName}_SystemEvent";
 
             var bindings = eventNames.Select(s => new QueueBinding
             {
                 ExchangeName = ExchangeNames.EventExchange,
-                RoutingKey = s
+                RoutingKey = "!{s}"
             }).ToList();
 
             bindings.Add(new QueueBinding
             {
                 ExchangeName = ExchangeNames.EventExchange,
-                RoutingKey = $"System#{AdapterConfiguration.AdapterType}#{AdapterConfiguration.AdapterName}"
+                RoutingKey = $"!{AdapterConfiguration.AdapterType}@{AdapterConfiguration.AdapterName}"
             });
             bindings.Add(new QueueBinding
             {
                 ExchangeName = ExchangeNames.EventExchange,
-                RoutingKey = $"System#{AdapterConfiguration.AdapterType}"
+                RoutingKey = $"!{AdapterConfiguration.AdapterType}@"
             });
 
             transport.AddQueue(new Queue
@@ -67,7 +67,7 @@ namespace SAL.Core.Rabbit
         {
             var queueList = new List<QueueInfo>();
 
-            var queueName = $"#{AdapterConfiguration.AdapterType}#{AdapterConfiguration.AdapterName}#Event";
+            var queueName = $"#{AdapterConfiguration.AdapterType}@{AdapterConfiguration.AdapterName}_Event";
 
             var bindings = eventNames.Select(s => new QueueBinding
             {
@@ -78,12 +78,12 @@ namespace SAL.Core.Rabbit
             bindings.Add(new QueueBinding
             {
                 ExchangeName = ExchangeNames.EventExchange,
-                RoutingKey = $"{AdapterConfiguration.AdapterType}#{AdapterConfiguration.AdapterName}"
+                RoutingKey = $"{AdapterConfiguration.AdapterType}@{AdapterConfiguration.AdapterName}"
             });
             bindings.Add(new QueueBinding
             {
                 ExchangeName = ExchangeNames.EventExchange,
-                RoutingKey = AdapterConfiguration.AdapterType
+                RoutingKey = $"{AdapterConfiguration.AdapterType}@"
             });
 
             transport.AddQueue(new Queue
@@ -104,12 +104,12 @@ namespace SAL.Core.Rabbit
                 PrefetchCount = prefetchCount
             });
             
-            queueName = $"#{AdapterConfiguration.AdapterType}#Event";
+            queueName = $"#{AdapterConfiguration.AdapterType}_Event";
             bindings = new List<QueueBinding>();
             bindings.Add(new QueueBinding
             {
                 ExchangeName = ExchangeNames.CEventExchange,
-                RoutingKey = $"{AdapterConfiguration.AdapterType}"
+                RoutingKey = $"{AdapterConfiguration.AdapterType}@"
             });
             transport.AddQueue(new Queue
             {
@@ -136,7 +136,7 @@ namespace SAL.Core.Rabbit
         {
             var queueList = new List<QueueInfo>();
 
-            var queueName = $"#{AdapterConfiguration.AdapterType}#{AdapterConfiguration.AdapterName}" + "#CommandResults";
+            var queueName = $"#{AdapterConfiguration.AdapterType}@{AdapterConfiguration.AdapterName}_CommandResults";
             transport.AddQueue(new Queue
             {
                 Name = queueName,
@@ -151,7 +151,7 @@ namespace SAL.Core.Rabbit
                     new QueueBinding
                     {
                         ExchangeName = ExchangeNames.CommandResultExchange,
-                        RoutingKey = $"{AdapterConfiguration.AdapterType}#{AdapterConfiguration.AdapterName}",
+                        RoutingKey = $"{AdapterConfiguration.AdapterType}@{AdapterConfiguration.AdapterName}",
                     }
                 }
             });
@@ -162,7 +162,7 @@ namespace SAL.Core.Rabbit
             });
 
 
-            queueName = $"#{AdapterConfiguration.AdapterType}" + "#CommandResults";
+            queueName = $"#{AdapterConfiguration.AdapterType}_CommandResults";
             transport.AddQueue(new Queue
             {
                 Name = queueName,
@@ -177,7 +177,7 @@ namespace SAL.Core.Rabbit
                     new QueueBinding
                     {
                         ExchangeName = ExchangeNames.CommandResultExchange,
-                        RoutingKey = $"{AdapterConfiguration.AdapterType}",
+                        RoutingKey = $"{AdapterConfiguration.AdapterType}@",
                     }
                 }
             });
@@ -194,7 +194,7 @@ namespace SAL.Core.Rabbit
         {
             var queueList = new List<QueueInfo>();
 
-            var queueName = $"#{AdapterConfiguration.AdapterType}#{AdapterConfiguration.AdapterName}" + "#Sync#CommandResults";
+            var queueName = $"#{AdapterConfiguration.AdapterType}@{AdapterConfiguration.AdapterName}_CommandResultsSync";
             transport.AddQueue(new Queue
             {
                 Name = queueName,
@@ -209,7 +209,7 @@ namespace SAL.Core.Rabbit
                     new QueueBinding
                     {
                         ExchangeName = ExchangeNames.CommandResultExchange,
-                        RoutingKey = $"{AdapterConfiguration.AdapterType}#{AdapterConfiguration.AdapterName}#Sync",
+                        RoutingKey = $"!{AdapterConfiguration.AdapterType}@{AdapterConfiguration.AdapterName}",
                     }
                 }
             });
@@ -229,7 +229,7 @@ namespace SAL.Core.Rabbit
             string queueName;
             commands.ForEach(c =>
             {
-                queueName = "Command." + c.CommandName;
+                queueName = $"${c.CommandName}";
                 queueList.Add(new QueueInfo
                 {
                     QueueName = queueName,
@@ -255,7 +255,7 @@ namespace SAL.Core.Rabbit
                 });
             });
 
-            queueName = $"#{AdapterConfiguration.AdapterType}#{AdapterConfiguration.AdapterName}" + "#Commands";
+            queueName = $"#{AdapterConfiguration.AdapterType}@{AdapterConfiguration.AdapterName}_Commands";
 
             transport.AddQueue(new Queue
             {
@@ -271,7 +271,7 @@ namespace SAL.Core.Rabbit
                     new QueueBinding
                     {
                         ExchangeName = ExchangeNames.CommandExchange,
-                        RoutingKey = $"{AdapterConfiguration.AdapterType}#{AdapterConfiguration.AdapterName}",
+                        RoutingKey = $"{AdapterConfiguration.AdapterType}@{AdapterConfiguration.AdapterName}",
                     }
                 }
             });
@@ -283,7 +283,7 @@ namespace SAL.Core.Rabbit
             });
 
 
-            queueName = $"#{AdapterConfiguration.AdapterType}" + "#Commands";
+            queueName = $"#{AdapterConfiguration.AdapterType}_Commands";
             transport.AddQueue(new Queue
             {
                 Name = queueName,
@@ -298,7 +298,7 @@ namespace SAL.Core.Rabbit
                     new QueueBinding
                     {
                         ExchangeName = ExchangeNames.CommandExchange,
-                        RoutingKey = $"{AdapterConfiguration.AdapterType}",
+                        RoutingKey = $"{AdapterConfiguration.AdapterType}@",
                     }
                 }
             });
@@ -318,7 +318,7 @@ namespace SAL.Core.Rabbit
             string queueName;
             queues.ForEach(q =>
             {
-                queueName = "ExtPath#" + q.Path.ToLower();
+                queueName = $"%{q.Path.ToLower()}";
                 queueList.Add(new QueueInfo
                 {
                     QueueName = queueName,
@@ -351,39 +351,7 @@ namespace SAL.Core.Rabbit
         {
             return new MultiConsumerSubscriptionAsyncEx(transport, subscriptionName, globalPrefetchCount, queues, handler);
         }
-      
-
-        public bool AddSystemEvent(string eventName)
-        {
-            var queueName = $"#{AdapterConfiguration.AdapterType}#{AdapterConfiguration.AdapterName}" + "#SystemEvent";
-            try
-            {
-                using var channel = transport.CreateModel();
-                channel.QueueBind(queueName, ExchangeNames.EventExchange, eventName, null);
-                return true;
-            }
-            catch
-            {
-                return false;
-            }
-        }
-
-        public bool AddEvent(string eventName)
-        {
-            var queueName = $"#{AdapterConfiguration.AdapterType}#{AdapterConfiguration.AdapterName}" + "#Event";
-            try
-            {
-                using var channel = transport.CreateModel();
-                channel.QueueBind(queueName, ExchangeNames.EventExchange, eventName, null);
-                return true;
-            }
-            catch // (Exception e)
-            {
-                return false;
-            }
-        }
-
-
+        
         public void Dispose()
         {
         }

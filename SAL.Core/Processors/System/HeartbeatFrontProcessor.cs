@@ -24,7 +24,7 @@ namespace SAL.Core.Processors.System
         {
             try
             {
-                await salClient.PublishEventAsync(new HeartbeatEvent
+                await salClient.PublishEventAsync("System.HeartbeatEvent", new HeartbeatEvent
                 {
                     Type = AdapterConfiguration.AdapterType,
                     Name = AdapterConfiguration.AdapterName,
@@ -34,7 +34,7 @@ namespace SAL.Core.Processors.System
                     InDocker = AdapterConfiguration.InDocker,
                     MachineName = AdapterConfiguration.MachineName,
                     Timestamp = DateTime.UtcNow
-                }, SalConst.SystemEventTTL);
+                }, true, SalConst.SystemEventTTL);
             }
             catch (Exception ex)
             {

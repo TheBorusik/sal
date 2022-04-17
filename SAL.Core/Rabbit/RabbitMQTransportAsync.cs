@@ -17,13 +17,13 @@ using SAL.Infrastructure;
 
 namespace SAL.Core.Rabbit
 {
-    public class RabbitMQTransportAsync : ITransport , IRMQTransport
+    public class RabbitMQTransportAsync :  IRMQTransport
     {
         private readonly RabbitMQConnectionManagerAsync rabbitMQConnectionManager;
 
 
         private readonly ISubscriptionFactory subscriptionFactory;
-        private readonly IPublisher publisher;
+        private readonly RabbitMQPublisherWithConfirms publisher;
 
         public event EventHandler<ConnectionRestoreEventArgs> ConnectionRestore;
         public event EventHandler<ConnectionFailureEventArgs> ConnectionFailure;
@@ -65,19 +65,16 @@ namespace SAL.Core.Rabbit
 
             rabbitMQConnectionManager = new RabbitMQConnectionManagerAsync(rabbitConfig, loggerProvider);
             rabbitMQConnectionManager.ConnectionFailure += (sender, args) => OnConnectionFailure(args);
-
-
-
+            
             subscriptionFactory = new RabbitMQAsyncSubscriptionFactoryAsync(this);
-            publisher = new RabbitMQPublisher(this, LoggerProvider);
+            publisher = new RabbitMQPublisherWithConfirms(this, LoggerProvider);
 
             exchanges.Add(new Exchange { Name = ExchangeNames.NotHandledExchange, Type = Topology.ExchangeType.Fanout });
             exchanges.Add(new Exchange { Name = ExchangeNames.CommandExchange, Type = Topology.ExchangeType.Direct, AlternateExchange = ExchangeNames.NotHandledExchange });
             exchanges.Add(new Exchange { Name = ExchangeNames.CommandResultExchange, Type = Topology.ExchangeType.Direct, AlternateExchange = ExchangeNames.NotHandledExchange });
             exchanges.Add(new Exchange { Name = ExchangeNames.EventExchange, Type = Topology.ExchangeType.Direct });
             exchanges.Add(new Exchange { Name = ExchangeNames.CEventExchange, Type = Topology.ExchangeType.Direct });
-
-
+            
             queues.Add(new Queue
             {
                 Name = QueueNames.NotHandledMessages,
@@ -170,10 +167,12 @@ namespace SAL.Core.Rabbit
         {
             rabbitMQConnectionManager.Start();
             RestoreTopology();
+            publisher.Start();
         }
 
         public void Stop()
         {
+            publisher.Stop();
             rabbitMQConnectionManager.Stop();
         }
 

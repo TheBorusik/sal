@@ -33,11 +33,11 @@ namespace SAL.Core.Service
         {
             try
             {
-                backClient.PublishEventAsync(new IAmOffline
+                backClient.PublishEventAsync("System.IAmOfflineEvent",new IAmOfflineEvent
                 {
                     Type = AdapterConfiguration.AdapterType,
                     Name = AdapterConfiguration.AdapterName
-                }, SalConst.SystemEventTTL).Wait();
+                }, true ,SalConst.SystemEventTTL).Wait();
             }
             catch (Exception)
             {
@@ -85,7 +85,7 @@ namespace SAL.Core.Service
             try
             {
                 if(backClient.Contour == contour)
-                    return backClient.PublishEventAsync(new IAmBackEvent
+                    return backClient.PublishEventAsync("System.IAmBackEvent",new IAmBackEvent
                     {
                         Type = AdapterConfiguration.AdapterType,
                         Name = AdapterConfiguration.AdapterName,
@@ -97,7 +97,7 @@ namespace SAL.Core.Service
                         CommandHandlers = backCommands.ToArray(),
                         CommandResultHandlers = backCommandResults.ToArray(),
                         EventHandlers = backEvents.ToArray()
-                    }, SalConst.SystemEventTTL);
+                    }, true, SalConst.SystemEventTTL);
             }
             catch (Exception ex)
             {

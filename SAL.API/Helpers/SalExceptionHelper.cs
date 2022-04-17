@@ -172,15 +172,17 @@ namespace SAL.API
         }
 
 
-        public static InternalExceptionDTO CreateValidationDto(IList<FieldError> validationErrors)
+        public static InternalExceptionDTO CreateValidationDto(IEnumerable<FieldError> validationErrors)
         {
+            var fieldErrors = validationErrors as FieldError[] ?? validationErrors.ToArray();
+            
             var dto = new InternalExceptionDTO
             {
                 Code = SalErrorCodes.ValidationFailed,
                 Message = string.Join(Environment.NewLine,
-                    validationErrors.Select(v => string.IsNullOrWhiteSpace(v.Path) ? v.Description : $"{v.Description}. Path '{v.Path}'")),
+                    fieldErrors.Select(v => string.IsNullOrWhiteSpace(v.Path) ? v.Description : $"{v.Description}. Path '{v.Path}'")),
                 TimeStamp = DateTime.UtcNow,
-                Properties = JObject.FromObject(new { ValidationErrors  = validationErrors }) ,
+                Properties = JObject.FromObject(new { ValidationErrors  = fieldErrors }) ,
                 AdapterName = $"{AdapterConfiguration.AdapterType}.{AdapterConfiguration.AdapterName}",
                 HandlerName = $"{HandlerContext.HandlerType}.{HandlerContext.HandlerName}",
                 SessionId = HandlerContext.SessionId,

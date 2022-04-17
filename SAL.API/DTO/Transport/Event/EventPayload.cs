@@ -1,11 +1,11 @@
-﻿using System;
 using Newtonsoft.Json.Linq;
 
 namespace SAL.API
 {
-    public class TransportMessage
+    public class EventPayload
     {
-        public string Type { get; set; }
+        public EventContext Context { get; set; }
         public JObject Payload { get; set; }
+        
     }
 }

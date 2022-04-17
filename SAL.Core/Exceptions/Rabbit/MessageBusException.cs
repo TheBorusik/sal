@@ -6,6 +6,13 @@ namespace SAL.Core.Exceptions.Rabbit
     {
     }
 
+    public class MessageNotPublishedException : Exception
+    {
+        
+    }
+    
+    
+
     public class NoConnectionException : Exception
     {
     }

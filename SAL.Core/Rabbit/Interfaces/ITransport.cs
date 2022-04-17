@@ -25,11 +25,12 @@ namespace SAL.Core.Rabbit.Interfaces
 
     }
 
-    public interface IRMQTransport
+    public interface IRMQTransport : ITransport
     {
         ILogger CreateLogger(string name);
         
         IModel CreateModel();
         void AddQueue(Queue queue);
+        
     }
 }
