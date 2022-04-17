@@ -1,5 +1,4 @@
 using System.Threading.Tasks;
-using SAL.Infrastructure;
 
 namespace SAL.API
 {

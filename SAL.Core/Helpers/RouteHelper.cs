@@ -2,7 +2,6 @@
 using System.Collections.Concurrent;
 using System.Linq;
 using System.Reflection;
-using System.Text.RegularExpressions;
 using Autofac;
 using SAL.API;
 using SAL.Infrastructure;

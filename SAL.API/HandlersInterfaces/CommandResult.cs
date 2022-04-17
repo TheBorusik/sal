@@ -1,5 +1,4 @@
 ﻿using Newtonsoft.Json.Linq;
-using SAL.Infrastructure;
 
 namespace SAL.API
 {

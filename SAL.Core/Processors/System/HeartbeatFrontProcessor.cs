@@ -4,7 +4,6 @@ using Autofac;
 using Microsoft.Extensions.Logging;
 using SAL.API;
 using SAL.API.Const;
-using SAL.Core.SystemHandlers;
 using SAL.Infrastructure;
 
 namespace SAL.Core.Processors.System

@@ -1,11 +1,7 @@
-﻿using System;
-using System.Threading;
-using System.Threading.Channels;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using RabbitMQ.Client;
 using SAL.Core.Exceptions.Rabbit;
-using SAL.Core.Rabbit.Consts;
 using SAL.Core.Rabbit.Helpers;
 using SAL.Core.Rabbit.Interfaces;
 

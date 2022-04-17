@@ -1,11 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 using Autofac;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Schema;
-using SAL.Infrastructure;
 
 namespace SAL.API
 {

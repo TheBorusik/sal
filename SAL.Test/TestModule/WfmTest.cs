@@ -1,7 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.Threading.Tasks;
 using Autofac;
-using Microsoft.Extensions.Logging;
 using SAL.API;
 using SAL.Infrastructure;
 

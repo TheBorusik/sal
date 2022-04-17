@@ -1,12 +1,6 @@
-﻿using NLog.LayoutRenderers;
-using NLog.Layouts;
-using SAL.API;
+﻿using SAL.API;
 using SAL.Core.Configuration.Rabbit;
 using SAL.Core.Exceptions;
-using SAL.Core.NLogEx.Adapter;
-using SAL.Core.NLogEx.Layout;
-using SAL.Core.NLogEx.LayoutRenderer;
-using SAL.Core.NLogEx.LayoutRenderer.HandlerContextRenderer;
 using SAL.Infrastructure;
 
 

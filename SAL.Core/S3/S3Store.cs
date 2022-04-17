@@ -1,10 +1,7 @@
 ﻿using System;
-using System.IO;
-using System.Net;
 using System.Threading.Tasks;
 using Amazon;
 using Amazon.S3;
-using Amazon.S3.Model;
 using Amazon.S3.Transfer;
 using Microsoft.Extensions.Logging;
 using SAL.API;

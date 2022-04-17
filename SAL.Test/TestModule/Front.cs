@@ -1,20 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.Data.Common;
-using System.IO;
-using System.Linq;
-using System.Security.Cryptography;
-using System.Text;
 using System.Threading.Tasks;
 using Autofac;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json.Linq;
-using Newtonsoft.Json.Schema;
-using Npgsql;
 using SAL.API;
 using SAL.Core.Rabbit.Consts;
-using SAL.Core.S3;
 using SAL.Infrastructure;
 
 // ReSharper disable once CheckNamespace
