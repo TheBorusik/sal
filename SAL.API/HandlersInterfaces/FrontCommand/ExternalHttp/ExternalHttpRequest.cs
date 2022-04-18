@@ -13,10 +13,7 @@ namespace SAL.API
         
         public string QueryString { get; set; }
         public JObject QueryData { get; set; }
-
-
-
-
+        
         public bool HasFormData { get; set; } 
         public JObject FormData { get; set; }
         public byte[] RawData { get; set; }

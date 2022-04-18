@@ -73,11 +73,13 @@ namespace SAL.Core.Processors
 
                 var subscriptionFactory = transport.CreateMessageSubscription();
 
-                var eventList = eventHandlers.Where(eh => eh.Value.Any(h => h.IsSystem == false)).Select(eh => eh.Key).ToArray();
-                var systemEventList = eventHandlers.Where(eh => eh.Value.Any(h => h.IsSystem == true)).Select(eh => eh.Key).ToArray();
+//                var eventList = eventHandlers.Where(eh => eh.Value.Any(h => h.IsSystem == false)).Select(eh => eh.Key).ToArray();
+//                var systemEventList = eventHandlers.Where(eh => eh.Value.Any(h => h.IsSystem == true)).Select(eh => eh.Key).ToArray();
+                var eventList = eventHandlers.Select(eh => eh.Key).ToArray();
+//                var systemEventList = eventHandlers.Where(eh => eh.Value.Any(h => h.IsSystem == true)).Select(eh => eh.Key).ToArray();
 
                 subscription = subscriptionFactory.CreateEvent(config.PrefetchCount, eventList, Handler);
-                systemSubscription = subscriptionFactory.CreateSystemEvent(config.SystemPrefetchCount, systemEventList, Handler);
+                systemSubscription = subscriptionFactory.CreateSystemEvent(config.SystemPrefetchCount, eventList, Handler);
             }
             catch (Exception ex)
             {

@@ -2,6 +2,7 @@
 using System.Threading.Tasks;
 using Autofac;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json.Linq;
 using SAL.API;
 using SAL.Core.Rabbit.Consts;
 using SAL.Infrastructure;
@@ -13,7 +14,10 @@ namespace SAL.Test.Front
     {
         public void Configure(ContainerBuilder builder, IConfigWatcher config)
         {
+            builder.RegisterSalHandler<CommandHandler>();
             builder.RegisterSalHandler<CommandResultHandler>();
+            builder.RegisterSalHandler<ExceptionDetectedEventHandler>();
+            
             builder.RegisterProcessor<TestFront>();
         }
     }
@@ -38,58 +42,10 @@ namespace SAL.Test.Front
         public void Online()
         {
             using var scope = lifetimeScope.BeginLifetimeScope();
-            var logger = lifetimeScope.Resolve<ILoggerProvider>().CreateLogger("Tester");
-
+            
             var client = scope.Resolve<ISalClient>();
 
-
-            if (true)
-            {
-                for (var ii = 0; ii < 300; ii++)
-                    Task.Run(async () =>
-                    {
-                        try
-                        {
-                            //var payload = new string('*', 5*1024);
-                            var payload = "";
-
-                            for (int i = 0; i < 1000; i++)
-                            {
-                                var cContext = new CommandContext
-                                {
-                                    ContextInfo = new ContextInfo("",0,null,"Test"),
-                                    Descriptor = new CommandDescriptor
-                                    {
-                                        Contour = Contour.Back.ToString(),
-                                        Priority = CommandPriority.Normal,
-                                        CommandName = "SalTester.TestCommand",
-                                        CorrelationId = Guid.NewGuid().ToString("N"),
-                                        PublishTimeStamp = DateTime.UtcNow,
-                                        HandlerTimeStamp = DateTime.UtcNow,
-                                        SourceAdapterType = AdapterConfiguration.AdapterType,
-                                        SourceAdapterName = AdapterConfiguration.AdapterName,
-                                        ResultExchangeName = ExchangeNames.CommandResultExchange,
-                                        ResultRoutingKey = $"{AdapterConfiguration.AdapterType}@{AdapterConfiguration.AdapterName}"
-                                    
-                                    }
-                                };
-
-                                await client.PublishResultAsync(CommonCommandResult.Create(new CommandResult
-                                {
-                                    Id = __index++,
-                                    Payload = payload,
-                                }), cContext);
-                            
-                            }
-                            
-                        }
-                        catch (Exception ex)
-                        {
-                            logger.Error("Какето ошибка",ex);
-                            throw;
-                        }
-                    });
-            }
+            client.PublishCommandAsync("SalTester.TestCommand", new { });
         }
 
         public void Offline()
@@ -101,14 +57,23 @@ namespace SAL.Test.Front
         }
     }
 
-
     public class CommandResult
     {
         public int Id { get; set; }
         public string Payload { get; set; }
     }
+    
 
-
+    [SalContourHandler(Contour.Back)]
+    [SalCommandName("SalTester.TestCommand")]
+    public class CommandHandler : ICommonCommandHandler2
+    {
+        public Task Handle(JObject command, CommandContext commandContext, ExecutingContext executingContext)
+        {
+            throw new Exception("Test");
+        }
+    }
+    
     [SalContourHandler(Contour.Back)]
     public class CommandResultHandler : ICommandResultHandle2Async<CommandResult>
     {
@@ -118,4 +83,26 @@ namespace SAL.Test.Front
             return true;
         }
     }
+    
+
+    [SalContourHandler(Contour.Both)]
+    public class ExceptionDetectedEventHandler :
+        IEventHandler2<ExceptionDetectedEvent>
+    {
+        private ILogger logger;
+
+        public ExceptionDetectedEventHandler(ILoggerProvider loggerProvider)
+        {
+            this.logger = loggerProvider.CreateLogger("Test");
+        }
+
+        [SalEventName("System.ExceptionDetected")]
+        public async Task Handle(ExceptionDetectedEvent evnt, EventContext eventContext, ExecutingContext executingContext)
+        {
+            logger.Info(evnt.ToIndentedJson());
+        }
+
+    }
+
+
 }
