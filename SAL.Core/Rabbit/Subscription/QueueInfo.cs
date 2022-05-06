@@ -6,4 +6,11 @@
         public ushort PrefetchCount { get; set; }
         
     }
+    
+    public class EventInfo
+    {
+        public string EventName { get; set; }
+        public bool Preserved { get; set; }
+        public bool OneInstance { get; set; }
+    }
 }

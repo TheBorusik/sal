@@ -97,7 +97,7 @@ namespace SAL.Core.Client
         }
         
         
-                public Task<SimpleCommandResult> ExecuteCommandAsync(
+        public Task<SimpleCommandResult> ExecuteCommandAsync(
             string commandName,
             object commandBody,
             CommandPriority priority = CommandPriority.Normal,
@@ -218,25 +218,20 @@ namespace SAL.Core.Client
         public Task PublishEventAsync(
             string eventName,
             object eventBody,
-            bool isSystem = false,
             TimeSpan? ttl = null,
             string handlerAdapterType = null,
             string handlerAdapterName = null)
         {
             var correlationId = Guid.NewGuid().ToString("N");
             var exchangeName = ExchangeNames.EventExchange;
-            var routingKey = new StringBuilder();
-            if (isSystem)
-                routingKey.Append("!");
-            if (string.IsNullOrWhiteSpace(handlerAdapterType))
-                routingKey.Append(eventName);
-            else
+            var routingKey = eventName;
+
+            if (!string.IsNullOrWhiteSpace(handlerAdapterType))
             {
-                routingKey.Append(handlerAdapterType).Append("@");
-                if(!string.IsNullOrWhiteSpace(handlerAdapterName))
-                    routingKey.Append(handlerAdapterName);
+                exchangeName = !string.IsNullOrWhiteSpace(handlerAdapterName) 
+                    ? $"{handlerAdapterType}@{handlerAdapterName}:EventExchange" 
+                    : $"{handlerAdapterType}:EventExchange";
             }
-            
             var eventContext = new EventContext
             {
                 ContextInfo = new ContextInfo(HandlerContext.SessionId, HandlerContext.AuthId, HandlerContext.ProcessId, HandlerContext.OperationId),
@@ -255,33 +250,7 @@ namespace SAL.Core.Client
             };
             return LoPublishAsync(eventContext, eventBody);
         }
-
-        public Task PublishCEventAsync(string eventName, object eventBody, string handlerAdapterType, TimeSpan? ttl = null)
-        {
-            var correlationId = Guid.NewGuid().ToString("N");
-            var exchangeName = ExchangeNames.CEventExchange;
-            var routingKey = $"{handlerAdapterType}@";
-            
-            
-            var eventContext = new EventContext
-            {
-                ContextInfo = new ContextInfo(HandlerContext.SessionId, HandlerContext.AuthId, HandlerContext.ProcessId, HandlerContext.OperationId),
-                Descriptor = new EventDescriptor
-                {
-                    CorrelationId = correlationId,
-                    EventName = eventName,
-                    ExchangeName = exchangeName,
-                    RoutingKey = routingKey,
-                    SourceAdapterType = AdapterConfiguration.AdapterType,
-                    SourceAdapterName = AdapterConfiguration.AdapterName,
-                    PublishTimeStamp = DateTime.UtcNow,
-                    TTL = ttl,
-                    Contour = Contour.ToString()
-                }
-            };
-            return LoPublishAsync(eventContext, eventBody);
-        }
-
+        
         public Task RaiseExceptionDetectEvent(string cid, InternalExceptionDTO exceptionDto)
         {
             return PublishEventAsync("System.ExceptionDetected",new ExceptionDetectedEvent

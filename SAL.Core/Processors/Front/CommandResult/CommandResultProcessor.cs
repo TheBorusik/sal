@@ -469,8 +469,7 @@ namespace SAL.Core.Processors
 
             commandResultPayload.Context.Descriptor.HandleResultTimeStamp = DateTime.UtcNow;
             commandResultPayload.Context.Descriptor.ProcessingDuration = commandResultPayload.Context.Descriptor.HandleResultTimeStamp - commandResultPayload.Context.Descriptor.PublishTimeStamp;
-
-
+            
             return commandResultPayload;
         }
 

@@ -74,7 +74,7 @@ namespace SAL.Core.S3
             throw new SalNotConfiguredException("S3");
         }
 
-        public async Task<bool> CheckSizeLimitAsync(AmazonS3Client s3Client, string fileId, long? byteLimit)
+        private async Task<bool> CheckSizeLimitAsync(AmazonS3Client s3Client, string fileId, long? byteLimit)
         {
             if (!byteLimit.HasValue)
                 return true;
@@ -96,13 +96,9 @@ namespace SAL.Core.S3
             await s3Client.DeleteObjectAsync(config.BucketName, fileId);
         }
 
-    }
-
-    public interface IS3Store
-    {
-        Task UploadFileAsync(string filePath, string fileId);
-        Task DownloadFileAsync(string fileId, string filePath, long? byteLimit = null);
-        Task DeleteFileAsync(string fileId);
-        Task<bool> CheckSizeLimitAsync(AmazonS3Client s3Client, string fileId, long? byteLimit);
+        public Task<bool> CheckSizeLimitAsync(string fileId, long byteLimit)
+        {
+            return CheckSizeLimitAsync(CreateClient(), fileId, byteLimit);
+        }
     }
 }

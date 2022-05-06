@@ -117,5 +117,6 @@ namespace SAL.Core.Rabbit
         }
 
         public string ContourName { get; }
+        public bool IsConnected => connection != null;
     }
 }

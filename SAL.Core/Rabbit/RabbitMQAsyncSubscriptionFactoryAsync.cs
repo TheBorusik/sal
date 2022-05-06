@@ -18,116 +18,143 @@ namespace SAL.Core.Rabbit
         {
             this.transport = transport;
         }
-
-        public ISubscription CreateSystemEvent(ushort prefetchCount, string[] eventNames, Func<RabbitMessage, Action, Action, Task> handler, string subscriptionName = "SystemEvent")
+        
+        public ISubscription CreateEvent(ushort prefetchCount, IEnumerable<EventInfo> eventInfosEnumerable, Func<RabbitMessage, Action, Action, Task> handler, string subscriptionName = "Event")
         {
-            var queueList = new List<QueueInfo>();
 
-            var queueName = $"#{AdapterConfiguration.AdapterType}@{AdapterConfiguration.AdapterName}_SystemEvent";
-
-            var bindings = eventNames.Select(s => new QueueBinding
-            {
-                ExchangeName = ExchangeNames.EventExchange,
-                RoutingKey = $"!{s}"
-            }).ToList();
-
-            bindings.Add(new QueueBinding
-            {
-                ExchangeName = ExchangeNames.EventExchange,
-                RoutingKey = $"!{AdapterConfiguration.AdapterType}@{AdapterConfiguration.AdapterName}"
-            });
-            bindings.Add(new QueueBinding
-            {
-                ExchangeName = ExchangeNames.EventExchange,
-                RoutingKey = $"!{AdapterConfiguration.AdapterType}@"
-            });
-
-            transport.AddQueue(new Queue
-            {
-                Name = queueName,
-                AutoDelete = true,
-                MaxPriority = 0,
-                Exclusive = true,
-                HasDeadLetter = true,
-                Expire = null,
-                Durable = true,
-                Bindings = bindings.ToArray()
-            });
-
-            queueList.Add(new QueueInfo
-            {
-                QueueName = queueName,
-                PrefetchCount = prefetchCount
-            });
-
-            return new MultiConsumerSubscriptionAsync(transport, subscriptionName, prefetchCount, queueList.ToArray(), handler);
-        }
-
-        public ISubscription CreateEvent(ushort prefetchCount, string[] eventNames, Func<RabbitMessage, Action, Action, Task> handler, string subscriptionName = "Event")
-        {
-            var queueList = new List<QueueInfo>();
-
-            var queueName = $"#{AdapterConfiguration.AdapterType}@{AdapterConfiguration.AdapterName}_Event";
-
-            var bindings = eventNames.Select(s => new QueueBinding
-            {
-                ExchangeName = ExchangeNames.EventExchange,
-                RoutingKey = s
-            }).ToList();
-
-            bindings.Add(new QueueBinding
-            {
-                ExchangeName = ExchangeNames.EventExchange,
-                RoutingKey = $"{AdapterConfiguration.AdapterType}@{AdapterConfiguration.AdapterName}"
-            });
-            bindings.Add(new QueueBinding
-            {
-                ExchangeName = ExchangeNames.EventExchange,
-                RoutingKey = $"{AdapterConfiguration.AdapterType}@"
-            });
-
-            transport.AddQueue(new Queue
-            {
-                Name = queueName,
-                AutoDelete = false,
-                MaxPriority = 0,
-                Exclusive = true,
-                HasDeadLetter = true,
-                Expire = null,
-                Durable = true,
-                Bindings = bindings.ToArray()
-            });
-
-            queueList.Add(new QueueInfo
-            {
-                QueueName = queueName,
-                PrefetchCount = prefetchCount
-            });
+            var eventInfos = eventInfosEnumerable.ToArray(); 
             
-            queueName = $"#{AdapterConfiguration.AdapterType}_Event";
-            bindings = new List<QueueBinding>();
-            bindings.Add(new QueueBinding
+            //exchanges
+            var typeEx = new Exchange
             {
-                ExchangeName = ExchangeNames.CEventExchange,
-                RoutingKey = $"{AdapterConfiguration.AdapterType}@"
-            });
-            transport.AddQueue(new Queue
-            {
-                Name = queueName,
-                AutoDelete = false,
-                MaxPriority = 0,
-                Exclusive = false,
-                HasDeadLetter = true,
-                Expire = null,
                 Durable = true,
-                Bindings = bindings.ToArray()
-            });
+                Type = ExchangeType.Direct,
+                Name = $"{AdapterConfiguration.AdapterType}:EventExchange",
+                Bindings = eventInfos
+                    .Where(x => x.OneInstance)
+                    .Select(x => new Binding{ ExchangeName = ExchangeNames.EventExchange, RoutingKey = x.EventName})
+                    .ToArray()
+            };
+
+            transport.AddExchange(typeEx);
             
-            queueList.Add(new QueueInfo
+            var instEx = new Exchange
             {
-                QueueName = queueName,
-                PrefetchCount = prefetchCount
-            });
+                Durable = true,
+                Type = ExchangeType.Direct,
+                Name = $"{AdapterConfiguration.AdapterType}@{AdapterConfiguration.AdapterName}:EventExchange",
+                Bindings = eventInfos
+                    .Where(x => !x.OneInstance)
+                    .Select(x => new Binding{ ExchangeName = ExchangeNames.EventExchange, RoutingKey = x.EventName})
+                    .ToArray()
+            };
+            transport.AddExchange(instEx);
+
+            
+            //queue
+            
+            var queueList = new List<QueueInfo>();
+            var queueName = "";
+
+
+            if (eventInfos.Any(x => x.OneInstance && !x.Preserved))
+            {
+                queueName = $"#{AdapterConfiguration.AdapterType}_OnlineEvent";
+                queueList.Add(new QueueInfo
+                {
+                    QueueName = queueName,
+                    PrefetchCount = 0
+                });
+                transport.AddQueue(new Queue
+                {
+                    Name = queueName,
+                    AutoDelete = true,
+                    MaxPriority = 0,
+                    Exclusive = false,
+                    HasDeadLetter = true,
+                    Expire = null,
+                    Durable = true,
+                    Bindings = eventInfos
+                        .Where(x => x.OneInstance && !x.Preserved)
+                        .Select(x => new Binding { ExchangeName = typeEx.Name, RoutingKey = x.EventName })
+                        .ToArray()
+                });
+            }
+
+            if (eventInfos.Any(x => x.OneInstance && x.Preserved))
+            {
+                queueName = $"#{AdapterConfiguration.AdapterType}_Event";
+                queueList.Add(new QueueInfo
+                {
+                    QueueName = queueName,
+                    PrefetchCount = 0
+                });
+                transport.AddQueue(new Queue
+                {
+                    Name = queueName,
+                    AutoDelete = false,
+                    MaxPriority = 0,
+                    Exclusive = false,
+                    HasDeadLetter = true,
+                    Expire = null,
+                    Durable = true,
+                    Bindings = eventInfos
+                        .Where(x => x.OneInstance && x.Preserved)
+                        .Select(x => new Binding { ExchangeName = typeEx.Name, RoutingKey = x.EventName })
+                        .ToArray()
+                });
+            }
+            
+            if (eventInfos.Any(x => !x.OneInstance && !x.Preserved))
+            {
+                queueName = $"#{AdapterConfiguration.AdapterType}@{AdapterConfiguration.AdapterName}_OnlineEvent";
+                queueList.Add(new QueueInfo
+                {
+                    QueueName = queueName,
+                    PrefetchCount = 0
+                });
+                transport.AddQueue(new Queue
+                {
+                    Name = queueName,
+                    AutoDelete = true,
+                    MaxPriority = 0,
+                    Exclusive = true,
+                    HasDeadLetter = true,
+                    Expire = null,
+                    Durable = true,
+                    Bindings = eventInfos
+                        .Where(x => !x.OneInstance && !x.Preserved)
+                        .Select(x => new Binding { ExchangeName = instEx.Name, RoutingKey = x.EventName })
+                        .ToArray()
+                });
+            }
+            
+            if (eventInfos.Any(x => !x.OneInstance && x.Preserved))
+            {
+
+
+
+                queueName = $"#{AdapterConfiguration.AdapterType}@{AdapterConfiguration.AdapterName}_Event";
+                queueList.Add(new QueueInfo
+                {
+                    QueueName = queueName,
+                    PrefetchCount = 0
+                });
+                transport.AddQueue(new Queue
+                {
+                    Name = queueName,
+                    AutoDelete = false,
+                    MaxPriority = 0,
+                    Exclusive = true,
+                    HasDeadLetter = true,
+                    Expire = null,
+                    Durable = true,
+                    Bindings = eventInfos
+                        .Where(x => !x.OneInstance && x.Preserved)
+                        .Select(x => new Binding { ExchangeName = instEx.Name, RoutingKey = x.EventName })
+                        .ToArray()
+                });
+            }
 
             return new MultiConsumerSubscriptionAsync(transport, subscriptionName, prefetchCount, queueList.ToArray(), handler);
         }
@@ -148,7 +175,7 @@ namespace SAL.Core.Rabbit
                 Durable = true,
                 Bindings = new[]
                 {
-                    new QueueBinding
+                    new Binding
                     {
                         ExchangeName = ExchangeNames.CommandResultExchange,
                         RoutingKey = $"{AdapterConfiguration.AdapterType}@{AdapterConfiguration.AdapterName}",
@@ -174,7 +201,7 @@ namespace SAL.Core.Rabbit
                 Durable = true,
                 Bindings = new[]
                 {
-                    new QueueBinding
+                    new Binding
                     {
                         ExchangeName = ExchangeNames.CommandResultExchange,
                         RoutingKey = $"{AdapterConfiguration.AdapterType}@",
@@ -206,7 +233,7 @@ namespace SAL.Core.Rabbit
                 Durable = true,
                 Bindings = new[]
                 {
-                    new QueueBinding
+                    new Binding
                     {
                         ExchangeName = ExchangeNames.CommandResultExchange,
                         RoutingKey = $"!{AdapterConfiguration.AdapterType}@{AdapterConfiguration.AdapterName}",
@@ -246,7 +273,7 @@ namespace SAL.Core.Rabbit
                     Durable = true,
                     Bindings = new[]
                     {
-                        new QueueBinding
+                        new Binding
                         {
                             ExchangeName = ExchangeNames.CommandExchange,
                             RoutingKey = c.CommandName,
@@ -268,7 +295,7 @@ namespace SAL.Core.Rabbit
                 Durable = true,
                 Bindings = new[]
                 {
-                    new QueueBinding
+                    new Binding
                     {
                         ExchangeName = ExchangeNames.CommandExchange,
                         RoutingKey = $"{AdapterConfiguration.AdapterType}@{AdapterConfiguration.AdapterName}",
@@ -295,7 +322,7 @@ namespace SAL.Core.Rabbit
                 Durable = true,
                 Bindings = new[]
                 {
-                    new QueueBinding
+                    new Binding
                     {
                         ExchangeName = ExchangeNames.CommandExchange,
                         RoutingKey = $"{AdapterConfiguration.AdapterType}@",
@@ -335,7 +362,7 @@ namespace SAL.Core.Rabbit
                     Durable = true,
                     Bindings = new[]
                     {
-                        new QueueBinding
+                        new Binding
                         {
                             ExchangeName = ExchangeNames.CommandExchange,
                             RoutingKey = q.Path,

@@ -2,9 +2,10 @@
 using System.Threading.Tasks;
 using Autofac;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json.Linq;
 using SAL.API;
-using SAL.Core.Rabbit.Consts;
 using SAL.Infrastructure;
+
 
 // ReSharper disable once CheckNamespace
 namespace SAL.Test.Front
@@ -14,6 +15,13 @@ namespace SAL.Test.Front
         public void Configure(ContainerBuilder builder, IConfigWatcher config)
         {
             builder.RegisterSalHandler<CommandResultHandler>();
+            builder.RegisterSalHandler<CommandHandler>();
+
+            
+            builder.RegisterSalHandler<TestEventHandler>();
+            builder.RegisterSalHandler<ExceptionDetectedEventHandler>();
+            
+            //     builder.RegisterSalHandler<ExternalApi>();
             builder.RegisterProcessor<TestFront>();
         }
     }
@@ -38,58 +46,33 @@ namespace SAL.Test.Front
         public void Online()
         {
             using var scope = lifetimeScope.BeginLifetimeScope();
-            var logger = lifetimeScope.Resolve<ILoggerProvider>().CreateLogger("Tester");
+
+            
+            
 
             var client = scope.Resolve<ISalClient>();
 
 
-            if (true)
+
+            for (var i = 1; i < 100; i += 5)
             {
-                for (var ii = 0; ii < 300; ii++)
-                    Task.Run(async () =>
-                    {
-                        try
-                        {
-                            //var payload = new string('*', 5*1024);
-                            var payload = "";
+                try
+                {
 
-                            for (int i = 0; i < 1000; i++)
-                            {
-                                var cContext = new CommandContext
-                                {
-                                    ContextInfo = new ContextInfo("",0,null,"Test"),
-                                    Descriptor = new CommandDescriptor
-                                    {
-                                        Contour = Contour.Back.ToString(),
-                                        Priority = CommandPriority.Normal,
-                                        CommandName = "SalTester.TestCommand",
-                                        CorrelationId = Guid.NewGuid().ToString("N"),
-                                        PublishTimeStamp = DateTime.UtcNow,
-                                        HandlerTimeStamp = DateTime.UtcNow,
-                                        SourceAdapterType = AdapterConfiguration.AdapterType,
-                                        SourceAdapterName = AdapterConfiguration.AdapterName,
-                                        ResultExchangeName = ExchangeNames.CommandResultExchange,
-                                        ResultRoutingKey = $"{AdapterConfiguration.AdapterType}@{AdapterConfiguration.AdapterName}"
-                                    
-                                    }
-                                };
-
-                                await client.PublishResultAsync(CommonCommandResult.Create(new CommandResult
-                                {
-                                    Id = __index++,
-                                    Payload = payload,
-                                }), cContext);
-                            
-                            }
-                            
-                        }
-                        catch (Exception ex)
-                        {
-                            logger.Error("Какето ошибка",ex);
-                            throw;
-                        }
-                    });
+                    var dataSize = i * 1024 * 1024;
+                    Console.WriteLine($"Оправляем  dataSize {dataSize.HumanReadable()}");
+                    client.PublishEventAsync("TestEvent1", new { 
+                        Size = i, 
+                        Data = new string('*', dataSize) }).Wait();
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e);
+                }
             }
+            //    client.PublishCommandAsync("SalTester.TestCommand", new { });
+
+
         }
 
         public void Offline()
@@ -110,6 +93,17 @@ namespace SAL.Test.Front
 
 
     [SalContourHandler(Contour.Back)]
+    [SalCommandName("SalTester.TestCommand")]
+    public class CommandHandler : ICommonCommandHandler2
+    {
+        public Task Handle(JObject command, CommandContext commandContext, ExecutingContext executingContext)
+        {
+            throw new Exception("Test");
+        }
+    }
+
+
+    [SalContourHandler(Contour.Back)]
     public class CommandResultHandler : ICommandResultHandle2Async<CommandResult>
     {
         [SalCommandName("SalTester.TestCommand")]
@@ -118,4 +112,78 @@ namespace SAL.Test.Front
             return true;
         }
     }
+
+
+    [SalContourHandler(Contour.Both)]
+    public class ExceptionDetectedEventHandler :
+        IEventHandler2<ExceptionDetectedEvent>
+    {
+        private ILogger logger;
+
+        public ExceptionDetectedEventHandler(ILoggerProvider loggerProvider)
+        {
+            this.logger = loggerProvider.CreateLogger("Test");
+        }
+
+        [SalEventName("System.ExceptionDetected", false)]
+        public async Task Handle(ExceptionDetectedEvent evnt, EventContext eventContext, ExecutingContext executingContext)
+        {
+            logger.Info(evnt.ToIndentedJson());
+        }
+
+    }
+
+
+    public class TestEvent1
+    {
+        public int Size { get; set; }
+        public JToken Data { get; set; }
+        
+    }
+
+    public class TestEvent2
+    {
+        
+    }
+    
+
+    [SalContourHandler(Contour.Back)]
+    public class TestEventHandler :
+        IEventHandler2<TestEvent1>
+    {
+        private ILogger logger;
+
+        public TestEventHandler(ILoggerProvider loggerProvider)
+        {
+            this.logger = loggerProvider.CreateLogger("Test");
+        }
+
+        [SalEventName("TestEvent1", false,  true)]
+        public async Task Handle(TestEvent1 evnt, EventContext eventContext, ExecutingContext executingContext)
+        {
+            var str = evnt.ToIndentedJson();
+            if(str.Length < 1024)
+                logger.Info(str);
+            else
+                logger.Info(str.Substring(0,256) + $"[256 of {str.Length.HumanReadable()}]");
+        }
+        
+    }
+
+
+/*
+    [SalExternalHttpPathAttribute("/api/saltest/test", "/api/saltest/test/[a-z0-9]+$")]
+    public class ExternalApi : FrontExternalHttpMethod
+    {
+        public override async Task Handle(ExternalHttpRequest request)
+        {
+            await PublishResult(new ExternalHttpResponse
+            {
+                StatusCode = 200
+            });
+        }
+
+
+    }
+    */
 }

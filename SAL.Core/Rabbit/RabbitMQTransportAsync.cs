@@ -28,7 +28,7 @@ namespace SAL.Core.Rabbit
         public event EventHandler<ConnectionRestoreEventArgs> ConnectionRestore;
         public event EventHandler<ConnectionFailureEventArgs> ConnectionFailure;
 
-        public bool IsConnected => true;
+        public bool IsConnected => rabbitMQConnectionManager.IsConnected;
         public string CounterName => rabbitMQConnectionManager.ContourName;
         public ILoggerProvider LoggerProvider { get; private set; }
 
@@ -73,7 +73,7 @@ namespace SAL.Core.Rabbit
             exchanges.Add(new Exchange { Name = ExchangeNames.CommandExchange, Type = Topology.ExchangeType.Direct, AlternateExchange = ExchangeNames.NotHandledExchange });
             exchanges.Add(new Exchange { Name = ExchangeNames.CommandResultExchange, Type = Topology.ExchangeType.Direct, AlternateExchange = ExchangeNames.NotHandledExchange });
             exchanges.Add(new Exchange { Name = ExchangeNames.EventExchange, Type = Topology.ExchangeType.Direct });
-            exchanges.Add(new Exchange { Name = ExchangeNames.CEventExchange, Type = Topology.ExchangeType.Direct });
+
             
             queues.Add(new Queue
             {
@@ -84,7 +84,7 @@ namespace SAL.Core.Rabbit
                 HasDeadLetter = false,
                 Expire = null,
                 MaxPriority = 0,
-                Bindings = new[] { new QueueBinding { ExchangeName = ExchangeNames.NotHandledExchange } },
+                Bindings = new[] { new Binding { ExchangeName = ExchangeNames.NotHandledExchange } },
             });
         }
 
@@ -108,7 +108,13 @@ namespace SAL.Core.Rabbit
                 queues.Add(queue);
 
         }
-        
+
+        public void AddExchange(Exchange exchange)
+        {
+            if (exchanges.All(e => !string.Equals(e.Name, exchange.Name, StringComparison.InvariantCultureIgnoreCase)))
+                exchanges.Add(exchange);
+        }
+
         private void OnConnectionFailure(ConnectionFailureEventArgs e)
         {
             lifeTime.StopApplication();
@@ -129,6 +135,7 @@ namespace SAL.Core.Rabbit
                 if (!string.IsNullOrWhiteSpace(exch.AlternateExchange))
                     exchangeParams.Add("alternate-exchange", exch.AlternateExchange);
                 channel.ExchangeDeclare(exch.Name, exch.Type.ToRMQ(), exch.Durable, false, exchangeParams);
+                exch.Bindings.ForEach(b => { channel?.ExchangeBind(exch.Name, b.ExchangeName, b.RoutingKey ?? String.Empty); });
             }
         }
 

@@ -33,7 +33,7 @@ namespace SAL.Core.Processors.System
                     MachineName = AdapterConfiguration.MachineName,
                     
                     Timestamp = DateTime.UtcNow
-                }, true ,SalConst.SystemEventTTL);
+                },  SalConst.SystemEventTTL);
             }
             catch (Exception ex)
             {

@@ -36,7 +36,7 @@ namespace SAL.Core.Service
                 {
                     Type = AdapterConfiguration.AdapterType,
                     Name = AdapterConfiguration.AdapterName
-                }, true ,SalConst.SystemEventTTL).Wait();
+                },  SalConst.SystemEventTTL).Wait();
             }
             catch (Exception)
             {
@@ -96,7 +96,7 @@ namespace SAL.Core.Service
                         CommandHandlers = backCommands.ToArray(),
                         CommandResultHandlers = backCommandResults.ToArray(),
                         EventHandlers = backEvents.ToArray()
-                    }, true, SalConst.SystemEventTTL);
+                    }, SalConst.SystemEventTTL);
             }
             catch (Exception ex)
             {

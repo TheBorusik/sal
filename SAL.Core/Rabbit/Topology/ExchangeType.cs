@@ -1,6 +1,6 @@
 ﻿namespace SAL.Core.Rabbit.Topology
 {
-    internal enum ExchangeType
+    public enum ExchangeType
     {
         Direct,
         Fanout,

@@ -14,6 +14,6 @@ namespace SAL.Core.Rabbit.Topology
         public TimeSpan? Expire { get; set; }
         public bool HasDeadLetter { get; set; }
 
-        public QueueBinding[] Bindings { get; set; }
+        public Binding[] Bindings { get; set; }
     }
 }

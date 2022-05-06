@@ -25,15 +25,11 @@ namespace SAL.Core.Processors
         private ISalService salService;
 
         private ISubscription subscription;
-        private ISubscription systemSubscription;
         private ISalClient salClient;
 
         private readonly ILifetimeScope container;
-
-
-        private readonly IDictionary<string, List<EventHandlerInfo>> eventHandlers = new Dictionary<string, List<EventHandlerInfo>>();
-        private readonly List<EventHandlerInfo> anyEventHandlers = new List<EventHandlerInfo>();
-
+        private readonly Dictionary<string, EventInfo> eventHandlers = new ();
+        
         public EventProcessor(ILifetimeScope container, ILoggerProvider loggerProvider, ISalLogger salLogger)
         {
             this.container = container;
@@ -73,11 +69,14 @@ namespace SAL.Core.Processors
 
                 var subscriptionFactory = transport.CreateMessageSubscription();
 
-                var eventList = eventHandlers.Where(eh => eh.Value.Any(h => h.IsSystem == false)).Select(eh => eh.Key).ToArray();
-                var systemEventList = eventHandlers.Where(eh => eh.Value.Any(h => h.IsSystem == true)).Select(eh => eh.Key).ToArray();
+                var eventInfos = eventHandlers.Select(x => new SAL.Core.Rabbit.Subscription.EventInfo
+                {
+                    EventName = x.Value.EventName,
+                    Preserved = x.Value.Preserved,
+                    OneInstance = x.Value.OneInstance
+                });
 
-                subscription = subscriptionFactory.CreateEvent(config.PrefetchCount, eventList, Handler);
-                systemSubscription = subscriptionFactory.CreateSystemEvent(config.SystemPrefetchCount, systemEventList, Handler);
+                subscription = subscriptionFactory.CreateEvent(config.PrefetchCount, eventInfos, Handler, "BackEvent");
             }
             catch (Exception ex)
             {
@@ -89,7 +88,6 @@ namespace SAL.Core.Processors
         public void Online()
         {
             subscription.Start();
-            systemSubscription.Start();
         }
 
         public void Offline()
@@ -100,7 +98,6 @@ namespace SAL.Core.Processors
         public void Stop()
         {
             subscription.Stop();
-            systemSubscription.Stop();
         }
         
         
@@ -146,59 +143,51 @@ namespace SAL.Core.Processors
             foreach(var handlerInterface in handlerInterfaces)
             {
                 var eventType = handlerInterface.GetGenericArguments()[0];
-                
+
                 var interfaceMethodInfo = handlerInterface.GetMethod("Handle");
                 var handleMethod = handlerType.GetMethodByInterfaceMethodInfo(interfaceMethodInfo);
                 
- 
-                var eventName = eventType.GetSalName();
+                var enAttr = handleMethod.GetAttribute<SalEventNameAttribute>();
+
+                if (enAttr == null)
+                    throw new Exception($"В '{handlerType.Name}' не задан атрибут SalEventNameAttribute для отбработчика с типом {eventType.Name}");
                 
-                 var enAttr= handleMethod.GetAttribute<SalEventNameAttribute>()?.Name;
-
-                if (string.IsNullOrWhiteSpace(enAttr) && handlerInterfaces.Length == 1)
+                if (eventHandlers.TryGetValue(enAttr.Name, out var eventInfo))
                 {
-                    enAttr = handlerType.GetAttribute<SalEventNameAttribute>()?.Name;
-                }
+                    if(eventInfo.Preserved !=  enAttr.Preserved)
+                        throw new Exception($"В '{handlerType.Name}' не соответствие праметров обработки в SalEventNameAttribute  типом {eventType.Name}");
 
-                if (string.IsNullOrWhiteSpace(enAttr) && string.IsNullOrWhiteSpace(eventName))
-                    throw new Exception($"Для {eventType.Name} в {handlerType.Name}  не заданно имя Event (SalEventNameAttribute)");
-                
-                if (!string.IsNullOrWhiteSpace(enAttr))
-                    eventName = enAttr;
-
-                var isSystem = string.Equals(eventName.Split(".").First(), "System", StringComparison.InvariantCultureIgnoreCase);
-
-                var eventHandlerInfo = new EventHandlerInfo
-                {
-                    HandlerType = handlerType,
-                    EventName = eventName,
-                    EventType = eventType,
-
-                    IsSystem = isSystem,
-                    HandleMethod = handleMethod,
-                    IsCommon = false,
-                };
-
-
-                if (eventHandlers.TryGetValue(eventName, out var handlers))
-                {
-                    handlers.Add(eventHandlerInfo);
+                    if(eventInfo.OneInstance !=  enAttr.OneInstance)
+                        throw new Exception($"В '{handlerType.Name}' не соответствие праметров обработки в SalEventNameAttribute  типом {eventType.Name}");
                 }
                 else
                 {
-                    handlers = new List<EventHandlerInfo>();
-                    handlers.Add(eventHandlerInfo);
-                    eventHandlers.Add(eventName, handlers);
+                    eventInfo = new EventInfo
+                    {
+                        EventName = enAttr.Name,
+                        Preserved = enAttr.Preserved,
+                        OneInstance = enAttr.OneInstance
+                    };
+                    
+                    eventHandlers.Add(enAttr.Name, eventInfo);
+                    
                     salService.AddBackEventHandler(new API.EventHandlerInfo
                     {
-                        IsSystem = eventHandlerInfo.IsSystem,
-                        IsCommon = eventHandlerInfo.IsCommon,
-                        EventName = eventName,
-                        EventSchema = schemeCreator == null ? SalSchema.Generate(eventType) : schemeCreator.GetEventScheme(eventName)
+                        EventName = eventInfo.EventName,
+                        EventSchema = schemeCreator == null ? SalSchema.Generate(eventType) : schemeCreator.GetEventScheme(eventInfo.EventName)
                     });
                 }
-
-                logger.Info($"Для евента {eventName} добавлен обработчик результата {handlerType.Name}");
+                
+                eventInfo.Handlers.Add(new EventHandlerInfo
+                {
+                    EventType = eventType,
+                    HandleMethod = handleMethod,
+                    HandlerType = handlerType,
+                    IsCommon = false
+                });
+                
+                logger.Info($"Для евента {eventInfo.EventName} (P:{eventInfo.Preserved}|I:{eventInfo.OneInstance}) добавлен обработчик результата {handlerType.Name}");
+                
             }
         }
 
@@ -209,73 +198,57 @@ namespace SAL.Core.Processors
                 return;
 
             var attrs = handlerType.GetAttributes<SalEventNameAttribute>().ToArray();
+            
+            if(!attrs.Any())
+                throw new Exception($"Для '{handlerType.Name}' не заданы атрибуты SalEventNameAttribute");
 
 
             IEventSchemeCreator schemeCreator = null;
             if (handlerType.IsAssignableTo<IEventSchemeCreator>())
-                schemeCreator = (IEventSchemeCreator) container.Resolve(handlerType);
+                schemeCreator = (IEventSchemeCreator)container.Resolve(handlerType);
 
-
-            if (attrs.Any())
+            attrs.ForEach(a =>
             {
-                attrs.ForEach(a =>
+                if (eventHandlers.TryGetValue(a.Name, out var eventInfo))
                 {
-                    var eventName = a.Name;
-                    var isSystem = string.Equals(eventName.Split(".").First(), "System", StringComparison.InvariantCultureIgnoreCase);
+                    if(eventInfo.Preserved !=  a.Preserved)
+                        throw new Exception($"В '{handlerType.Name}' не соответствие праметров обработки в SalEventNameAttribute  типом {a.Name}");
 
-                    var eventHandlerInfo = new EventHandlerInfo
+                    if(eventInfo.OneInstance !=  a.OneInstance)
+                        throw new Exception($"В '{handlerType.Name}' не соответствие праметров обработки в SalEventNameAttribute  типом {a.Name}");
+                    
+                }
+                else
+                {
+                    eventInfo = new EventInfo
                     {
-                        HandlerType = handlerType,
-                        EventName = eventName,
-                        EventType = null,
-                        IsSystem = isSystem,
-                        HandleMethod = null,
-                        IsCommon = true,
+                        EventName = a.Name,
+                        Preserved = a.Preserved,
+                        OneInstance = a.OneInstance
                     };
-
-                    if (eventHandlers.TryGetValue(eventName, out var handlers))
+                    
+                    eventHandlers.Add(a.Name, eventInfo);
+                    
+                    salService.AddBackEventHandler(new API.EventHandlerInfo
                     {
-                        handlers.Add(eventHandlerInfo);
-                    }
-                    else
-                    {
-                        handlers = new List<EventHandlerInfo>();
-                        handlers.Add(eventHandlerInfo);
-                        eventHandlers.Add(eventName, handlers);
-
-                        var eventInfo = new API.EventHandlerInfo
-                        {
-                            IsSystem = eventHandlerInfo.IsSystem,
-                            IsCommon = eventHandlerInfo.IsCommon,
-                            EventName = eventName,
-                        };
-
-                        if (schemeCreator != null)
-                        {
-                            eventInfo.EventSchema = schemeCreator.GetEventScheme(eventName);
-                        }
-
-                        salService.AddBackEventHandler(eventInfo);
-                    }
-
-                    logger.Info($"Для евента {eventName} добавлен уневерсальный обработчик результата {handlerType.Name}");
-                });
-            }
-            else
-            {
-                var eventHandlerInfo = new EventHandlerInfo
+                        EventName = eventInfo.EventName,
+                        EventSchema = schemeCreator?.GetEventScheme(eventInfo.EventName)
+                    });
+                }
+                
+                
+                eventInfo.Handlers.Add(new EventHandlerInfo
                 {
-                    HandlerType = handlerType,
-                    EventName = null,
                     EventType = null,
-                    IsSystem = false,
                     HandleMethod = null,
-                    IsCommon = true,
-                };
+                    HandlerType = handlerType,
+                    IsCommon = true
+                });
+                
+                logger.Info($"Для евента {eventInfo.EventName} (P:{eventInfo.Preserved}|I:{eventInfo.OneInstance})  добавлен уневерсальный обработчик результата {handlerType.Name}");
+            });
 
-                anyEventHandlers.Add(eventHandlerInfo);
-                logger.Info($"Добавлен уневерсальный обработчик событий {handlerType.Name}");
-            }
+        
         }
 
         private async Task Handler(RabbitMessage rabbitMessage, Action ack, Action nack)
@@ -399,16 +372,10 @@ namespace SAL.Core.Processors
             var handlerTasks = new List<Task>();
 
             using var scope = container.BeginLifetimeScope();
-
-            foreach (var eventHandlerInfo in anyEventHandlers)
+            
+            if(eventHandlers.TryGetValue(eventName, out var eventInfo))
             {
-                salLogger.LogHandler(eventPayload, eventHandlerInfo.HandlerType.Name);
-                handlerTasks.Add(ExecuteEventHandlerAsync(scope, eventHandlerInfo, eventPayload, eventLogger));
-            }
-
-            if (eventHandlers.TryGetValue(eventName, out var eventHandlerInfos))
-            {
-                foreach(var eventHandlerInfo in eventHandlerInfos)
+                foreach(var eventHandlerInfo in eventInfo.Handlers)
                 {
                     salLogger.LogHandler(eventPayload, eventHandlerInfo.HandlerType.Name);
                     handlerTasks.Add(ExecuteEventHandlerAsync(scope, eventHandlerInfo, eventPayload, eventLogger));
@@ -428,9 +395,7 @@ namespace SAL.Core.Processors
 
         public Task ExecuteEventHandlerAsync(ILifetimeScope scope, EventHandlerInfo ehi,  EventPayload eventPayload, ILogger eventLogger)
         {
-
-
-
+            
             var executingContext = new ExecutingContext
             {
                 Scope = scope,

@@ -38,7 +38,7 @@ namespace SAL.Core.Service
                 {
                     Type = AdapterConfiguration.AdapterType,
                     Name = AdapterConfiguration.AdapterName
-                }, true, SalConst.SystemEventTTL).Wait();
+                }, SalConst.SystemEventTTL).Wait();
             }
             catch (Exception)
             {
@@ -88,7 +88,7 @@ namespace SAL.Core.Service
                         CommandResultHandlers = frontCommandResults.ToArray(),
                         EventHandlers = frontEvents.ToArray(),
                         ExternalHandlers = externalHttp.ToArray(),
-                    }, true, SalConst.SystemEventTTL);
+                    },  SalConst.SystemEventTTL);
             }
             catch (Exception ex)
             {

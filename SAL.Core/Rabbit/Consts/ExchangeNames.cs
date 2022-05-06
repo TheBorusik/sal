@@ -7,6 +7,5 @@
         public const string CommandExchange = "CommandExchange";
         public const string CommandResultExchange = "CommandResultExchange";
         public const string EventExchange = "EventExchange";
-        public const string CEventExchange = "CEventExchange";
     }
 }

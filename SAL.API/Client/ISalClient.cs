@@ -49,64 +49,13 @@ namespace SAL.API
         
         Task PublishEventAsync(
             string eventName, 
-            object eventBody, 
-            bool isSystem = false,
+            object eventBody,
             TimeSpan? ttl = null, 
             string handlerAdapterType = null, 
             string handlerAdapterName = null);
-
-        Task PublishCEventAsync(string eventName, object eventBody, string handlerAdapterType, TimeSpan? ttl = null);
         
         Task RaiseExceptionDetectEvent(string cid, InternalExceptionDTO exceptionDto);
         
-        /*
-        [Obsolete]
-        Task<SimpleCommandResult> ExecuteExternalHttp(
-            ExternalHttpRequest request,
-            string routePath,
-            TimeSpan ttl,
-            bool throwIfTimeout,
-            string handlerAdapterType,
-            string handlerAdapterName);
-        
-        [Obsolete]
-        Task PublishResultAsync(ICommandResult result, CommandContext commandContext);
-        [Obsolete]
-        Task<string> PublishCommandAsync<TCommand>(
-            TCommand command,
-            string correlationId = null,
-            CommandPriority priority = CommandPriority.Normal,
-            TimeSpan? ttl = null,
-            string handlerAdapterType = null,
-            string handlerAdapterName = null,
-            string resultAdapterType = null,
-            string resultAdapterName = null);
-        
-        
-        [Obsolete]
-        Task<CommandResult<TCommandResult>> ExecuteCommandAsync<TCommand, TCommandResult>(
-            TCommand command,
-            CommandPriority priority = CommandPriority.Normal,
-            TimeSpan? ttl = null,
-            string handlerServiceType = null,
-            string handlerServiceName = null
-        )
-            where TCommand : class, IHaveResult<TCommandResult>, new()
-            where TCommandResult : class, ICommandResult, new();
-        
-        [Obsolete]
-        Task PublishResultAsync(IList<FieldError> validationErrors, CommandContext commandContext);
-        [Obsolete]
-        Task PublishResultAsync<TCommandResult>(CommandResult<TCommandResult> result, CommandContext commandContext)
-            where TCommandResult : class, ICommandResult, new();
 
-        
-        [Obsolete]
-        Task PublishEventAsync(IEvent evnt, TimeSpan? ttl = null, string handlerServiceType = null, string handlerServiceName = null);
-        [Obsolete]
-        Task PublishCEventAsync(IEvent evnt, string handlerServiceType, TimeSpan? ttl = null);
-        [Obsolete]
-        Task RaiseExceptionDetectEvent(string cid, Exception ex);
-        */
     }
 }

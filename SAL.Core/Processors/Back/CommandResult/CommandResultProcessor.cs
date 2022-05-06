@@ -303,12 +303,9 @@ namespace SAL.Core.Processors
                 HandlerContext.Set(HandlerTypes.Processor, "CommandResultProcessor", rabbitMessage.CorrelationId);
                 var transportMessage = ExtractMessage(rabbitMessage);
                 var commandResultPayload = ExtractCommandResultPayload(transportMessage, rabbitMessage.CorrelationId);
-                commandResultPayload.Context.Descriptor.HandleResultTimeStamp = DateTime.UtcNow;
-                commandResultPayload.Context.Descriptor.ProcessingDuration = commandResultPayload.Context.Descriptor.HandleResultTimeStamp - commandResultPayload.Context.Descriptor.PublishTimeStamp;
+                //todo перенести в ExtractCommandResultPayload следующие 2 строчки кода
                 HandlerContext.Update(commandResultPayload.Context.ContextInfo);
                 salLogger.LogIncoming(commandResultPayload);
-                
-                
                 
                 await Processing(transportMessage, commandResultPayload);
                 ack();
@@ -467,6 +464,9 @@ namespace SAL.Core.Processors
             
             if (commandResultPayload.Payload == null)
                 throw new Exception($"Отсутствует CommandResultPayload.Payload | CorrelationId:{cid}");
+            
+            commandResultPayload.Context.Descriptor.HandleResultTimeStamp = DateTime.UtcNow;
+            commandResultPayload.Context.Descriptor.ProcessingDuration = commandResultPayload.Context.Descriptor.HandleResultTimeStamp - commandResultPayload.Context.Descriptor.PublishTimeStamp;
             
             return commandResultPayload;
         }

@@ -6,7 +6,6 @@ namespace SAL.API
     {
         public string EventName;
         public JSchema EventSchema;
-        public bool IsSystem;
-        public bool IsCommon;
+    //    public bool IsCommon;
     }
 }
