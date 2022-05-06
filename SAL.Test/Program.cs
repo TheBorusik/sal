@@ -9,8 +9,7 @@ namespace SAL.Test
         public static async Task Main(string[] args)
         {
            Environment.SetEnvironmentVariable("AdapterType","SalTest");
-          //Environment.SetEnvironmentVariable("AdapterType","AuthAdapter");
-          var back = new BackAdapterRunner();
+           var back = new FrontAdapterRunner();
           await back.RunAsync();
         }
     }
