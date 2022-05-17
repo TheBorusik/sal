@@ -164,10 +164,6 @@ namespace SAL.Core.Client
                 throwIfTimeout);
             return new CommandResult<TCommandResult>(result.CommandResult);
         }
-
-
-
-
         public Task PublishResultAsync(CommonCommandResult result, CommandContext commandContext)
         {
             return LoPublishResultAsync(commandContext, result);

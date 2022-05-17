@@ -46,14 +46,20 @@ namespace SAL.Test.Front
         public void Online()
         {
             using var scope = lifetimeScope.BeginLifetimeScope();
-
+            
             
             
 
             var client = scope.Resolve<ISalClient>();
+            client.PublishEventAsync("NewWebsiteEvent", new
+            {
+                Owner = new { a = 12},
+                Website = new {b = 10},
+                TimeStamp = DateTime.UtcNow,
+                RecipientAuthId = new long[] { 1},
+            });
 
-
-
+/*
             for (var i = 1; i < 100; i += 5)
             {
                 try
@@ -71,7 +77,7 @@ namespace SAL.Test.Front
                 }
             }
             //    client.PublishCommandAsync("SalTester.TestCommand", new { });
-
+*/
 
         }
 
@@ -128,7 +134,7 @@ namespace SAL.Test.Front
         [SalEventName("System.ExceptionDetected", false)]
         public async Task Handle(ExceptionDetectedEvent evnt, EventContext eventContext, ExecutingContext executingContext)
         {
-            logger.Info(evnt.ToIndentedJson());
+         //   logger.Info(evnt.ToIndentedJson());
         }
 
     }

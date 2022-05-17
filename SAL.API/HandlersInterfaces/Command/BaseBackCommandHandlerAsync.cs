@@ -29,6 +29,11 @@ namespace SAL.API
         {
             return salClient?.PublishResultAsync(result, ResultCodes.Success, commandContext);
         }
+        
+        public Task PublishResult(CommonCommandResult result)
+        {
+            return salClient?.PublishResultAsync(result, commandContext);
+        }
 
         public Task PublishResult(object result, string code)
         {
