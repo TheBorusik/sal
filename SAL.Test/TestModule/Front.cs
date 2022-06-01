@@ -18,11 +18,11 @@ namespace SAL.Test.Front
             builder.RegisterSalHandler<CommandHandler>();
 
             
-            builder.RegisterSalHandler<TestEventHandler>();
-            builder.RegisterSalHandler<ExceptionDetectedEventHandler>();
+       //     builder.RegisterSalHandler<TestEventHandler>();
+        //    builder.RegisterSalHandler<ExceptionDetectedEventHandler>();
             
             //     builder.RegisterSalHandler<ExternalApi>();
-            builder.RegisterProcessor<TestFront>();
+           builder.RegisterProcessor<TestFront>();
         }
     }
 
@@ -47,37 +47,10 @@ namespace SAL.Test.Front
         {
             using var scope = lifetimeScope.BeginLifetimeScope();
             
-            
-            
-
             var client = scope.Resolve<ISalClient>();
-            client.PublishEventAsync("NewWebsiteEvent", new
-            {
-                Owner = new { a = 12},
-                Website = new {b = 10},
-                TimeStamp = DateTime.UtcNow,
-                RecipientAuthId = new long[] { 1},
-            });
-
-/*
-            for (var i = 1; i < 100; i += 5)
-            {
-                try
-                {
-
-                    var dataSize = i * 1024 * 1024;
-                    Console.WriteLine($"Оправляем  dataSize {dataSize.HumanReadable()}");
-                    client.PublishEventAsync("TestEvent1", new { 
-                        Size = i, 
-                        Data = new string('*', dataSize) }).Wait();
-                }
-                catch (Exception e)
-                {
-                    Console.WriteLine(e);
-                }
-            }
-            //    client.PublishCommandAsync("SalTester.TestCommand", new { });
-*/
+            
+            client.PublishCommandWithSharedResultHandlerAsync("SalTester.TestCommand", new { });
+            client.PublishCommandWithSharedResultHandlerAsync("SalTester.TestCommand", new { });
 
         }
 
@@ -98,83 +71,50 @@ namespace SAL.Test.Front
     }
 
 
-    [SalContourHandler(Contour.Back)]
-    [SalCommandName("SalTester.TestCommand")]
-    public class CommandHandler : ICommonCommandHandler2
+    [BackCommandName("SalTester.TestCommand")]
+    public class CommandHandler : BaseBackCommandHandlerAsync<Nothing, CommandResult>
     {
-        public Task Handle(JObject command, CommandContext commandContext, ExecutingContext executingContext)
+
+
+        public override async Task Handle(Nothing command)
         {
-            throw new Exception("Test");
+            await PublishResult(new CommandResult
+            {
+                Id = 1,
+                Payload = "s1"
+            });
         }
-    }
-
-
-    [SalContourHandler(Contour.Back)]
-    public class CommandResultHandler : ICommandResultHandle2Async<CommandResult>
-    {
-        [SalCommandName("SalTester.TestCommand")]
-        public async Task<bool> ResultHandle(CommandResult<CommandResult> result, CommandResultContext commandContext, ExecutingContext executingContext)
-        {
-            return true;
-        }
-    }
-
-
-    [SalContourHandler(Contour.Both)]
-    public class ExceptionDetectedEventHandler :
-        IEventHandler2<ExceptionDetectedEvent>
-    {
-        private ILogger logger;
-
-        public ExceptionDetectedEventHandler(ILoggerProvider loggerProvider)
-        {
-            this.logger = loggerProvider.CreateLogger("Test");
-        }
-
-        [SalEventName("System.ExceptionDetected", false)]
-        public async Task Handle(ExceptionDetectedEvent evnt, EventContext eventContext, ExecutingContext executingContext)
-        {
-         //   logger.Info(evnt.ToIndentedJson());
-        }
-
-    }
-
-
-    public class TestEvent1
-    {
-        public int Size { get; set; }
-        public JToken Data { get; set; }
-        
-    }
-
-    public class TestEvent2
-    {
-        
     }
     
-
-    [SalContourHandler(Contour.Back)]
-    public class TestEventHandler :
-        IEventHandler2<TestEvent1>
+    
+    public class CommandResultHandler : ICommonCommandSharedResultHandler
     {
         private ILogger logger;
 
-        public TestEventHandler(ILoggerProvider loggerProvider)
+        public CommandResultHandler(ILoggerProvider loggerProvider)
         {
-            this.logger = loggerProvider.CreateLogger("Test");
+            this.logger = loggerProvider.CreateLogger("CommonCommandSharedResultHandler");
         }
 
-        [SalEventName("TestEvent1", false,  true)]
-        public async Task Handle(TestEvent1 evnt, EventContext eventContext, ExecutingContext executingContext)
+        public Task PersonalResultHandle(CommonCommandResult result, CommandResultContext commandContext, ExecutingContext executingContext)
         {
-            var str = evnt.ToIndentedJson();
-            if(str.Length < 1024)
-                logger.Info(str);
-            else
-                logger.Info(str.Substring(0,256) + $"[256 of {str.Length.HumanReadable()}]");
+            logger.Info("!!! PERSONAL !!!");
+            return Task.CompletedTask;
         }
-        
+
+        public Task SharedResultHandle(CommonCommandResult result, CommandResultContext commandContext, ExecutingContext executingContext)
+        {
+            logger.Info("!!!! SHARED !!!!");
+            return Task.CompletedTask;
+        }
     }
+
+
+ 
+
+
+    
+
 
 
 /*

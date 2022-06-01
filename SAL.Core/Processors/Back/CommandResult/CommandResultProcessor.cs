@@ -36,6 +36,8 @@ namespace SAL.Core.Processors
         private readonly Dictionary<string, LinkedList<CommandResultHandlerInfo>> resultHandlers = new();
         private readonly LinkedList<CommandResultHandlerInfo> anyResultHandlers = new();
         private readonly ConcurrentDictionary<string, SimpleCommandResultHandlerInfo> simpleCommandResultHandlers = new();
+        private CommandSharedResultHandlerInfo commonSharedResultHandler = null;
+
 
 
         public CommandResultProcessor(ILifetimeScope container, ILoggerProvider loggerProvider, ISalLogger salLogger)
@@ -62,6 +64,11 @@ namespace SAL.Core.Processors
                     .Where(r => r.Services.OfType<TypedService>().Any(ts => ts.ServiceType == typeof(ICommonCommandResultHandler2)))
                     .Select(a => a.Activator.LimitType)
                     .ForEach(RegisterCommonCommandResultHandler);
+                
+                container.ComponentRegistry.Registrations
+                    .Where(r => r.Services.OfType<TypedService>().Any(ts => ts.ServiceType == typeof(ICommonCommandSharedResultHandler)))
+                    .Select(a => a.Activator.LimitType)
+                    .ForEach(RegisterSharedCommandResultHandler);
 
                 var configWatcher = container.Resolve<IConfigWatcher>();
                 var jsonConfig = configWatcher.GetSection(ConfigurationSectionNames.CommandResultProcessor);
@@ -79,6 +86,14 @@ namespace SAL.Core.Processors
 
                 subscription = subscriptionFactory.CreateCommandResult(config.GlobalPrefetchCount, config.InstancePrefetchCount, config.TypePrefetchCount, Handler);
                 syncSubscription = subscriptionFactory.CreateSyncCommandResult(config.SyncPrefetchCount, SyncHandler);
+
+                if (commonSharedResultHandler != null)
+                {
+                    commonSharedResultHandler.config = config.CommonSharedConfig;
+                    var subs = subscriptionFactory.CreateCommonSharedCommandResult(commonSharedResultHandler.config, SharedHandler);
+                    commonSharedResultHandler.privateSubscription = subs.PrivateSubscription;
+                    commonSharedResultHandler.sharedSubscription = subs.SharedSubscription;
+                }
             }
             catch (Exception ex)
             {
@@ -243,6 +258,26 @@ namespace SAL.Core.Processors
                 logger.Info($"Добавлен уневерсальный обработчик результата {handlerType.Name}");
             }
         }
+        
+        private void RegisterSharedCommandResultHandler(Type handlerType)
+        {
+            try
+            {
+                if (commonSharedResultHandler != null)
+                    throw new Exception("CommonCommandSharedResultHandler  уже зарегестрирован");
+                
+                commonSharedResultHandler = new CommandSharedResultHandlerInfo
+                {
+                    HandlerType = handlerType
+                };
+                
+            }
+            catch (Exception ex)
+            {
+                logger.Error($"Ошибка добавления типа {handlerType.Name}", ex);
+                throw;
+            }
+        }
 
         public void RegisterSimpleCommandResultHandler(string correlationId, TaskCompletionSource<SimpleCommandResult> completionSource, TimeSpan timeOut, bool throwIfTimeout)
         {
@@ -283,17 +318,34 @@ namespace SAL.Core.Processors
         {
             subscription.Start();
             syncSubscription.Start();
+            
+            if (commonSharedResultHandler != null)
+            {
+                commonSharedResultHandler.privateSubscription.Start();
+                commonSharedResultHandler.sharedSubscription.Start();
+            }
         }
 
         public void Offline()
         {
             subscription.Stop();
+            syncSubscription.Stop();
+            if (commonSharedResultHandler != null)
+            {
+                commonSharedResultHandler.privateSubscription.Stop();
+                commonSharedResultHandler.sharedSubscription.Stop();
+            }
         }
 
         public void Stop()
         {
             subscription.Stop();
             syncSubscription.Stop();
+            if (commonSharedResultHandler != null)
+            {
+                commonSharedResultHandler.privateSubscription.Stop();
+                commonSharedResultHandler.sharedSubscription.Stop();
+            }
         }
 
         private async Task Handler(RabbitMessage rabbitMessage, Action ack, Action nack)
@@ -378,6 +430,76 @@ namespace SAL.Core.Processors
                 HandlerContext.Update(commandResultPayload.Context.ContextInfo);
                 salLogger.LogIncoming(commandResultPayload);
                 await SyncProcessing(commandResultPayload);
+                ack();
+            }
+            catch (JsonReaderException ex)
+            {
+                var dto = ex.ToDto();
+                logger.Error("При обработке результата команды произошла ошибка десериализации", ex);
+                var sb = new StringBuilder();
+                sb.AppendLine("Rabbit message Payload");
+                sb.AppendLine(SalEncoding.GetString(rabbitMessage.Payload));
+                logger.Info(sb.ToString());
+                nack();
+                await salClient.RaiseExceptionDetectEvent(rabbitMessage.CorrelationId, dto);
+            }
+            catch (SalException ex)
+            {
+                nack();
+                logger.Error($"При обработке результата команды произошла ошибка ({ex.Code})", ex);
+                await salClient.RaiseExceptionDetectEvent(rabbitMessage.CorrelationId, ex.ToDto());
+            }
+            catch (TargetInvocationException ex)
+            {
+                nack();
+                if (ex.InnerException is SalException sex)
+                {
+                    logger.Error($"При обработке результата команды произошла ошибка ({sex.Code})", sex);
+                    await salClient.RaiseExceptionDetectEvent(rabbitMessage.CorrelationId, sex.ToDto());
+                }
+                else
+                {
+                    var dto = SalError.CreateDto(SalErrorCodes.Fatal,
+                        "При обработке результата команды произошла ошибка"
+                        , innerException: ex.InnerException
+                        , properties: new
+                        {
+                            rabbitMessage.CorrelationId,
+                            rabbitMessage.QueueName
+                        });
+                    logger.Error(dto, ex.InnerException);
+                    await salClient.RaiseExceptionDetectEvent(rabbitMessage.CorrelationId, dto);
+                }
+            }
+            catch (Exception ex)
+            {
+                nack();
+                var dto = SalError.CreateDto(SalErrorCodes.Fatal,
+                    "При обработке результата команды произошла ошибка"
+                    , innerException: ex
+                    , properties: new
+                    {
+                        rabbitMessage.CorrelationId,
+                        rabbitMessage.QueueName
+                    });
+                logger.Error(dto, ex);
+                await salClient.RaiseExceptionDetectEvent(rabbitMessage.CorrelationId, dto);
+            }
+        }
+
+        private async Task SharedHandler(RabbitMessage rabbitMessage, Action ack, Action nack)
+        {
+            try
+            {
+                //todo проверить надобность
+                HandlerContext.Set(HandlerTypes.Processor, "SharedCommandResultProcessor", rabbitMessage.CorrelationId);
+                var transportMessage = ExtractMessage(rabbitMessage);
+                var commandResultPayload = ExtractCommandResultPayload(transportMessage, rabbitMessage.CorrelationId);
+                commandResultPayload.Context.Descriptor.HandleResultTimeStamp = DateTime.UtcNow;
+                commandResultPayload.Context.Descriptor.ProcessingDuration = commandResultPayload.Context.Descriptor.HandleResultTimeStamp - commandResultPayload.Context.Descriptor.PublishTimeStamp;
+                HandlerContext.Update(commandResultPayload.Context.ContextInfo);
+                salLogger.LogIncoming(commandResultPayload);
+                await SharedProcessing(commandResultPayload, rabbitMessage.QueueName == $"#{AdapterConfiguration.AdapterType}:PersonalCommandResult");
                 ack();
             }
             catch (JsonReaderException ex)
@@ -552,6 +674,48 @@ namespace SAL.Core.Processors
 
             return Task.CompletedTask;
         }
+
+        private Task SharedProcessing(CommandResultPayload commandResultPayload, bool personalQueue)
+        {
+            if (commonSharedResultHandler == null)
+                throw new Exception("Нет SharedResultHandler");
+            
+            var commandResLogger = salLogger.GetLogger(commandResultPayload);
+
+            if (commandResultPayload.Context.Descriptor.TTL.HasValue &&
+                commandResultPayload.Context.Descriptor.PublishTimeStamp + commandResultPayload.Context.Descriptor.TTL.Value <= DateTime.UtcNow)
+            {
+                commandResLogger.Trace("Результат команды - протух");
+                return Task.CompletedTask;
+            }
+
+            HandlerContext.Update(HandlerTypes.CommandResultHandler, commandResultPayload.Context.Descriptor.CommandName);
+
+            using var scope = container.BeginLifetimeScope();
+            
+            var executingContext = new ExecutingContext
+            {
+                Scope = scope,
+                SalClient = scope.Resolve<ISalClient>(),
+                Logger = commandResLogger
+            };
+
+            var context = commandResultPayload.Context;
+            
+            HandlerContext.Update(handlerName: commonSharedResultHandler.HandlerType.Name);
+            
+            var handler = scope.Resolve(commonSharedResultHandler.HandlerType);
+            
+            if (handler is ICommonCommandSharedResultHandler ccsrh)
+            {
+                return personalQueue ? 
+                    ccsrh.PersonalResultHandle(commandResultPayload.Payload, context, executingContext):
+                    ccsrh.SharedResultHandle(commandResultPayload.Payload, context, executingContext);
+            }
+
+            throw SalError.CreateException(SalErrorCodes.Fatal, "Обработчик не являеться общим", properties: new {handlerType = handler.GetType().Name});
+        }
+        
 
         public Task<bool> ExecuteResultHandlerAsync(ILifetimeScope scope, CommandResultHandlerInfo rchi, CommonCommandResult result, CommandResultContext context, ExecutingContext executingContext)
         {

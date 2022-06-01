@@ -34,8 +34,9 @@ namespace SAL.Core.Rabbit
 
         //topology
 
-        private ConcurrentBag<Exchange> exchanges = new ConcurrentBag<Exchange>();
-        private ConcurrentBag<Queue> queues = new ConcurrentBag<Queue>();
+        private LinkedList<Exchange> exchanges = new();
+        private object exchangeLocker = new();
+        private ConcurrentBag<Queue> queues = new();
 
         private readonly ILogger logger;
         private readonly Contour contour;
@@ -69,10 +70,11 @@ namespace SAL.Core.Rabbit
             subscriptionFactory = new RabbitMQAsyncSubscriptionFactoryAsync(this);
             publisher = new RabbitMQPublisherWithConfirms(this, LoggerProvider);
 
-            exchanges.Add(new Exchange { Name = ExchangeNames.NotHandledExchange, Type = Topology.ExchangeType.Fanout });
-            exchanges.Add(new Exchange { Name = ExchangeNames.CommandExchange, Type = Topology.ExchangeType.Direct, AlternateExchange = ExchangeNames.NotHandledExchange });
-            exchanges.Add(new Exchange { Name = ExchangeNames.CommandResultExchange, Type = Topology.ExchangeType.Direct, AlternateExchange = ExchangeNames.NotHandledExchange });
-            exchanges.Add(new Exchange { Name = ExchangeNames.EventExchange, Type = Topology.ExchangeType.Direct });
+            exchanges.AddLast(new Exchange { Name = ExchangeNames.NotHandledExchange, Type = Topology.ExchangeType.Fanout });
+            exchanges.AddLast(new Exchange { Name = ExchangeNames.EventExchange, Type = Topology.ExchangeType.Direct });
+            exchanges.AddLast(new Exchange { Name = ExchangeNames.CommandExchange, Type = Topology.ExchangeType.Direct, AlternateExchange = ExchangeNames.NotHandledExchange });
+            exchanges.AddLast(new Exchange { Name = ExchangeNames.CommandResultExchange, Type = Topology.ExchangeType.Direct, AlternateExchange = ExchangeNames.NotHandledExchange });
+
 
             
             queues.Add(new Queue
@@ -111,8 +113,11 @@ namespace SAL.Core.Rabbit
 
         public void AddExchange(Exchange exchange)
         {
-            if (exchanges.All(e => !string.Equals(e.Name, exchange.Name, StringComparison.InvariantCultureIgnoreCase)))
-                exchanges.Add(exchange);
+            lock (exchangeLocker)
+            {
+                if (exchanges.All(e => !string.Equals(e.Name, exchange.Name, StringComparison.InvariantCultureIgnoreCase)))
+                    exchanges.AddLast(exchange);
+            }
         }
 
         private void OnConnectionFailure(ConnectionFailureEventArgs e)
@@ -152,7 +157,10 @@ namespace SAL.Core.Rabbit
 
                 if (queue.HasDeadLetter)
                 {
-                    queueParams.Add("x-dead-letter-exchange", ExchangeNames.NotHandledExchange);
+                    if(!string.IsNullOrWhiteSpace(queue.DeadLetterExchange))
+                        queueParams.Add("x-dead-letter-exchange", queue.DeadLetterExchange);
+                    else
+                        queueParams.Add("x-dead-letter-exchange", ExchangeNames.NotHandledExchange);
                 }
 
                 if (queue.MaxPriority > 0)

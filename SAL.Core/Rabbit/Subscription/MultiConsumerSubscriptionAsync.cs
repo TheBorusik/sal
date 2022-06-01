@@ -67,12 +67,13 @@ namespace SAL.Core.Rabbit.Subscription
 
                     Model = Transport.CreateModel();
                 }
-
-                Model.BasicQos(0, globalPrefetchCount, true);
+                if(globalPrefetchCount > 0)
+                    Model.BasicQos(0, globalPrefetchCount, true);
 
                 foreach(var queueData in queueDatas)
                 {
-                    Model.BasicQos(0, queueData.PrefetchCount, false);
+                    if(queueData.PrefetchCount > 0)
+                        Model.BasicQos(0, queueData.PrefetchCount, false);
 
 
                     queueData.Consumer = new AsyncEventingBasicConsumer(Model);

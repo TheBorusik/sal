@@ -95,8 +95,44 @@ namespace SAL.Core.Client
             await LoPublishAsync(commandContext, commandBody);
             return correlationId;
         }
-        
-        
+
+        public async Task<string> PublishCommandWithSharedResultHandlerAsync(string commandName, object commandBody, string correlationId = null, CommandPriority priority = CommandPriority.Normal, TimeSpan? ttl = null)
+        {
+            if (string.IsNullOrWhiteSpace(correlationId))
+                correlationId = Guid.NewGuid().ToString("N");
+
+            var commandExchangeName = ExchangeNames.CommandExchange;
+            var resultExchangeName = $"{AdapterConfiguration.AdapterType}:CommandResultExchange";
+
+            var commandRoutingKey = commandName;
+            var resultRoutingKey = $"@{AdapterConfiguration.AdapterName}";
+
+
+            
+            var commandContext = new CommandContext
+            {
+                ContextInfo = new ContextInfo(HandlerContext.SessionId, HandlerContext.AuthId, HandlerContext.ProcessId, HandlerContext.OperationId),
+                Descriptor = new CommandDescriptor
+                {
+                    CorrelationId = correlationId,
+                    CommandName = commandName,
+                    CommandExchangeName = commandExchangeName,
+                    CommandRoutingKey = commandRoutingKey,
+                    Priority = priority,
+                    SourceAdapterType = AdapterConfiguration.AdapterType,
+                    SourceAdapterName = AdapterConfiguration.AdapterName,
+                    ResultExchangeName = resultExchangeName,
+                    ResultRoutingKey = resultRoutingKey,
+                    PublishTimeStamp = DateTime.UtcNow,
+                    TTL = ttl,
+                    Contour = Contour.ToString()
+                }
+            };
+            await LoPublishAsync(commandContext, commandBody);
+            return correlationId;
+        }
+
+
         public Task<SimpleCommandResult> ExecuteCommandAsync(
             string commandName,
             object commandBody,
@@ -322,6 +358,12 @@ namespace SAL.Core.Client
         #endregion
 
         #region public LoPublish
+
+        public (string, string) GetRouteForCommonSharedResult()
+        {
+            throw new NotImplementedException();
+        }
+
         public Task LoPublishCommandAsync(
             string commandName,
             object commandBody,

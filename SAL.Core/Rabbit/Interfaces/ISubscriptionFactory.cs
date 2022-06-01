@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using SAL.Core.Processors;
 using SAL.Core.Rabbit.Subscription;
+using EventInfo = SAL.Core.Rabbit.Subscription.EventInfo;
 
 namespace SAL.Core.Rabbit.Interfaces
 {
@@ -14,8 +16,6 @@ namespace SAL.Core.Rabbit.Interfaces
         ISubscription CreateExternalHttp(ushort globalPrefetchCount, ExternalHttpInfo[] queues,  Func<RabbitMessageEx, Action, Action, Task> handler, string subscriptionName = "ExternalHttp");
         ISubscription CreateCustom(ushort globalPrefetchCount, QueueInfo[] queues, Func<RabbitMessageEx, Action, Action, Task> handler, string subscriptionName = "Custom");
 
-
-
-
+        (ISubscription PrivateSubscription, ISubscription SharedSubscription) CreateCommonSharedCommandResult(CommonSharedCommandResultConfig config, Func<RabbitMessageEx, Action, Action, Task> handler);
     }
 }

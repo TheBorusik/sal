@@ -13,6 +13,7 @@ namespace SAL.Core.Rabbit.Topology
 
         public TimeSpan? Expire { get; set; }
         public bool HasDeadLetter { get; set; }
+        public string DeadLetterExchange { get; set; }
 
         public Binding[] Bindings { get; set; }
     }

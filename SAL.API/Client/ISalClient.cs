@@ -9,6 +9,8 @@ namespace SAL.API
 
         public Contour Contour { get; }
         
+
+        
         // hi level
         
         Task<string> PublishCommandAsync(
@@ -21,6 +23,14 @@ namespace SAL.API
             string handlerAdapterName = null,
             string resultAdapterType = null,
             string resultAdapterName = null);
+
+        Task<string> PublishCommandWithSharedResultHandlerAsync(
+            string commandName,
+            object commandBody,
+            string correlationId = null,
+            CommandPriority priority = CommandPriority.Normal,
+            TimeSpan? ttl = null);
+        
         
         Task<SimpleCommandResult> ExecuteCommandAsync(            
             string commandName,

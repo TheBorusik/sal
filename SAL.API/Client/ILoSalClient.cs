@@ -5,6 +5,9 @@ namespace SAL.API
 {
     public interface ILoSalClient
     {
+
+        (string, string) GetRouteForCommonSharedResult();
+        
         Task LoPublishCommandAsync(
             string commandName,
             object commandBody,

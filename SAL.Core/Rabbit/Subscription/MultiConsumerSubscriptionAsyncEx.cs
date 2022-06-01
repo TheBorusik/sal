@@ -19,7 +19,7 @@ namespace SAL.Core.Rabbit.Subscription
         private readonly ushort globalPrefetchCount;
 
 
-        public MultiConsumerSubscriptionAsyncEx(IRMQTransport transport, string subscriptionName, ushort globalPrefetchCount, QueueInfo[] queueInfos, Func<RabbitMessageEx, Action, Action, Task> handler)
+        public MultiConsumerSubscriptionAsyncEx(IRMQTransport transport, string subscriptionName, ushort globalPrefetchCount, IEnumerable<QueueInfo> queueInfos, Func<RabbitMessageEx, Action, Action, Task> handler)
             : base(transport, subscriptionName, handler)
         {
             logger = transport.CreateLogger($"RMQ.{SubscriptionName}");
@@ -35,7 +35,7 @@ namespace SAL.Core.Rabbit.Subscription
 
         protected override Task<string> GetConsumerTag(object consumer)
         {
-            if (consumer is DefaultBasicConsumer defaultConsumer)
+            if (consumer is AsyncDefaultBasicConsumer defaultConsumer)
                 return Task.FromResult(defaultConsumer.ConsumerTags.FirstOrDefault());
             return Task.FromResult(string.Empty);
         }
@@ -148,7 +148,8 @@ namespace SAL.Core.Rabbit.Subscription
 
                 foreach(var queueData in queueDatas)
                 {
-                    Model.BasicQos(0, queueData.PrefetchCount, false);
+                    if(queueData.PrefetchCount > 0)
+                        Model.BasicQos(0, queueData.PrefetchCount, false);
 
                     if (queueData.Consumer == null)
                     {
@@ -162,7 +163,8 @@ namespace SAL.Core.Rabbit.Subscription
                     }
                 }
 
-                Model.BasicQos(0, globalPrefetchCount, true);
+                if(globalPrefetchCount > 0)
+                    Model.BasicQos(0, globalPrefetchCount, true);
 
                 Started = true;
             }

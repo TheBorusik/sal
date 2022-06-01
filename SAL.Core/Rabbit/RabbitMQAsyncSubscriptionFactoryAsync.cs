@@ -3,10 +3,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using SAL.API;
+using SAL.Core.Processors;
 using SAL.Core.Rabbit.Consts;
 using SAL.Core.Rabbit.Interfaces;
 using SAL.Core.Rabbit.Subscription;
 using SAL.Core.Rabbit.Topology;
+using EventInfo = SAL.Core.Rabbit.Subscription.EventInfo;
 
 namespace SAL.Core.Rabbit
 {
@@ -18,12 +20,11 @@ namespace SAL.Core.Rabbit
         {
             this.transport = transport;
         }
-        
+
         public ISubscription CreateEvent(ushort prefetchCount, IEnumerable<EventInfo> eventInfosEnumerable, Func<RabbitMessage, Action, Action, Task> handler, string subscriptionName = "Event")
         {
+            var eventInfos = eventInfosEnumerable.ToArray();
 
-            var eventInfos = eventInfosEnumerable.ToArray(); 
-            
             //exchanges
             var typeEx = new Exchange
             {
@@ -32,12 +33,12 @@ namespace SAL.Core.Rabbit
                 Name = $"{AdapterConfiguration.AdapterType}:EventExchange",
                 Bindings = eventInfos
                     .Where(x => x.OneInstance)
-                    .Select(x => new Binding{ ExchangeName = ExchangeNames.EventExchange, RoutingKey = x.EventName})
+                    .Select(x => new Binding { ExchangeName = ExchangeNames.EventExchange, RoutingKey = x.EventName })
                     .ToArray()
             };
 
             transport.AddExchange(typeEx);
-            
+
             var instEx = new Exchange
             {
                 Durable = true,
@@ -45,14 +46,14 @@ namespace SAL.Core.Rabbit
                 Name = $"{AdapterConfiguration.AdapterType}@{AdapterConfiguration.AdapterName}:EventExchange",
                 Bindings = eventInfos
                     .Where(x => !x.OneInstance)
-                    .Select(x => new Binding{ ExchangeName = ExchangeNames.EventExchange, RoutingKey = x.EventName})
+                    .Select(x => new Binding { ExchangeName = ExchangeNames.EventExchange, RoutingKey = x.EventName })
                     .ToArray()
             };
             transport.AddExchange(instEx);
 
-            
+
             //queue
-            
+
             var queueList = new List<QueueInfo>();
             var queueName = "";
 
@@ -104,7 +105,7 @@ namespace SAL.Core.Rabbit
                         .ToArray()
                 });
             }
-            
+
             if (eventInfos.Any(x => !x.OneInstance && !x.Preserved))
             {
                 queueName = $"#{AdapterConfiguration.AdapterType}@{AdapterConfiguration.AdapterName}_OnlineEvent";
@@ -128,12 +129,9 @@ namespace SAL.Core.Rabbit
                         .ToArray()
                 });
             }
-            
+
             if (eventInfos.Any(x => !x.OneInstance && x.Preserved))
             {
-
-
-
                 queueName = $"#{AdapterConfiguration.AdapterType}@{AdapterConfiguration.AdapterName}_Event";
                 queueList.Add(new QueueInfo
                 {
@@ -370,7 +368,7 @@ namespace SAL.Core.Rabbit
                     }
                 });
             });
-              
+
             return new MultiConsumerSubscriptionAsyncEx(transport, subscriptionName, globalPrefetchCount, queueList.ToArray(), handler);
         }
 
@@ -378,7 +376,94 @@ namespace SAL.Core.Rabbit
         {
             return new MultiConsumerSubscriptionAsyncEx(transport, subscriptionName, globalPrefetchCount, queues, handler);
         }
-        
+
+        public (ISubscription, ISubscription) CreateCommonSharedCommandResult(CommonSharedCommandResultConfig config, Func<RabbitMessageEx, Action, Action, Task> handler)
+        {
+            //exchanges
+
+            var exShared = new Exchange
+            {
+                Durable = true,
+                Type = ExchangeType.Fanout,
+                Name = $"{AdapterConfiguration.AdapterType}:SharedCommandResultExchange"
+            };
+
+            transport.AddExchange(exShared);
+
+
+            var exPersonal = new Exchange
+            {
+                Durable = true,
+                Type = ExchangeType.Direct,
+                Name = $"{AdapterConfiguration.AdapterType}:CommandResultExchange",
+                AlternateExchange = exShared.Name
+            };
+            transport.AddExchange(exPersonal);
+
+
+            //queue
+
+            var queueList = new List<QueueInfo>();
+            var queueName = "";
+
+            queueName = $"#{AdapterConfiguration.AdapterType}:PersonalCommandResult";
+            queueList.Add(new QueueInfo
+            {
+                QueueName = queueName,
+                PrefetchCount = 1
+            });
+            transport.AddQueue(new Queue
+            {
+                Name = queueName,
+                AutoDelete = true,
+                MaxPriority = 9,
+                Exclusive = true,
+                HasDeadLetter = true,
+                DeadLetterExchange = exShared.Name,
+                Expire = null,
+                Durable = true,
+                Bindings = new[]
+                {
+                    new Binding
+                    {
+                        ExchangeName = exPersonal.Name,
+                        RoutingKey = $"@{AdapterConfiguration.AdapterName}"
+                    }
+                }
+            });
+
+
+            var personalSubscription = new MultiConsumerSubscriptionAsyncEx(transport, "PersonalCommandResult", 0, queueList, handler);
+
+            queueList.Clear();
+            queueName = $"#{AdapterConfiguration.AdapterType}:SharedCommandResult";
+            queueList.Add(new QueueInfo
+            {
+                QueueName = queueName,
+                PrefetchCount = config.PrefetchCount
+            });
+            transport.AddQueue(new Queue
+            {
+                Name = queueName,
+                AutoDelete = false,
+                MaxPriority = 9,
+                Exclusive = false,
+                HasDeadLetter = true,
+                Expire = null,
+                Durable = true,
+                Bindings = new[]
+                {
+                    new Binding
+                    {
+                        ExchangeName = exShared.Name,
+                    }
+                }
+            });
+            var sharedSubscription = new MultiConsumerSubscriptionAsyncEx(transport, "SharedCommandResult", 0, queueList, handler);
+            
+            return (personalSubscription, sharedSubscription);
+        }
+
         public void Dispose()
         {
         }
