@@ -406,7 +406,7 @@ namespace SAL.Core.Rabbit
             var queueList = new List<QueueInfo>();
             var queueName = "";
 
-            queueName = $"#{AdapterConfiguration.AdapterType}:PersonalCommandResult";
+            queueName = $"#{AdapterConfiguration.AdapterType}@{AdapterConfiguration.AdapterName}:PersonalCommandResult";
             queueList.Add(new QueueInfo
             {
                 QueueName = queueName,
