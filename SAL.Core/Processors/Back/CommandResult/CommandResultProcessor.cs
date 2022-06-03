@@ -499,7 +499,7 @@ namespace SAL.Core.Processors
                 commandResultPayload.Context.Descriptor.ProcessingDuration = commandResultPayload.Context.Descriptor.HandleResultTimeStamp - commandResultPayload.Context.Descriptor.PublishTimeStamp;
                 HandlerContext.Update(commandResultPayload.Context.ContextInfo);
                 salLogger.LogIncoming(commandResultPayload);
-                await SharedProcessing(commandResultPayload, rabbitMessage.QueueName == $"#{AdapterConfiguration.AdapterType}:PersonalCommandResult");
+                await SharedProcessing(commandResultPayload, rabbitMessage.QueueName.EndsWith(":PersonalCommandResult"));
                 ack();
             }
             catch (JsonReaderException ex)
