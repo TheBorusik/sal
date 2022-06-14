@@ -4,14 +4,14 @@ namespace SAL.Core.Exceptions.Rabbit
 {
     public class MessageBusException : Exception
     {
-        public MessageBusException(string? message, Exception? innerException) : base(message, innerException)
+        public MessageBusException(string message, Exception innerException) : base(message, innerException)
         {
         }
     }
 
     public class MessageNotPublishedException : Exception
     {
-        public MessageNotPublishedException(string? message) : base(message)
+        public MessageNotPublishedException(string message) : base(message)
         {
         }
     }

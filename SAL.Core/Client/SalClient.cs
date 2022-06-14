@@ -96,6 +96,42 @@ namespace SAL.Core.Client
             return correlationId;
         }
 
+        public async Task PublishCommandFafAsync(string commandName, object commandBody, string correlationId = null, CommandPriority priority = CommandPriority.Normal, TimeSpan? ttl = null, string handlerAdapterType = null, string handlerAdapterName = null)
+        {
+            if (string.IsNullOrWhiteSpace(correlationId))
+                correlationId = Guid.NewGuid().ToString("N");
+
+            var commandExchangeName = ExchangeNames.CommandExchange;
+            
+            var commandRoutingKey = commandName;
+            
+            if (!string.IsNullOrWhiteSpace(handlerAdapterType))
+            {
+                commandRoutingKey = $"{handlerAdapterType}@{handlerAdapterName}";
+            }
+            
+            var commandContext = new CommandContext
+            {
+                ContextInfo = new ContextInfo(HandlerContext.SessionId, HandlerContext.AuthId, HandlerContext.ProcessId, HandlerContext.OperationId),
+                Descriptor = new CommandDescriptor
+                {
+                    CorrelationId = correlationId,
+                    CommandName = commandName,
+                    CommandExchangeName = commandExchangeName,
+                    CommandRoutingKey = commandRoutingKey,
+                    Priority = priority,
+                    SourceAdapterType = AdapterConfiguration.AdapterType,
+                    SourceAdapterName = AdapterConfiguration.AdapterName,
+                    ResultExchangeName = null,
+                    ResultRoutingKey = null,
+                    PublishTimeStamp = DateTime.UtcNow,
+                    TTL = ttl,
+                    Contour = Contour.ToString()
+                }
+            };
+            await LoPublishAsync(commandContext, commandBody);
+        }
+
         public async Task<string> PublishCommandWithSharedResultHandlerAsync(string commandName, object commandBody, string correlationId = null, CommandPriority priority = CommandPriority.Normal, TimeSpan? ttl = null)
         {
             if (string.IsNullOrWhiteSpace(correlationId))

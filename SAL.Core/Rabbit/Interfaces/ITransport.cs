@@ -27,7 +27,6 @@ namespace SAL.Core.Rabbit.Interfaces
 
     public interface IRMQTransport : ITransport
     {
-        public bool IsConnected { get; }
         
         ILogger CreateLogger(string name);
         

@@ -23,6 +23,15 @@ namespace SAL.API
             string handlerAdapterName = null,
             string resultAdapterType = null,
             string resultAdapterName = null);
+        
+        Task PublishCommandFafAsync(
+            string commandName,
+            object commandBody,
+            string correlationId = null,
+            CommandPriority priority = CommandPriority.Normal,
+            TimeSpan? ttl = null,
+            string handlerAdapterType = null,
+            string handlerAdapterName = null);
 
         Task<string> PublishCommandWithSharedResultHandlerAsync(
             string commandName,
