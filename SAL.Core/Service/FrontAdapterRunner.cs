@@ -1,11 +1,12 @@
 ﻿using System;
 using System.Threading.Tasks;
 using Autofac;
+using Prometheus;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using SAL.Core.Exceptions;
-using SAL.Core.NLogEx;
+using Microsoft.AspNetCore.Hosting;
 
 namespace SAL.Core.Service
 {
@@ -39,7 +40,10 @@ namespace SAL.Core.Service
                     logging.ClearProviders();
                     logging.SetMinimumLevel(LogLevel.Trace);
                 })
-                .UseNlog(adapter.LogFactory)
+                .ConfigureWebHostDefaults(webBuilder => 
+                {
+                    webBuilder.Configure(app => { app.UseMetricServer(); });
+                })
                 .Build();
 
             try

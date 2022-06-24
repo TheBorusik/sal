@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Threading.Tasks;
+using Prometheus;
 using Autofac;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -23,8 +25,6 @@ namespace SAL.Core.Service
                 Console.WriteLine(e.Message);
                 return;
             }
-            
-
 
             var host = new HostBuilder()
                 .UseServiceProviderFactory(adapter)
@@ -36,6 +36,10 @@ namespace SAL.Core.Service
                     logging.SetMinimumLevel(LogLevel.Trace);
                 })
                 .UseNlog(adapter.LogFactory)
+                .ConfigureWebHostDefaults(webBuilder =>
+                {
+                    webBuilder.Configure(app => { app.UseMetricServer(); });
+                })
                 .Build();
 
             try
