@@ -456,5 +456,10 @@ namespace SAL.API
         {
             return (JObject) obj?.DeepClone();
         }
+        
+        public static JToken ToJToken(this object obj)
+        {
+            return obj == null ? JValue.CreateNull() : JToken.FromObject(obj);
+        }
     }
 }

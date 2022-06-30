@@ -7,6 +7,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using SAL.Core.Exceptions;
 using Microsoft.AspNetCore.Hosting;
+using SAL.Core.NLogEx;
 
 namespace SAL.Core.Service
 {
@@ -40,6 +41,7 @@ namespace SAL.Core.Service
                     logging.ClearProviders();
                     logging.SetMinimumLevel(LogLevel.Trace);
                 })
+                .UseNlog(adapter.LogFactory)
                 .ConfigureWebHostDefaults(webBuilder => 
                 {
                     webBuilder.Configure(app => { app.UseMetricServer(); });
