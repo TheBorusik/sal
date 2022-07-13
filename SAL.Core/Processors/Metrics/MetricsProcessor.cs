@@ -245,18 +245,19 @@ namespace SAL.Core.Processors
             };
             gaugeConfiguration.StaticLabels.Add("adapterType",AdapterConfiguration.AdapterType );
             gaugeConfiguration.StaticLabels.Add("adapterName",AdapterConfiguration.AdapterName );
-            
 
+
+            var metricName = commandName.Replace('.', '_');
             
             commandsCounter.Add(commandName, new CommandCounters
             {
-                Total = Metrics.CreateCounter($"Command_{commandName}_Total","", counterConfig),
-                Positive = Metrics.CreateCounter($"Command_{commandName}_Positive","", counterConfig),
-                Fatal = Metrics.CreateCounter($"Command_{commandName}_Fatal","", counterConfig),
-                TotalL = Metrics.CreateGauge($"Command_{commandName}_TotalL", $"", gaugeConfiguration),
-                PositiveL = Metrics.CreateGauge($"Command_{commandName}_PositiveL", $"", gaugeConfiguration),
-                FatalL = Metrics.CreateGauge($"Command_{commandName}_FatalL", $"", gaugeConfiguration),
-                AverageElapsedL = Metrics.CreateGauge($"Command_{commandName}_AverageElapsedL", $"", gaugeConfiguration),
+                Total = Metrics.CreateCounter($"Command_{metricName}_Total","", counterConfig),
+                Positive = Metrics.CreateCounter($"Command_{metricName}_Positive","", counterConfig),
+                Fatal = Metrics.CreateCounter($"Command_{metricName}_Fatal","", counterConfig),
+                TotalL = Metrics.CreateGauge($"Command_{metricName}_TotalL", $"", gaugeConfiguration),
+                PositiveL = Metrics.CreateGauge($"Command_{metricName}_PositiveL", $"", gaugeConfiguration),
+                FatalL = Metrics.CreateGauge($"Command_{metricName}_FatalL", $"", gaugeConfiguration),
+                AverageElapsedL = Metrics.CreateGauge($"Command_{metricName}_AverageElapsedL", $"", gaugeConfiguration),
             });
         }
         public void RegisterEvent(string eventName)
@@ -285,16 +286,17 @@ namespace SAL.Core.Processors
             gaugeConfiguration.StaticLabels.Add("adapterName",AdapterConfiguration.AdapterName );
             
 
+            var metricName = eventName.Replace('.', '_');
             
             eventsCounter.Add(eventName, new EventCounters
             {
-                Total = Metrics.CreateCounter($"Event_{eventName}_Total","", counterConfig),
-                Positive = Metrics.CreateCounter($"Event_{eventName}_Positive","", counterConfig),
-                Fatal = Metrics.CreateCounter($"Event_{eventName}_Fatal","", counterConfig),
-                TotalL = Metrics.CreateGauge($"Event_{eventName}_TotalL", $"", gaugeConfiguration),
-                PositiveL = Metrics.CreateGauge($"Event_{eventName}_PositiveL", $"", gaugeConfiguration),
-                FatalL = Metrics.CreateGauge($"Event_{eventName}_FatalL", $"", gaugeConfiguration),
-                AverageElapsedL = Metrics.CreateGauge($"Event_{eventName}_AverageElapsedL", $"", gaugeConfiguration),
+                Total = Metrics.CreateCounter($"Event_{metricName}_Total","", counterConfig),
+                Positive = Metrics.CreateCounter($"Event_{metricName}_Positive","", counterConfig),
+                Fatal = Metrics.CreateCounter($"Event_{metricName}_Fatal","", counterConfig),
+                TotalL = Metrics.CreateGauge($"Event_{metricName}_TotalL", $"", gaugeConfiguration),
+                PositiveL = Metrics.CreateGauge($"Event_{metricName}_PositiveL", $"", gaugeConfiguration),
+                FatalL = Metrics.CreateGauge($"Event_{metricName}_FatalL", $"", gaugeConfiguration),
+                AverageElapsedL = Metrics.CreateGauge($"Event_{metricName}_AverageElapsedL", $"", gaugeConfiguration),
             });
         }
         private void TimerRoutine(object state)
