@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Text;
@@ -31,6 +32,8 @@ namespace SAL.Core.Processors
         private readonly IDictionary<string, FrontExternalHttpHandlerInfo> handlers = new Dictionary<string, FrontExternalHttpHandlerInfo>();
 
         private ISubscription subscription;
+        
+        private readonly IMetricProvider metricProvider;
 
         public FrontExternalHttpProcessor(ILifetimeScope container, ILoggerProvider loggerProvider, ISalLogger salLogger)
         {
@@ -40,6 +43,7 @@ namespace SAL.Core.Processors
             logger = loggerProvider.CreateLogger(nameof(FrontExternalHttpProcessor));
             salClient = container.ResolveKeyed<ISalClient>(Contour.Front);
             salService = container.Resolve<ISalService>();
+            metricProvider = container.Resolve<IMetricProvider>();
         }
 
         private ExternalHttpProcessorConfig processorConfig;
@@ -142,6 +146,10 @@ namespace SAL.Core.Processors
                 Path = externalPathMethod.Uri.ToLower(),
                 PathRegExp = externalPathMethod.RegExp
             });
+
+
+            var commandName = externalPathMethod.Uri.Replace('/', '_');
+            metricProvider.RegisterCommand(commandName);
         }
 
 
@@ -162,11 +170,19 @@ namespace SAL.Core.Processors
 
         private async Task Handler(RabbitMessage rabbitMessage, Action ack, Action nack)
         {
+            var sw = new Stopwatch();
+            var commandName = "";
+            var isFail = false; 
+            sw.Start();
             try
             {
                 HandlerContext.Set(HandlerTypes.Processor, "FrontExternalHttpProcessor", rabbitMessage.CorrelationId);
                 var transportMessage = ExtractMessage(rabbitMessage);
                 var commandPayload = ExtractCommandPayload(transportMessage, rabbitMessage.CorrelationId);
+                
+                var externalHttpRequest = commandPayload.Payload.ConvertValue<ExternalHttpRequest>();
+                commandName = externalHttpRequest.BasePath.Replace("/", "_");
+                
                 HandlerContext.Update(commandPayload.Context.ContextInfo);
                 salLogger.LogIncoming(commandPayload);
                 await Processing(commandPayload);
@@ -181,17 +197,20 @@ namespace SAL.Core.Processors
                 sb.AppendLine(SalEncoding.GetString(rabbitMessage.Payload));
                 logger.Info(sb.ToString());
                 nack();
+                isFail = true;
                 await salClient.RaiseExceptionDetectEvent(rabbitMessage.CorrelationId, dto);
             }
             catch (SalException ex)
             {
                 nack();
+                isFail = true;
                 logger.Error("При обработке произошла ошибка", ex);
                 await salClient.RaiseExceptionDetectEvent(rabbitMessage.CorrelationId, ex.ToDto());
             }
             catch (TargetInvocationException ex)
             {
                 nack();
+                isFail = true;
                 if (ex.InnerException is SalException sex)
                 {
                     logger.Error("При обработке произошла ошибка", sex);
@@ -214,6 +233,7 @@ namespace SAL.Core.Processors
             catch (Exception ex)
             {
                 nack();
+                isFail = true;
                 var dto = SalError.CreateDto(SalErrorCodes.Fatal,
                     "При обработке произошла ошибка"
                     , innerException: ex
@@ -225,6 +245,8 @@ namespace SAL.Core.Processors
                 logger.Error(dto, ex);
                 await salClient.RaiseExceptionDetectEvent(rabbitMessage.CorrelationId, dto);
             }
+            sw.Stop();
+            metricProvider.IncCommand(commandName, sw.Elapsed, isFail);
         }
 
         protected TransportMessage ExtractMessage(RabbitMessage rabbitMessage)

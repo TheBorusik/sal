@@ -48,13 +48,10 @@ namespace SAL.Test.Front
             using var scope = lifetimeScope.BeginLifetimeScope();
             
             var client = scope.Resolve<ISalClient>();
-            var loggerProvider = scope.Resolve<ILoggerProvider>();
-            var logger = loggerProvider.CreateLogger("TestFrontProcessor");
-            
-            logger.Info(new{ cardNumber="1234567890123456", cvv = "123", cvc = "321" }.ToJson());
-            
-       //     client.PublishCommandWithSharedResultHandlerAsync("SalTester.TestCommand", new { });
-       //     client.PublishCommandWithSharedResultHandlerAsync("SalTester.TestCommand", new { });
+            client.PublishEventAsync("System.WhoIsWhoEvent", new { });
+
+            //     client.PublishCommandWithSharedResultHandlerAsync("SalTester.TestCommand", new { });
+            //     client.PublishCommandWithSharedResultHandlerAsync("SalTester.TestCommand", new { });
 
         }
 

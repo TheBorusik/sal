@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 using SAL.API;
 using SAL.API.Const;
 
-namespace SAL.Core.Processors.System
+namespace SAL.Core.Processors
 {
     abstract class HeartbeatBaseProcessor : IProcessor
     {

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Text;
@@ -32,6 +33,8 @@ namespace SAL.Core.Processors
         private readonly Dictionary<string, FrontCommandHandlerInfo> commandHandlers = new();
 
         private ISubscription subscription;
+        
+        private readonly IMetricProvider metricProvider;
 
         public FrontCommandProcessor(ILifetimeScope container, ILoggerProvider loggerProvider, ISalLogger salLogger)
         {
@@ -41,6 +44,7 @@ namespace SAL.Core.Processors
             logger = loggerProvider.CreateLogger(nameof(FrontCommandProcessor));
             salClient = container.ResolveKeyed<ISalClient>(Contour.Front);
             salService = container.Resolve<ISalService>();
+            metricProvider = container.Resolve<IMetricProvider>();
         }
 
         private CommandProcessorConfig commandProcessorConfig;
@@ -214,6 +218,8 @@ namespace SAL.Core.Processors
                     CommandSchema = commandHandlerInfo.CommandSchema,
                     ResultSchema = schemaCreater?.GetResultSchema(commandName),
                 });
+                
+                metricProvider.RegisterCommand(commandHandlerInfo.CommandName);
             }
         }
 
@@ -263,6 +269,7 @@ namespace SAL.Core.Processors
 
 
             salService.AddFrontCommandHandler(handlerInfo);
+            metricProvider.RegisterCommand(handlerInfo.CommandName);
         }
 
 
@@ -283,15 +290,22 @@ namespace SAL.Core.Processors
 
         private async Task Handler(RabbitMessage rabbitMessage, Action ack, Action nack)
         {
+            var sw = new Stopwatch();
+            var commandName = "";
+            var isFail = false;
+            sw.Start();
+            
             try
             {
                 HandlerContext.Set(HandlerTypes.Processor, "FrontCommandProcessor", rabbitMessage.CorrelationId);
                 var transportMessage = ExtractMessage(rabbitMessage);
                 var commandPayload = ExtractCommandPayload(transportMessage, rabbitMessage.CorrelationId);
+                commandName = commandPayload.Context.Descriptor.CommandName;
                 HandlerContext.Update(commandPayload.Context.ContextInfo);
                 salLogger.LogIncoming(commandPayload);
                 await Processing(commandPayload);
                 ack();
+
             }
             catch (JsonReaderException ex)
             {
@@ -302,17 +316,20 @@ namespace SAL.Core.Processors
                 sb.AppendLine(SalEncoding.GetString(rabbitMessage.Payload));
                 logger.Info(sb.ToString());
                 nack();
+                isFail = true;
                 await salClient.RaiseExceptionDetectEvent(rabbitMessage.CorrelationId, dto);
             }
             catch (SalException ex)
             {
                 nack();
+                isFail = true;
                 logger.Error("При обработке результата команды произошла ошибка", ex);
                 await salClient.RaiseExceptionDetectEvent(rabbitMessage.CorrelationId, ex.ToDto());
             }
             catch (TargetInvocationException ex)
             {
                 nack();
+                isFail = true;
                 if (ex.InnerException is SalException sex)
                 {
                     logger.Error("При обработке команды произошла ошибка", ex);
@@ -335,6 +352,7 @@ namespace SAL.Core.Processors
             catch (Exception ex)
             {
                 nack();
+                isFail = true;
                 var dto = SalError.CreateDto(SalErrorCodes.Fatal,
                     "При обработке команды произошла ошибка"
                     , innerException: ex
@@ -346,6 +364,9 @@ namespace SAL.Core.Processors
                 logger.Error(dto, ex);
                 await salClient.RaiseExceptionDetectEvent(rabbitMessage.CorrelationId, dto);
             }
+            
+            sw.Stop();
+            metricProvider.IncCommand(commandName, sw.Elapsed, isFail);
         }
 
         protected TransportMessage ExtractMessage(RabbitMessage rabbitMessage)

@@ -5,7 +5,6 @@ using SAL.Core.Configuration.Redis;
 using SAL.Core.DB;
 using SAL.Core.DB.RedisStore;
 using SAL.Core.Processors;
-using SAL.Core.Processors.System;
 using SAL.Core.Rabbit;
 using SAL.Core.Rabbit.Interfaces;
 using SAL.Core.S3;
@@ -89,6 +88,9 @@ namespace SAL.Core.Service
 
             builder.RegisterType<S3Store>()
                 .As<IS3Store>();
+
+            builder.RegisterProcessor<MetricsProcessor>()
+                .As<IMetricProvider>();
 
             AdapterConfigureContainer(builder);
 

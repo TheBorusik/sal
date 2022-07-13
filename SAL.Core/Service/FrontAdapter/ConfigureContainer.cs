@@ -2,7 +2,6 @@
 using SAL.API;
 using SAL.Core.Client;
 using SAL.Core.Processors;
-using SAL.Core.Processors.System;
 using SAL.Core.Rabbit;
 using SAL.Core.Rabbit.Interfaces;
 using SAL.Core.WatchDog;

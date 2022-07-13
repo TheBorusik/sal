@@ -6,7 +6,7 @@ using SAL.API;
 using SAL.API.Const;
 using SAL.Infrastructure;
 
-namespace SAL.Core.Processors.System
+namespace SAL.Core.Processors
 {
     class HeartbeatFrontProcessor : HeartbeatBaseProcessor
     {

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Text;
@@ -33,6 +34,8 @@ namespace SAL.Core.Processors
         private readonly Dictionary<string, WfmResultHandlerInfo> wfmResultHandler = new();
 
         private ISubscription subscription;
+        
+        private readonly IMetricProvider metricProvider;
 
         public CommandProcessor(ILifetimeScope container, ILoggerProvider loggerProvider, ISalLogger salLogger)
         {
@@ -42,6 +45,7 @@ namespace SAL.Core.Processors
             logger = loggerProvider.CreateLogger(nameof(CommandProcessor));
             salClient = container.Resolve<ISalClient>();
             salService = container.Resolve<ISalService>();
+            metricProvider = container.Resolve<IMetricProvider>();
         }
 
         private CommandProcessorConfig commandProcessorConfig;
@@ -229,6 +233,8 @@ namespace SAL.Core.Processors
                     CommandSchema = commandHandlerInfo.CommandSchema,
                     ResultSchema = schemeCreator == null ? null : schemeCreator.GetResultSchema(commandName),
                 });
+                
+                metricProvider.RegisterCommand(commandName);
             }
         }
 
@@ -277,6 +283,7 @@ namespace SAL.Core.Processors
                     }
 
                     commandHandlers.Add(commandName, commandHandlerInfo);
+                    metricProvider.RegisterCommand(commandName);
 
                     logger.Info($"Для команды {commandName} добавлен уневерсальный обработчик {handlerType.Name}");
 
@@ -306,7 +313,9 @@ namespace SAL.Core.Processors
 
 
             wfmResultHandler.Add(wfmResultHandlerName, wfmResultHandlerInfo);
+            metricProvider.RegisterCommand("WFM.Result");
             logger.Info($"Для обработки результата ВФМ '{wfmResultHandlerName}' добавлен обработчик  '{handlerType.Name}'");
+            
         }
 
         public void Online()
@@ -326,14 +335,20 @@ namespace SAL.Core.Processors
 
         private async Task Handler(RabbitMessage rabbitMessage, Action ack, Action nack)
         {
+            var sw = new Stopwatch();
+            var commandName = "";
+            var isFail = false;
+            sw.Start();
+            
             try
             {
                 HandlerContext.Set(HandlerTypes.Processor, "CommandProcessor", rabbitMessage.CorrelationId);
                 var transportMessage = ExtractMessage(rabbitMessage);
                 var commandPayload = ExtractCommandPayload(transportMessage, rabbitMessage.CorrelationId);
+                commandName = commandPayload.Context.Descriptor.CommandName;
                 HandlerContext.Update(commandPayload.Context.ContextInfo);
                 salLogger.LogIncoming(commandPayload);
-                if (commandPayload.Context.Descriptor.CommandName == "WFM.Result")
+                if (commandName == "WFM.Result")
                     await ProcessingWfmResult(transportMessage, commandPayload);
                 else
                     await Processing(transportMessage, commandPayload);
@@ -348,17 +363,20 @@ namespace SAL.Core.Processors
                 sb.AppendLine(SalEncoding.GetString(rabbitMessage.Payload));
                 logger.Info(sb.ToString());
                 nack();
+                isFail = true;
                 await salClient.RaiseExceptionDetectEvent(rabbitMessage.CorrelationId, dto);
             }
             catch (SalException ex)
             {
                 nack();
+                isFail = true;
                 logger.Error("При обработке команды произошла ошибка ", ex);
                 await salClient.RaiseExceptionDetectEvent(rabbitMessage.CorrelationId, ex.ToDto());
             }
             catch (TargetInvocationException ex)
             {
                 nack();
+                isFail = true;
                 if (ex.InnerException is SalException sex)
                 {
                     logger.Error("При обработке команды произошла ошибка", ex);
@@ -381,6 +399,7 @@ namespace SAL.Core.Processors
             catch (Exception ex)
             {
                 nack();
+                isFail = true;
                 var dto = SalError.CreateDto(SalErrorCodes.Fatal,
                     "При обработке команды произошла ошибка"
                     , innerException: ex
@@ -392,6 +411,9 @@ namespace SAL.Core.Processors
                 logger.Error(dto, ex);
                 await salClient.RaiseExceptionDetectEvent(rabbitMessage.CorrelationId, dto);
             }
+            
+            sw.Stop();
+            metricProvider.IncCommand(commandName, sw.Elapsed, isFail);
         }
 
         protected TransportMessage ExtractMessage(RabbitMessage rabbitMessage)

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Text;
@@ -36,6 +37,8 @@ namespace SAL.Core.Processors
         private readonly Dictionary<string, LinkedList<CommandResultHandlerInfo>> resultHandlers = new();
         private readonly LinkedList<CommandResultHandlerInfo> anyResultHandlers = new();
         private readonly ConcurrentDictionary<string, SimpleCommandResultHandlerInfo> simpleCommandResultHandlers = new();
+        
+        private readonly IMetricProvider metricProvider;
 
         public FrontCommandResultProcessor(ILifetimeScope container, ILoggerProvider loggerProvider, ISalLogger salLogger)
         {
@@ -44,6 +47,7 @@ namespace SAL.Core.Processors
             this.salLogger = salLogger;
             logger = loggerProvider.CreateLogger(nameof(FrontCommandResultProcessor));
             salService = container.Resolve<ISalService>();
+            metricProvider = container.Resolve<IMetricProvider>();
         }
 
         public void Start()
@@ -299,6 +303,9 @@ namespace SAL.Core.Processors
 
         private async Task Handler(RabbitMessage rabbitMessage, Action ack, Action nack)
         {
+            var sw = new Stopwatch();
+            var isFail = false;
+            sw.Start();
             try
             {
                 HandlerContext.Set(HandlerTypes.Processor, "FrontCommandResultProcessor", rabbitMessage.CorrelationId);
@@ -318,17 +325,20 @@ namespace SAL.Core.Processors
                 sb.AppendLine(SalEncoding.GetString(rabbitMessage.Payload));
                 logger.Info(sb.ToString());
                 nack();
+                isFail = true;
                 await salClient.RaiseExceptionDetectEvent(rabbitMessage.CorrelationId, dto);
             }
             catch (SalException ex)
             {
                 nack();
+                isFail = true;
                 logger.Error($"При обработке результата команды произошла ошибка ({ex.Code})", ex);
                 await salClient.RaiseExceptionDetectEvent(rabbitMessage.CorrelationId, ex.ToDto());
             }
             catch (TargetInvocationException ex)
             {
                 nack();
+                isFail = true;
                 if (ex.InnerException is SalException sex)
                 {
                     logger.Error($"При обработке результата команды произошла ошибка ({sex.Code})", sex);
@@ -351,6 +361,7 @@ namespace SAL.Core.Processors
             catch (Exception ex)
             {
                 nack();
+                isFail = true;
                 var dto = SalError.CreateDto(SalErrorCodes.Fatal,
                     "При обработке результата команды произошла ошибка"
                     , innerException: ex
@@ -362,10 +373,15 @@ namespace SAL.Core.Processors
                 logger.Error(dto, ex);
                 await salClient.RaiseExceptionDetectEvent(rabbitMessage.CorrelationId, dto);
             }
+            sw.Stop();
+            metricProvider.IncCommandResult(sw.Elapsed, isFail);
         }
 
         private async Task SyncHandler(RabbitMessage rabbitMessage, Action ack, Action nack)
         {
+            var sw = new Stopwatch();
+            var isFail = false;
+            sw.Start();
             try
             {
                 //todo проверить надобность
@@ -388,17 +404,20 @@ namespace SAL.Core.Processors
                 sb.AppendLine(SalEncoding.GetString(rabbitMessage.Payload));
                 logger.Info(sb.ToString());
                 nack();
+                isFail = true;
                 await salClient.RaiseExceptionDetectEvent(rabbitMessage.CorrelationId, dto);
             }
             catch (SalException ex)
             {
                 nack();
+                isFail = true;
                 logger.Error($"При обработке результата команды произошла ошибка ({ex.Code})", ex);
                 await salClient.RaiseExceptionDetectEvent(rabbitMessage.CorrelationId, ex.ToDto());
             }
             catch (TargetInvocationException ex)
             {
                 nack();
+                isFail = true;
                 if (ex.InnerException is SalException sex)
                 {
                     logger.Error($"При обработке результата команды произошла ошибка ({sex.Code})", sex);
@@ -421,6 +440,7 @@ namespace SAL.Core.Processors
             catch (Exception ex)
             {
                 nack();
+                isFail = true;
                 var dto = SalError.CreateDto(SalErrorCodes.Fatal,
                     "При обработке результата команды произошла ошибка"
                     , innerException: ex
@@ -432,6 +452,8 @@ namespace SAL.Core.Processors
                 logger.Error(dto, ex);
                 await salClient.RaiseExceptionDetectEvent(rabbitMessage.CorrelationId, dto);
             }
+            sw.Stop();
+            metricProvider.IncCommandResult(sw.Elapsed, isFail);
         }
 
         protected TransportMessage ExtractMessage(RabbitMessage rabbitMessage)

@@ -5,7 +5,8 @@ using Microsoft.Extensions.Logging;
 using SAL.API;
 using SAL.API.Const;
 
-namespace SAL.Core.Processors.System
+
+namespace SAL.Core.Processors
 {
     class HeartbeatBackProcessor : HeartbeatBaseProcessor
     {

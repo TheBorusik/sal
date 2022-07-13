@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Text;
@@ -29,6 +30,7 @@ namespace SAL.Core.Processors
 
         private readonly ILifetimeScope container;
         private readonly Dictionary<string, EventInfo> eventHandlers = new ();
+        private readonly IMetricProvider metricProvider;
         
         public EventProcessor(ILifetimeScope container, ILoggerProvider loggerProvider, ISalLogger salLogger)
         {
@@ -37,6 +39,7 @@ namespace SAL.Core.Processors
             this.salLogger = salLogger;
             logger = loggerProvider.CreateLogger(nameof(EventProcessor));
             salService = container.Resolve<ISalService>();
+            metricProvider = container.Resolve<IMetricProvider>();
         }
 
         public void Start()
@@ -176,6 +179,7 @@ namespace SAL.Core.Processors
                         EventName = eventInfo.EventName,
                         EventSchema = schemeCreator == null ? SalSchema.Generate(eventType) : schemeCreator.GetEventScheme(eventInfo.EventName)
                     });
+                    metricProvider.RegisterEvent(eventInfo.EventName);
                 }
                 
                 eventInfo.Handlers.Add(new EventHandlerInfo
@@ -185,7 +189,7 @@ namespace SAL.Core.Processors
                     HandlerType = handlerType,
                     IsCommon = false
                 });
-                
+       
                 logger.Info($"Для евента {eventInfo.EventName} (P:{eventInfo.Preserved}|I:{eventInfo.OneInstance}) добавлен обработчик результата {handlerType.Name}");
                 
             }
@@ -234,6 +238,8 @@ namespace SAL.Core.Processors
                         EventName = eventInfo.EventName,
                         EventSchema = schemeCreator?.GetEventScheme(eventInfo.EventName)
                     });
+                    
+                    metricProvider.RegisterEvent(eventInfo.EventName);
                 }
                 
                 
@@ -253,15 +259,21 @@ namespace SAL.Core.Processors
 
         private async Task Handler(RabbitMessage rabbitMessage, Action ack, Action nack)
         {
+            var sw = new Stopwatch();
+            var eventName = "";
+            var isFail = false;
+            sw.Start();
             try
             {
                 HandlerContext.Set(HandlerTypes.Processor, "EventProcessor", rabbitMessage.CorrelationId);
                 var transportMessage = ExtractMessage(rabbitMessage);
                 var eventPayload = ExtractEventPayload(transportMessage, rabbitMessage.CorrelationId);
+                eventName = eventPayload.Context.Descriptor.EventName;
                 HandlerContext.Update(eventPayload.Context.ContextInfo);
                 salLogger.LogIncoming(eventPayload);
                 await Processing(eventPayload);
                 ack();
+
             }
             catch (JsonReaderException ex)
             {
@@ -277,12 +289,16 @@ namespace SAL.Core.Processors
             catch (SalException ex)
             {
                 nack();
+                isFail = true;
+                if(!string.IsNullOrEmpty(eventName))
+                    metricProvider.IncEvent(eventName, sw.Elapsed, true);
                 logger.Error("При обработке event произошла ошибка", ex);
                 await salClient.RaiseExceptionDetectEvent(rabbitMessage.CorrelationId, ex.ToDto());
             }
             catch (TargetInvocationException ex)
             {
                 nack();
+                isFail = true;
                 if (ex.InnerException is SalException sex)
                 {
                     logger.Error("При обработке event произошла ошибка", ex);
@@ -305,6 +321,7 @@ namespace SAL.Core.Processors
             catch (Exception ex)
             {
                 nack();
+                isFail = true;
                 var dto = SalError.CreateDto(SalErrorCodes.Fatal,
                     "При обработке event произошла ошибка"
                     , innerException: ex
@@ -316,6 +333,9 @@ namespace SAL.Core.Processors
                 logger.Error(dto, ex);
                 await salClient.RaiseExceptionDetectEvent(rabbitMessage.CorrelationId, dto);
             }
+            
+            sw.Stop();
+            metricProvider.IncEvent(eventName, sw.Elapsed, isFail);
         }
 
         protected TransportMessage ExtractMessage(RabbitMessage rabbitMessage)
