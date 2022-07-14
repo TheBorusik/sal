@@ -236,6 +236,7 @@ namespace SAL.Core.Processors
             };
             counterConfig.StaticLabels.Add("adapterType",AdapterConfiguration.AdapterType );
             counterConfig.StaticLabels.Add("adapterName",AdapterConfiguration.AdapterName );
+            counterConfig.StaticLabels.Add("commandName",commandName);
 
 
             var gaugeConfiguration = new GaugeConfiguration
@@ -245,6 +246,7 @@ namespace SAL.Core.Processors
             };
             gaugeConfiguration.StaticLabels.Add("adapterType",AdapterConfiguration.AdapterType );
             gaugeConfiguration.StaticLabels.Add("adapterName",AdapterConfiguration.AdapterName );
+            gaugeConfiguration.StaticLabels.Add("commandName",commandName);
 
 
             var metricName = commandName.Replace('.', '_');
