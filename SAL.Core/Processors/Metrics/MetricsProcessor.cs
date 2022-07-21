@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net.Sockets;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
@@ -249,7 +250,7 @@ namespace SAL.Core.Processors
             gaugeConfiguration.StaticLabels.Add("commandName",commandName);
 
 
-            var metricName = commandName.Replace('.', '_');
+            var metricName = SalNameToMetricName(commandName);
             
             commandsCounter.Add(commandName, new CommandCounters
             {
@@ -288,7 +289,7 @@ namespace SAL.Core.Processors
             gaugeConfiguration.StaticLabels.Add("adapterName",AdapterConfiguration.AdapterName );
             
 
-            var metricName = eventName.Replace('.', '_');
+            var metricName = SalNameToMetricName(eventName);
             
             eventsCounter.Add(eventName, new EventCounters
             {
@@ -496,6 +497,11 @@ namespace SAL.Core.Processors
             }
 
 
+        }
+
+        public string SalNameToMetricName(string salName)
+        {
+            return Regex.Replace(salName,"[^a-zA-Z_]","_");
         }
     }
 }
