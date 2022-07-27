@@ -229,78 +229,86 @@ namespace SAL.Core.Processors
         {
             if(commandsCounter.ContainsKey(commandName))
                 return;
+
+            lock (commandsCounter)
+            {
+                var counterConfig = new CounterConfiguration
+                {
+                    StaticLabels = new Dictionary<string, string>(),
+                    SuppressInitialValue = false
+                };
+                counterConfig.StaticLabels.Add("adapterType",AdapterConfiguration.AdapterType );
+                counterConfig.StaticLabels.Add("adapterName",AdapterConfiguration.AdapterName );
+                counterConfig.StaticLabels.Add("commandName",commandName);
+
+
+                var gaugeConfiguration = new GaugeConfiguration
+                {
+                    StaticLabels = new Dictionary<string, string>(),
+                    SuppressInitialValue = false
+                };
+                gaugeConfiguration.StaticLabels.Add("adapterType",AdapterConfiguration.AdapterType );
+                gaugeConfiguration.StaticLabels.Add("adapterName",AdapterConfiguration.AdapterName );
+                gaugeConfiguration.StaticLabels.Add("commandName",commandName);
+
+
+                var metricName = SalNameToMetricName(commandName);
             
-            var counterConfig = new CounterConfiguration
-            {
-                StaticLabels = new Dictionary<string, string>(),
-                SuppressInitialValue = false
-            };
-            counterConfig.StaticLabels.Add("adapterType",AdapterConfiguration.AdapterType );
-            counterConfig.StaticLabels.Add("adapterName",AdapterConfiguration.AdapterName );
-            counterConfig.StaticLabels.Add("commandName",commandName);
-
-
-            var gaugeConfiguration = new GaugeConfiguration
-            {
-                StaticLabels = new Dictionary<string, string>(),
-                SuppressInitialValue = false
-            };
-            gaugeConfiguration.StaticLabels.Add("adapterType",AdapterConfiguration.AdapterType );
-            gaugeConfiguration.StaticLabels.Add("adapterName",AdapterConfiguration.AdapterName );
-            gaugeConfiguration.StaticLabels.Add("commandName",commandName);
-
-
-            var metricName = SalNameToMetricName(commandName);
-            
-            commandsCounter.Add(commandName, new CommandCounters
-            {
-                Total = Metrics.CreateCounter($"Command_{metricName}_Total","", counterConfig),
-                Positive = Metrics.CreateCounter($"Command_{metricName}_Positive","", counterConfig),
-                Fatal = Metrics.CreateCounter($"Command_{metricName}_Fatal","", counterConfig),
-                TotalL = Metrics.CreateGauge($"Command_{metricName}_TotalL", $"", gaugeConfiguration),
-                PositiveL = Metrics.CreateGauge($"Command_{metricName}_PositiveL", $"", gaugeConfiguration),
-                FatalL = Metrics.CreateGauge($"Command_{metricName}_FatalL", $"", gaugeConfiguration),
-                AverageElapsedL = Metrics.CreateGauge($"Command_{metricName}_AverageElapsedL", $"", gaugeConfiguration),
-            });
+                commandsCounter.Add(commandName, new CommandCounters
+                {
+                    Total = Metrics.CreateCounter($"Command_{metricName}_Total","", counterConfig),
+                    Positive = Metrics.CreateCounter($"Command_{metricName}_Positive","", counterConfig),
+                    Fatal = Metrics.CreateCounter($"Command_{metricName}_Fatal","", counterConfig),
+                    TotalL = Metrics.CreateGauge($"Command_{metricName}_TotalL", $"", gaugeConfiguration),
+                    PositiveL = Metrics.CreateGauge($"Command_{metricName}_PositiveL", $"", gaugeConfiguration),
+                    FatalL = Metrics.CreateGauge($"Command_{metricName}_FatalL", $"", gaugeConfiguration),
+                    AverageElapsedL = Metrics.CreateGauge($"Command_{metricName}_AverageElapsedL", $"", gaugeConfiguration),
+                });
+            }
         }
         public void RegisterEvent(string eventName)
         {
             if(string.IsNullOrEmpty(eventName))
                 return;
-            
-            if(eventsCounter.ContainsKey(eventName))
-                return;
-            
-            var counterConfig = new CounterConfiguration
+
+            lock (eventsCounter)
             {
-                StaticLabels = new Dictionary<string, string>(),
-                SuppressInitialValue = false
-            };
-            counterConfig.StaticLabels.Add("adapterType",AdapterConfiguration.AdapterType );
-            counterConfig.StaticLabels.Add("adapterName",AdapterConfiguration.AdapterName );
+                if(eventsCounter.ContainsKey(eventName))
+                    return;
+                
+                var counterConfig = new CounterConfiguration
+                {
+                    StaticLabels = new Dictionary<string, string>(),
+                    SuppressInitialValue = false
+                };
+                counterConfig.StaticLabels.Add("adapterType",AdapterConfiguration.AdapterType );
+                counterConfig.StaticLabels.Add("adapterName",AdapterConfiguration.AdapterName );
 
 
-            var gaugeConfiguration = new GaugeConfiguration
-            {
-                StaticLabels = new Dictionary<string, string>(),
-                SuppressInitialValue = false
-            };
-            gaugeConfiguration.StaticLabels.Add("adapterType",AdapterConfiguration.AdapterType );
-            gaugeConfiguration.StaticLabels.Add("adapterName",AdapterConfiguration.AdapterName );
+                var gaugeConfiguration = new GaugeConfiguration
+                {
+                    StaticLabels = new Dictionary<string, string>(),
+                    SuppressInitialValue = false
+                };
+                gaugeConfiguration.StaticLabels.Add("adapterType",AdapterConfiguration.AdapterType );
+                gaugeConfiguration.StaticLabels.Add("adapterName",AdapterConfiguration.AdapterName );
             
 
-            var metricName = SalNameToMetricName(eventName);
+                var metricName = SalNameToMetricName(eventName);
             
-            eventsCounter.Add(eventName, new EventCounters
-            {
-                Total = Metrics.CreateCounter($"Event_{metricName}_Total","", counterConfig),
-                Positive = Metrics.CreateCounter($"Event_{metricName}_Positive","", counterConfig),
-                Fatal = Metrics.CreateCounter($"Event_{metricName}_Fatal","", counterConfig),
-                TotalL = Metrics.CreateGauge($"Event_{metricName}_TotalL", $"", gaugeConfiguration),
-                PositiveL = Metrics.CreateGauge($"Event_{metricName}_PositiveL", $"", gaugeConfiguration),
-                FatalL = Metrics.CreateGauge($"Event_{metricName}_FatalL", $"", gaugeConfiguration),
-                AverageElapsedL = Metrics.CreateGauge($"Event_{metricName}_AverageElapsedL", $"", gaugeConfiguration),
-            });
+                eventsCounter.Add(eventName, new EventCounters
+                {
+                    Total = Metrics.CreateCounter($"Event_{metricName}_Total","", counterConfig),
+                    Positive = Metrics.CreateCounter($"Event_{metricName}_Positive","", counterConfig),
+                    Fatal = Metrics.CreateCounter($"Event_{metricName}_Fatal","", counterConfig),
+                    TotalL = Metrics.CreateGauge($"Event_{metricName}_TotalL", $"", gaugeConfiguration),
+                    PositiveL = Metrics.CreateGauge($"Event_{metricName}_PositiveL", $"", gaugeConfiguration),
+                    FatalL = Metrics.CreateGauge($"Event_{metricName}_FatalL", $"", gaugeConfiguration),
+                    AverageElapsedL = Metrics.CreateGauge($"Event_{metricName}_AverageElapsedL", $"", gaugeConfiguration),
+                });
+            }
+            
+           
         }
         private void TimerRoutine(object state)
         {
