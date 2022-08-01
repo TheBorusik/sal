@@ -83,61 +83,62 @@ namespace SAL.Core.Processors
                 SuppressInitialValue = false
             };
             gaugeConfiguration.StaticLabels.Add("adapterName",AdapterConfiguration.AdapterName );
-            
-            
+
+
+            var metricAdapterType = SalNameToMetricName(AdapterConfiguration.AdapterType);
 
             //commands
-            adapterCounters.CommandPositive = Metrics.CreateCounter($"{AdapterConfiguration.AdapterType}_CommandPositive","", counterConfig);
-            adapterCounters.CommandFatal = Metrics.CreateCounter($"{AdapterConfiguration.AdapterType}_CommandFatal", $"", counterConfig);
-            adapterCounters.CommandTotal = Metrics.CreateCounter($"{AdapterConfiguration.AdapterType}_CommandTotal", $"", counterConfig);
+            adapterCounters.CommandPositive = Metrics.CreateCounter($"{metricAdapterType}_CommandPositive","", counterConfig);
+            adapterCounters.CommandFatal = Metrics.CreateCounter($"{metricAdapterType}_CommandFatal", $"", counterConfig);
+            adapterCounters.CommandTotal = Metrics.CreateCounter($"{metricAdapterType}_CommandTotal", $"", counterConfig);
 
             
-            adapterCounters.CommandTotalL = Metrics.CreateGauge($"{AdapterConfiguration.AdapterType}_CommandTotalL", $"", gaugeConfiguration);
-            adapterCounters.CommandFatalL = Metrics.CreateGauge($"{AdapterConfiguration.AdapterType}_CommandFatalL", $"", gaugeConfiguration);
-            adapterCounters.CommandPositiveL = Metrics.CreateGauge($"{AdapterConfiguration.AdapterType}_CommandPositiveL", $"", gaugeConfiguration);
-            adapterCounters.CommandAverageElapsedL = Metrics.CreateGauge($"{AdapterConfiguration.AdapterType}_CommandAverageElapsedL", $"",gaugeConfiguration);
+            adapterCounters.CommandTotalL = Metrics.CreateGauge($"{metricAdapterType}_CommandTotalL", $"", gaugeConfiguration);
+            adapterCounters.CommandFatalL = Metrics.CreateGauge($"{metricAdapterType}_CommandFatalL", $"", gaugeConfiguration);
+            adapterCounters.CommandPositiveL = Metrics.CreateGauge($"{metricAdapterType}_CommandPositiveL", $"", gaugeConfiguration);
+            adapterCounters.CommandAverageElapsedL = Metrics.CreateGauge($"{metricAdapterType}_CommandAverageElapsedL", $"",gaugeConfiguration);
 
             //comandResults
-            adapterCounters.CommandResultPositive = Metrics.CreateCounter($"{AdapterConfiguration.AdapterType}_CommandResultPositive", $"",counterConfig );
-            adapterCounters.CommandResultFatal = Metrics.CreateCounter($"{AdapterConfiguration.AdapterType}_CommandResultFatal", $"", counterConfig);
-            adapterCounters.CommandResultTotal = Metrics.CreateCounter($"{AdapterConfiguration.AdapterType}_CommandResultTotal", $"", counterConfig);
+            adapterCounters.CommandResultPositive = Metrics.CreateCounter($"{metricAdapterType}_CommandResultPositive", $"",counterConfig );
+            adapterCounters.CommandResultFatal = Metrics.CreateCounter($"{metricAdapterType}_CommandResultFatal", $"", counterConfig);
+            adapterCounters.CommandResultTotal = Metrics.CreateCounter($"{metricAdapterType}_CommandResultTotal", $"", counterConfig);
             
-            adapterCounters.CommandResultPositiveL = Metrics.CreateGauge($"{AdapterConfiguration.AdapterType}_CommandResultPositiveL", $"", gaugeConfiguration);
-            adapterCounters.CommandResultFatalL = Metrics.CreateGauge($"{AdapterConfiguration.AdapterType}_CommandResultFatalL", $"",gaugeConfiguration);
-            adapterCounters.CommandResultTotalL = Metrics.CreateGauge($"{AdapterConfiguration.AdapterType}_CommandResultTotalL", $"", gaugeConfiguration);
-            adapterCounters.CommandResultAverageElapsedL = Metrics.CreateGauge($"{AdapterConfiguration.AdapterType}_CommandResultAverageElapsedL", $"",gaugeConfiguration);
+            adapterCounters.CommandResultPositiveL = Metrics.CreateGauge($"{metricAdapterType}_CommandResultPositiveL", $"", gaugeConfiguration);
+            adapterCounters.CommandResultFatalL = Metrics.CreateGauge($"{metricAdapterType}_CommandResultFatalL", $"",gaugeConfiguration);
+            adapterCounters.CommandResultTotalL = Metrics.CreateGauge($"{metricAdapterType}_CommandResultTotalL", $"", gaugeConfiguration);
+            adapterCounters.CommandResultAverageElapsedL = Metrics.CreateGauge($"{metricAdapterType}_CommandResultAverageElapsedL", $"",gaugeConfiguration);
 
             
-            adapterCounters.SyncCommandResultPositive = Metrics.CreateCounter($"{AdapterConfiguration.AdapterType}_SyncCommandResultPositive", $"",counterConfig );
-            adapterCounters.SyncCommandResultFatal = Metrics.CreateCounter($"{AdapterConfiguration.AdapterType}_SyncCommandResultFatal", $"", counterConfig);
-            adapterCounters.SyncCommandResultTotal = Metrics.CreateCounter($"{AdapterConfiguration.AdapterType}_SyncCommandResultTotal", $"", counterConfig);
+            adapterCounters.SyncCommandResultPositive = Metrics.CreateCounter($"{metricAdapterType}_SyncCommandResultPositive", $"",counterConfig );
+            adapterCounters.SyncCommandResultFatal = Metrics.CreateCounter($"{metricAdapterType}_SyncCommandResultFatal", $"", counterConfig);
+            adapterCounters.SyncCommandResultTotal = Metrics.CreateCounter($"{metricAdapterType}_SyncCommandResultTotal", $"", counterConfig);
             
-            adapterCounters.SyncCommandResultPositiveL = Metrics.CreateGauge($"{AdapterConfiguration.AdapterType}_SyncCommandResultPositiveL", $"", gaugeConfiguration);
-            adapterCounters.SyncCommandResultFatalL = Metrics.CreateGauge($"{AdapterConfiguration.AdapterType}_SyncCommandResultFatalL", $"",gaugeConfiguration);
-            adapterCounters.SyncCommandResultTotalL = Metrics.CreateGauge($"{AdapterConfiguration.AdapterType}_SyncCommandResultTotalL", $"", gaugeConfiguration);
-            adapterCounters.SyncCommandResultAverageElapsedL = Metrics.CreateGauge($"{AdapterConfiguration.AdapterType}_SyncCommandResultAverageElapsedL", $"",gaugeConfiguration);
+            adapterCounters.SyncCommandResultPositiveL = Metrics.CreateGauge($"{metricAdapterType}_SyncCommandResultPositiveL", $"", gaugeConfiguration);
+            adapterCounters.SyncCommandResultFatalL = Metrics.CreateGauge($"{metricAdapterType}_SyncCommandResultFatalL", $"",gaugeConfiguration);
+            adapterCounters.SyncCommandResultTotalL = Metrics.CreateGauge($"{metricAdapterType}_SyncCommandResultTotalL", $"", gaugeConfiguration);
+            adapterCounters.SyncCommandResultAverageElapsedL = Metrics.CreateGauge($"{metricAdapterType}_SyncCommandResultAverageElapsedL", $"",gaugeConfiguration);
 
             
-            adapterCounters.SharedCommandResultPositive = Metrics.CreateCounter($"{AdapterConfiguration.AdapterType}_SharedCommandResultPositive", $"",counterConfig );
-            adapterCounters.SharedCommandResultFatal = Metrics.CreateCounter($"{AdapterConfiguration.AdapterType}_SharedCommandResultFatal", $"", counterConfig);
-            adapterCounters.SharedCommandResultTotal = Metrics.CreateCounter($"{AdapterConfiguration.AdapterType}_SharedCommandResultTotal", $"", counterConfig);
+            adapterCounters.SharedCommandResultPositive = Metrics.CreateCounter($"{metricAdapterType}_SharedCommandResultPositive", $"",counterConfig );
+            adapterCounters.SharedCommandResultFatal = Metrics.CreateCounter($"{metricAdapterType}_SharedCommandResultFatal", $"", counterConfig);
+            adapterCounters.SharedCommandResultTotal = Metrics.CreateCounter($"{metricAdapterType}_SharedCommandResultTotal", $"", counterConfig);
             
-            adapterCounters.SharedCommandResultPositiveL = Metrics.CreateGauge($"{AdapterConfiguration.AdapterType}_SharedCommandResultPositiveL", $"", gaugeConfiguration);
-            adapterCounters.SharedCommandResultFatalL = Metrics.CreateGauge($"{AdapterConfiguration.AdapterType}_SharedCommandResultFatalL", $"",gaugeConfiguration);
-            adapterCounters.SharedCommandResultTotalL = Metrics.CreateGauge($"{AdapterConfiguration.AdapterType}_SharedCommandResultTotalL", $"", gaugeConfiguration);
-            adapterCounters.SharedCommandResultAverageElapsedL = Metrics.CreateGauge($"{AdapterConfiguration.AdapterType}_SharedCommandResultAverageElapsedL", $"",gaugeConfiguration);
+            adapterCounters.SharedCommandResultPositiveL = Metrics.CreateGauge($"{metricAdapterType}_SharedCommandResultPositiveL", $"", gaugeConfiguration);
+            adapterCounters.SharedCommandResultFatalL = Metrics.CreateGauge($"{metricAdapterType}_SharedCommandResultFatalL", $"",gaugeConfiguration);
+            adapterCounters.SharedCommandResultTotalL = Metrics.CreateGauge($"{metricAdapterType}_SharedCommandResultTotalL", $"", gaugeConfiguration);
+            adapterCounters.SharedCommandResultAverageElapsedL = Metrics.CreateGauge($"{metricAdapterType}_SharedCommandResultAverageElapsedL", $"",gaugeConfiguration);
 
             
             
             //events
-            adapterCounters.EventPositive = Metrics.CreateCounter($"{AdapterConfiguration.AdapterType}_EventPositive", $"", counterConfig );
-            adapterCounters.EventFatal = Metrics.CreateCounter($"{AdapterConfiguration.AdapterType}_EventFatal", $"", counterConfig);
-            adapterCounters.EventTotal = Metrics.CreateCounter($"{AdapterConfiguration.AdapterType}_EventTotal", $"", counterConfig);
+            adapterCounters.EventPositive = Metrics.CreateCounter($"{metricAdapterType}_EventPositive", $"", counterConfig );
+            adapterCounters.EventFatal = Metrics.CreateCounter($"{metricAdapterType}_EventFatal", $"", counterConfig);
+            adapterCounters.EventTotal = Metrics.CreateCounter($"{metricAdapterType}_EventTotal", $"", counterConfig);
             
-            adapterCounters.EventPositiveL = Metrics.CreateGauge($"{AdapterConfiguration.AdapterType}_EventPositiveL", $"", gaugeConfiguration);
-            adapterCounters.EventFatalL = Metrics.CreateGauge($"{AdapterConfiguration.AdapterType}_EventFatalL", $"", gaugeConfiguration);
-            adapterCounters.EventTotalL = Metrics.CreateGauge($"{AdapterConfiguration.AdapterType}_EventTotalL", $"", gaugeConfiguration);
-            adapterCounters.EventAverageElapsedL = Metrics.CreateGauge($"{AdapterConfiguration.AdapterType}_EventAverageElapsedL", $"",gaugeConfiguration);
+            adapterCounters.EventPositiveL = Metrics.CreateGauge($"{metricAdapterType}_EventPositiveL", $"", gaugeConfiguration);
+            adapterCounters.EventFatalL = Metrics.CreateGauge($"{metricAdapterType}_EventFatalL", $"", gaugeConfiguration);
+            adapterCounters.EventTotalL = Metrics.CreateGauge($"{metricAdapterType}_EventTotalL", $"", gaugeConfiguration);
+            adapterCounters.EventAverageElapsedL = Metrics.CreateGauge($"{metricAdapterType}_EventAverageElapsedL", $"",gaugeConfiguration);
             
             
             timer = new Timer(TimerRoutine, null, Interval, Interval);
