@@ -38,7 +38,10 @@ namespace SAL.API
             object commandBody,
             string correlationId = null,
             CommandPriority priority = CommandPriority.Normal,
-            TimeSpan? ttl = null);
+            TimeSpan? ttl = null,
+            string handlerAdapterType = null, 
+            string handlerAdapterName = null
+            );
         
         
         Task<SimpleCommandResult> ExecuteCommandAsync(            

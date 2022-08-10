@@ -132,18 +132,21 @@ namespace SAL.Core.Client
             await LoPublishAsync(commandContext, commandBody);
         }
 
-        public async Task<string> PublishCommandWithSharedResultHandlerAsync(string commandName, object commandBody, string correlationId = null, CommandPriority priority = CommandPriority.Normal, TimeSpan? ttl = null)
+        public async Task<string> PublishCommandWithSharedResultHandlerAsync(string commandName, object commandBody, string correlationId = null, CommandPriority priority = CommandPriority.Normal, TimeSpan? ttl = null,string handlerAdapterType = null, string handlerAdapterName = null)
         {
             if (string.IsNullOrWhiteSpace(correlationId))
                 correlationId = Guid.NewGuid().ToString("N");
 
             var commandExchangeName = ExchangeNames.CommandExchange;
-            var resultExchangeName = $"{AdapterConfiguration.AdapterType}:CommandResultExchange";
-
             var commandRoutingKey = commandName;
+            if (!string.IsNullOrWhiteSpace(handlerAdapterType))
+            {
+                commandRoutingKey = $"{handlerAdapterType}@{handlerAdapterName}";
+            }
+            
+            
+            var resultExchangeName = $"{AdapterConfiguration.AdapterType}:CommandResultExchange";
             var resultRoutingKey = $"@{AdapterConfiguration.AdapterName}";
-
-
             
             var commandContext = new CommandContext
             {
