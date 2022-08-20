@@ -52,7 +52,8 @@ namespace SAL.Core.Client
             string handlerAdapterType = null,
             string handlerAdapterName = null,
             string resultAdapterType = null,
-            string resultAdapterName = null)
+            string resultAdapterName = null,
+            JObject meta = null)
         {
             if (string.IsNullOrWhiteSpace(correlationId))
                 correlationId = Guid.NewGuid().ToString("N");
@@ -90,7 +91,8 @@ namespace SAL.Core.Client
                     PublishTimeStamp = DateTime.UtcNow,
                     TTL = ttl,
                     Contour = Contour.ToString()
-                }
+                },
+                Meta = meta.Clone()
             };
             await LoPublishAsync(commandContext, commandBody);
             return correlationId;
@@ -132,7 +134,15 @@ namespace SAL.Core.Client
             await LoPublishAsync(commandContext, commandBody);
         }
 
-        public async Task<string> PublishCommandWithSharedResultHandlerAsync(string commandName, object commandBody, string correlationId = null, CommandPriority priority = CommandPriority.Normal, TimeSpan? ttl = null,string handlerAdapterType = null, string handlerAdapterName = null)
+        public async Task<string> PublishCommandWithSharedResultHandlerAsync(
+            string commandName, 
+            object commandBody, 
+            string correlationId = null, 
+            CommandPriority priority = CommandPriority.Normal, 
+            TimeSpan? ttl = null,
+            string handlerAdapterType = null, 
+            string handlerAdapterName = null,
+            JObject meta = null)
         {
             if (string.IsNullOrWhiteSpace(correlationId))
                 correlationId = Guid.NewGuid().ToString("N");
@@ -165,7 +175,8 @@ namespace SAL.Core.Client
                     PublishTimeStamp = DateTime.UtcNow,
                     TTL = ttl,
                     Contour = Contour.ToString()
-                }
+                },
+                Meta = meta.Clone()
             };
             await LoPublishAsync(commandContext, commandBody);
             return correlationId;
@@ -412,7 +423,8 @@ namespace SAL.Core.Client
             string commandExchangeName,
             string commandRoutingKey,
             string resultExchangeName,
-            string resultRoutingKey)
+            string resultRoutingKey,
+            JObject meta)
         {
             if (string.IsNullOrWhiteSpace(commandExchangeName))
                 throw new ArgumentNullException(nameof(commandExchangeName));
@@ -434,7 +446,8 @@ namespace SAL.Core.Client
                     PublishTimeStamp = DateTime.UtcNow,
                     TTL = ttl,
                     Contour = Contour.ToString()
-                }
+                },
+                Meta = meta.Clone()
             };
             return LoPublishAsync(commandContext, commandBody);
         }
@@ -535,7 +548,8 @@ namespace SAL.Core.Client
                     HandlerAdapterType = AdapterConfiguration.AdapterType,
                     HandlerAdapterName = AdapterConfiguration.AdapterName,
                     Contour = Contour.ToString()
-                }
+                },
+                Meta = commandContext.Meta.Clone()
             };
             return LoPublishAsync(commandResultContext, result);
         }

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Threading.Tasks;
+using Newtonsoft.Json.Linq;
 using SAL.Infrastructure;
 
 namespace SAL.API
@@ -22,7 +23,8 @@ namespace SAL.API
             string handlerAdapterType = null,
             string handlerAdapterName = null,
             string resultAdapterType = null,
-            string resultAdapterName = null);
+            string resultAdapterName = null,
+            JObject meta = null);
         
         Task PublishCommandFafAsync(
             string commandName,
@@ -40,8 +42,8 @@ namespace SAL.API
             CommandPriority priority = CommandPriority.Normal,
             TimeSpan? ttl = null,
             string handlerAdapterType = null, 
-            string handlerAdapterName = null
-            );
+            string handlerAdapterName = null,
+            JObject meta = null);
         
         
         Task<SimpleCommandResult> ExecuteCommandAsync(            

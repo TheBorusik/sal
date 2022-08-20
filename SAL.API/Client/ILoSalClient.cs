@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Threading.Tasks;
+using Newtonsoft.Json.Linq;
 
 namespace SAL.API
 {
@@ -7,7 +8,7 @@ namespace SAL.API
     {
 
         (string, string) GetRouteForCommonSharedResult();
-        
+
         Task LoPublishCommandAsync(
             string commandName,
             object commandBody,
@@ -17,7 +18,22 @@ namespace SAL.API
             string commandExchangeName,
             string commandRoutingKey,
             string resultExchangeName,
-            string resultRoutingKey);
+            string resultRoutingKey)
+        {
+            return LoPublishCommandAsync(commandName, commandBody, correlationId, priority, ttl, commandExchangeName, commandRoutingKey, resultExchangeName, resultRoutingKey, default(JObject));
+        }
+
+        Task LoPublishCommandAsync(
+            string commandName,
+            object commandBody,
+            string correlationId,
+            CommandPriority priority,
+            TimeSpan? ttl,
+            string commandExchangeName,
+            string commandRoutingKey,
+            string resultExchangeName,
+            string resultRoutingKey,
+            JObject meta);
 
         Task<SimpleCommandResult> LoExecuteCommandAsync(
             string commandName,
