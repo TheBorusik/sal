@@ -14,7 +14,7 @@
 
     public class CommonSharedCommandResultConfig
     {
-        public bool AutoAck { get; set; } = false;
-        public ushort PrefetchCount { get; set; } = 0;
+        public ushort PersonalPrefetchCount { get; set; } = 0;
+        public ushort SharedPrefetchCount { get; set; } = 10;
     }
 }

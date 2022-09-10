@@ -410,7 +410,7 @@ namespace SAL.Core.Rabbit
             queueList.Add(new QueueInfo
             {
                 QueueName = queueName,
-                PrefetchCount = 1
+                PrefetchCount = config.PersonalPrefetchCount
             });
             transport.AddQueue(new Queue
             {
@@ -440,7 +440,7 @@ namespace SAL.Core.Rabbit
             queueList.Add(new QueueInfo
             {
                 QueueName = queueName,
-                PrefetchCount = config.PrefetchCount
+                PrefetchCount = config.SharedPrefetchCount
             });
             transport.AddQueue(new Queue
             {
