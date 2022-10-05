@@ -1,6 +1,7 @@
 ﻿using System;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
+using Newtonsoft.Json.Linq;
 using Newtonsoft.Json.Serialization;
 using NLog;
 using NLog.Layouts;
@@ -19,34 +20,13 @@ namespace SAL.Core.NLogEx.Layout
         public string AdapterVersion { get; set; }
         public int SalVersion { get; set; }
         public Contour AdatpterContour { get; set; }
-        public string HandlerType { get; set; }
-        public string HandlerName { get; set; }
-        public string SessionId { get; set; }
-        
-        public string CorrelationId { get; set; } 
-        
-        public long? AuthId { get; set; }
-        public long? ProcessId { get; set; }
-        public string OperationId { get; set; } 
         public string Level { get; set; }
         public string Logger { get; set; }
         public string Message { get; set; }
         public LogExceptionDTO Exception { get; set; }
     }
 
-    public class LogEventInfoProperty
-    {
-        public string Name { get; set; }
-        public object Value { get; set; }
-
-        public LogEventInfoProperty(string name, object value)
-        {
-            Name = name;
-            Value = value;
-        }
-    }
-
-
+    
     [Layout("SalJsonLayout")]
     public class SalJsonLayout : NLog.Layouts.Layout
     {
@@ -78,14 +58,6 @@ namespace SAL.Core.NLogEx.Layout
                 AdapterVersion = AdapterConfiguration.AdapterVersion,
                 SalVersion = AdapterConfiguration.SalVersion,
                 AdatpterContour = AdapterConfiguration.AdapterContour,
-                HandlerType = HandlerContext.HandlerType.ToString(),
-                HandlerName = HandlerContext.HandlerName,
-                SessionId = HandlerContext.SessionId,
-                CorrelationId = HandlerContext.CorrelationId,
-                AuthId = HandlerContext.AuthId,
-                ProcessId = HandlerContext.ProcessId,
-                OperationId = HandlerContext.OperationId,
-                
                 Level = logEvent.Level.Name,
                 Logger = logEvent.LoggerName,
                 Message = logEvent.FormattedMessage.MaskSecretData(),
@@ -94,8 +66,11 @@ namespace SAL.Core.NLogEx.Layout
             if (logEvent.Exception != null)
                 salLogEvent.Exception = logEvent.Exception.ToLogDto();
 
-            
-            return JsonConvert.SerializeObject(salLogEvent, jSettings);
+            var jData = JObject.FromObject(salLogEvent);
+            jData.Merge(HandlerContext.GetData());
+
+
+            return JsonConvert.SerializeObject(jData, jSettings);
         }
 
 

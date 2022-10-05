@@ -527,7 +527,7 @@ namespace SAL.Core.Processors
             {
                 foreach(var rchi in resultCommandHandlersInfo)
                 {
-                    HandlerContext.Update(handlerName: rchi.HandlerType.Name);
+                    HandlerContext.UpdateHandlerName(rchi.HandlerType.Name);
                     isHandled = await ExecuteResultHandlerAsync(scope, rchi, commandResultPayload.Payload, context,
                         executingContext);
                     salLogger.LogHandler(commandResultPayload, rchi.HandlerType.Name, isHandled);
@@ -541,7 +541,7 @@ namespace SAL.Core.Processors
                 var node = anyResultHandlers.First;
                 while (node != null && isHandled == false)
                 {
-                    HandlerContext.Update(handlerName: node.Value.HandlerType.Name);
+                    HandlerContext.UpdateHandlerName(node.Value.HandlerType.Name);
                     isHandled = await ExecuteResultHandlerAsync(scope, node.Value, commandResultPayload.Payload,
                         context, executingContext);
                     salLogger.LogHandler(commandResultPayload, node.Value.HandlerType.Name, isHandled);
@@ -552,7 +552,7 @@ namespace SAL.Core.Processors
 
             if (!isHandled)
             {
-                HandlerContext.Update(handlerName: commandResultPayload.Context.Descriptor.CommandName);
+                HandlerContext.UpdateHandlerName(commandResultPayload.Context.Descriptor.CommandName);
                 throw SalError.CreateException(SalErrorCodes.NotHandledCommandResult);
             }
         }

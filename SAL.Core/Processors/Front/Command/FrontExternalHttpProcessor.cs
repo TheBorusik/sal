@@ -306,7 +306,7 @@ namespace SAL.Core.Processors
 
             if (handlers.TryGetValue(externalHttpRequest.BasePath.ToLower(), out var commandHandlerInfo))
             {
-                HandlerContext.Update(handlerName: commandHandlerInfo.HandlerType.Name);
+                HandlerContext.UpdateHandlerName(commandHandlerInfo.HandlerType.Name);
                 salLogger.LogHandler(commandPayload, commandHandlerInfo.HandlerType.Name);
 
                 using var scope = container.BeginLifetimeScope();

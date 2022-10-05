@@ -76,7 +76,7 @@ namespace SAL.Core.Client
             
             var commandContext = new CommandContext
             {
-                ContextInfo = new ContextInfo(HandlerContext.SessionId, HandlerContext.AuthId, HandlerContext.ProcessId, HandlerContext.OperationId),
+                ContextInfo = HandlerContext.MakeContextInfo(),// new ContextInfo(HandlerContext.SessionId, HandlerContext.AuthId, HandlerContext.ProcessId, HandlerContext.OperationId),
                 Descriptor = new CommandDescriptor
                 {
                     CorrelationId = correlationId,
@@ -114,7 +114,7 @@ namespace SAL.Core.Client
             
             var commandContext = new CommandContext
             {
-                ContextInfo = new ContextInfo(HandlerContext.SessionId, HandlerContext.AuthId, HandlerContext.ProcessId, HandlerContext.OperationId),
+                ContextInfo = HandlerContext.MakeContextInfo(), //new ContextInfo(HandlerContext.SessionId, HandlerContext.AuthId, HandlerContext.ProcessId, HandlerContext.OperationId),
                 Descriptor = new CommandDescriptor
                 {
                     CorrelationId = correlationId,
@@ -160,7 +160,7 @@ namespace SAL.Core.Client
             
             var commandContext = new CommandContext
             {
-                ContextInfo = new ContextInfo(HandlerContext.SessionId, HandlerContext.AuthId, HandlerContext.ProcessId, HandlerContext.OperationId),
+                ContextInfo = HandlerContext.MakeContextInfo(), //new ContextInfo(HandlerContext.SessionId, HandlerContext.AuthId, HandlerContext.ProcessId, HandlerContext.OperationId),
                 Descriptor = new CommandDescriptor
                 {
                     CorrelationId = correlationId,
@@ -209,7 +209,7 @@ namespace SAL.Core.Client
             
             var commandContext = new CommandContext
             {
-                ContextInfo = new ContextInfo(HandlerContext.SessionId, HandlerContext.AuthId, HandlerContext.ProcessId, HandlerContext.OperationId),
+                ContextInfo = HandlerContext.MakeContextInfo(), //new ContextInfo(HandlerContext.SessionId, HandlerContext.AuthId, HandlerContext.ProcessId, HandlerContext.OperationId),
                 Descriptor = new CommandDescriptor
                 {
                     CorrelationId = correlationId,
@@ -316,7 +316,7 @@ namespace SAL.Core.Client
             }
             var eventContext = new EventContext
             {
-                ContextInfo = new ContextInfo(HandlerContext.SessionId, HandlerContext.AuthId, HandlerContext.ProcessId, HandlerContext.OperationId),
+                ContextInfo = HandlerContext.MakeContextInfo(), //new ContextInfo(HandlerContext.SessionId, HandlerContext.AuthId, HandlerContext.ProcessId, HandlerContext.OperationId),
                 Descriptor = new EventDescriptor
                 {
                     CorrelationId = correlationId,
@@ -431,7 +431,7 @@ namespace SAL.Core.Client
 
             var commandContext = new CommandContext
             {
-                ContextInfo = new ContextInfo(HandlerContext.SessionId, HandlerContext.AuthId, HandlerContext.ProcessId, HandlerContext.OperationId),
+                ContextInfo = HandlerContext.MakeContextInfo(), //new ContextInfo(HandlerContext.SessionId, HandlerContext.AuthId, HandlerContext.ProcessId, HandlerContext.OperationId),
                 Descriptor = new CommandDescriptor
                 {
                     CorrelationId = correlationId,
@@ -473,7 +473,7 @@ namespace SAL.Core.Client
 
             var commandContext = new CommandContext
             {
-                ContextInfo = new ContextInfo(HandlerContext.SessionId, HandlerContext.AuthId, HandlerContext.ProcessId, HandlerContext.OperationId),
+                ContextInfo = HandlerContext.MakeContextInfo(), //new ContextInfo(HandlerContext.SessionId, HandlerContext.AuthId, HandlerContext.ProcessId, HandlerContext.OperationId),
                 Descriptor = new CommandDescriptor
                 {
                     CorrelationId = correlationId,
@@ -508,7 +508,7 @@ namespace SAL.Core.Client
 
             var eventContext = new EventContext
             {
-                ContextInfo = new ContextInfo(HandlerContext.SessionId, HandlerContext.AuthId, HandlerContext.ProcessId, HandlerContext.OperationId),
+                ContextInfo = HandlerContext.MakeContextInfo(), //new ContextInfo(HandlerContext.SessionId, HandlerContext.AuthId, HandlerContext.ProcessId, HandlerContext.OperationId),
                 Descriptor = new EventDescriptor
                 {
                     CorrelationId = correlationId,
@@ -542,7 +542,7 @@ namespace SAL.Core.Client
         {
             var commandResultContext = new CommandResultContext
             {
-                ContextInfo = commandContext.ContextInfo with { },
+                ContextInfo = commandContext.ContextInfo.Clone(),
                 Descriptor = new CommandResultDescriptor(commandContext.Descriptor)
                 {
                     HandlerAdapterType = AdapterConfiguration.AdapterType,

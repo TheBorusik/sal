@@ -563,7 +563,7 @@ namespace SAL.Core.Processors
 
             if (wfmResultHandler.TryGetValue(wfmResultHandlerName, out var wfmResultHandlerInfo))
             {
-                HandlerContext.Update(handlerName: wfmResultHandlerInfo.HandlerName);
+                HandlerContext.UpdateHandlerName(wfmResultHandlerInfo.HandlerName);
                 salLogger.LogHandler(commandPayload, wfmResultHandlerInfo.HandlerName);
 
                 using var scope = container.BeginLifetimeScope();

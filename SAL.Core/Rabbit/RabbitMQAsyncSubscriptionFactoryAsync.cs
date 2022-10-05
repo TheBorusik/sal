@@ -415,7 +415,7 @@ namespace SAL.Core.Rabbit
             transport.AddQueue(new Queue
             {
                 Name = queueName,
-                AutoDelete = true,
+                AutoDelete = false,
                 MaxPriority = 9,
                 Exclusive = true,
                 HasDeadLetter = true,

@@ -424,7 +424,7 @@ namespace SAL.Core.Processors
 
             if (commandHandlers.TryGetValue(commandPayload.Context.Descriptor.CommandName, out var commandHandlerInfo))
             {
-                HandlerContext.Update(handlerName: commandHandlerInfo.HandlerType.Name);
+                HandlerContext.UpdateHandlerName(handlerName: commandHandlerInfo.HandlerType.Name);
                 salLogger.LogHandler(commandPayload, commandHandlerInfo.HandlerType.Name);
 
                 using var scope = container.BeginLifetimeScope();
