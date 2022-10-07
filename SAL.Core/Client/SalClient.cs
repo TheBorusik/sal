@@ -556,6 +556,12 @@ namespace SAL.Core.Client
 
         public Task LoPublishAsync(CommandContext commandContext, object commandBody)
         {
+            if (commandContext != null)
+                throw new ArgumentNullException(nameof(commandContext));
+            if (commandBody != null)
+                throw new ArgumentNullException(nameof(commandBody));
+
+            
             var commandPayload = new CommandPayload
             {
                 Context = commandContext,
@@ -569,6 +575,12 @@ namespace SAL.Core.Client
 
         public Task LoPublishAsync(CommandResultContext commandResultContext, CommonCommandResult result)
         {
+            if (commandResultContext != null)
+                throw new ArgumentNullException(nameof(commandResultContext));
+            if (result != null)
+                throw new ArgumentNullException(nameof(result));
+
+
             TimeSpan? ttl = null;
             ttl = commandResultContext.Descriptor.PublishTimeStamp + commandResultContext.Descriptor.TTL - DateTime.UtcNow;
 
@@ -578,6 +590,8 @@ namespace SAL.Core.Client
                 if (commandResultContext.Descriptor.HandlerTimeStamp.HasValue)
                     commandResultContext.Descriptor.HandlerDuration = commandResultContext.Descriptor.PublishResultTimeStamp.Value - commandResultContext.Descriptor.HandlerTimeStamp.Value;
 
+
+                
                 var commandResultPayload = new CommandResultPayload
                 {
                     Context = commandResultContext,
@@ -598,6 +612,11 @@ namespace SAL.Core.Client
 
         public Task LoPublishAsync(EventContext eventContext, object eventBody)
         {
+            if (eventContext != null)
+                throw new ArgumentNullException(nameof(eventContext));
+            if (eventBody != null)
+                throw new ArgumentNullException(nameof(eventBody));
+            
             var eventPayload = new EventPayload()
             {
                 Context = eventContext,
