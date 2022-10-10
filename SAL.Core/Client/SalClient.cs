@@ -556,9 +556,9 @@ namespace SAL.Core.Client
 
         public Task LoPublishAsync(CommandContext commandContext, object commandBody)
         {
-            if (commandContext != null)
+            if (commandContext == null)
                 throw new ArgumentNullException(nameof(commandContext));
-            if (commandBody != null)
+            if (commandBody == null)
                 throw new ArgumentNullException(nameof(commandBody));
 
             
@@ -575,9 +575,9 @@ namespace SAL.Core.Client
 
         public Task LoPublishAsync(CommandResultContext commandResultContext, CommonCommandResult result)
         {
-            if (commandResultContext != null)
+            if (commandResultContext == null)
                 throw new ArgumentNullException(nameof(commandResultContext));
-            if (result != null)
+            if (result == null)
                 throw new ArgumentNullException(nameof(result));
 
 
@@ -612,9 +612,9 @@ namespace SAL.Core.Client
 
         public Task LoPublishAsync(EventContext eventContext, object eventBody)
         {
-            if (eventContext != null)
+            if (eventContext == null)
                 throw new ArgumentNullException(nameof(eventContext));
-            if (eventBody != null)
+            if (eventBody == null)
                 throw new ArgumentNullException(nameof(eventBody));
             
             var eventPayload = new EventPayload()
