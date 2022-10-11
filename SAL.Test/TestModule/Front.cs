@@ -79,6 +79,8 @@ namespace SAL.Test.Front
 
         public override async Task Handle(Nothing command)
         {
+            logger.Info(HandlerContext.GetData().ToIndentedJson());
+            
             await PublishResult(new CommandResult
             {
                 Id = 1,

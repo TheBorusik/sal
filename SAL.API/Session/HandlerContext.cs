@@ -101,7 +101,9 @@ namespace SAL.API
             if (contextInfo == null)
                 return;
 
-            data.Value.Merge(contextInfo);
+            var filteredContextInfo = contextInfo.Clone();
+            ValuesFilter(filteredContextInfo);
+            data.Value.Merge(filteredContextInfo);
         }
 
         public static void Update(HandlerTypes handlerType = HandlerTypes.Unknown, string handlerName = "")
@@ -159,8 +161,8 @@ namespace SAL.API
 
         public static string HandlerName => GetSafeValue("HandlerName", "");
         public static string HandlerType => GetSafeValue("HandlerType", "Unknown");
-        public static string SessionId => GetSafeValue("SessionId", "");
         public static string CorrelationId => GetSafeValue("CorrelationId", "");
+        public static string SessionId => GetSafeValue("SessionId", "");
         public static long? ProcessId => GetSafeValue<long?>("ProcessId", null);
         public static long? AuthId => GetSafeValue<long?>("AuthId", null);
         public static string OperationId => GetSafeValue("OperationId", "");
@@ -171,8 +173,7 @@ namespace SAL.API
                 return new JObject();
 
             var res = data.Value.Clone();
-            res.Remove("HandlerName");
-            res.Remove("HandlerType");
+            ValuesFilter(res);
             return res;
         }
 
@@ -181,6 +182,13 @@ namespace SAL.API
             if (data.Value == null)
                 return new JObject();
             return data.Value.Clone();
+        }
+
+        private static void ValuesFilter(JObject obj)
+        {
+            obj.Remove("HandlerName");
+            obj.Remove("HandlerType");
+            obj.Remove("CorrelationId");
         }
     }
 }
