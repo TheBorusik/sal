@@ -167,7 +167,7 @@ namespace SAL.API
 
         public static JObject MakeContextInfo()
         {
-            if (data.Value != null)
+            if (data.Value == null)
                 return new JObject();
 
             var res = data.Value.Clone();
@@ -178,7 +178,7 @@ namespace SAL.API
 
         public static JObject GetData()
         {
-            if (data.Value != null)
+            if (data.Value == null)
                 return new JObject();
             return data.Value.Clone();
         }

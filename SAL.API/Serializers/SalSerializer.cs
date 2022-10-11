@@ -1,4 +1,5 @@
 using System;
+using System.Security.Cryptography.X509Certificates;
 using Newtonsoft.Json;
 
 namespace SAL.API
@@ -6,9 +7,10 @@ namespace SAL.API
     public static class SalSerializer 
 	{
 		private static readonly SalJsonSerializerSettings sal = new SalJsonSerializerSettings();
+		public static JsonSerializerSettings JsonSerializerSettings => sal.SerializerSettings;
+		public static JsonSerializer JsonSerializer { get; } = JsonSerializer.Create(JsonSerializerSettings);
 
-
-        public static string Serialize(object obj)
+		public static string Serialize(object obj)
 		{
 			return JsonConvert.SerializeObject(obj, sal.SerializerSettings);
 		}

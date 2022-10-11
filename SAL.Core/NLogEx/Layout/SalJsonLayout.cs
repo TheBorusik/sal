@@ -66,11 +66,15 @@ namespace SAL.Core.NLogEx.Layout
             if (logEvent.Exception != null)
                 salLogEvent.Exception = logEvent.Exception.ToLogDto();
 
-            var jData = JObject.FromObject(salLogEvent);
-            jData.Merge(HandlerContext.GetData());
+
+            var jData = JObject.FromObject(salLogEvent, SalSerializer.JsonSerializer);
+            var handlerData = HandlerContext.GetData();
+
+            jData.Merge(handlerData);
 
 
-            return JsonConvert.SerializeObject(jData, jSettings);
+            var a = JsonConvert.SerializeObject(jData,  Formatting.None, jSettings);
+            return a;
         }
 
 
