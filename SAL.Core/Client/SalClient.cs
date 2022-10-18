@@ -542,7 +542,7 @@ namespace SAL.Core.Client
         {
             var commandResultContext = new CommandResultContext
             {
-                ContextInfo = commandContext.ContextInfo.Clone(),
+                ContextInfo = HandlerContext.MakeContextInfo(),
                 Descriptor = new CommandResultDescriptor(commandContext.Descriptor)
                 {
                     HandlerAdapterType = AdapterConfiguration.AdapterType,
