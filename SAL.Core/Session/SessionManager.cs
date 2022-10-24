@@ -10,10 +10,9 @@ namespace SAL.Core.Session
 {
     public class SessionManager : ISessionManager
     {
-        
         protected ILogger logger;
         protected ConnectionMultiplexer redis;
-        
+
         public SessionManager(ILoggerProvider loggerProvider, IConfigWatcher configWatcher)
         {
             logger = loggerProvider.CreateLogger("SessionManager");
@@ -60,10 +59,9 @@ namespace SAL.Core.Session
                 logger.Fatal("нет соединения с редисом", e);
                 redis = null;
             }
-
-            
         }
 
+        [Obsolete]
         public API.Session GetCurrent()
         {
             if (redis == null)
@@ -76,7 +74,7 @@ namespace SAL.Core.Session
                     data = new JObject()
                 };
             }
-            
+
             var sessionId = HandlerContext.SessionId;
             if (!string.IsNullOrWhiteSpace(sessionId))
             {
@@ -96,15 +94,14 @@ namespace SAL.Core.Session
                             IsChanged = false,
                             data = sessioinData
                         };
-
                     }
                     catch (Exception ex)
                     {
-                        logger.Error("SessionDataError",ex);
+                        logger.Error("SessionDataError", ex);
                     }
                 }
             }
-            
+
 
             return new API.Session(this)
             {
@@ -113,45 +110,101 @@ namespace SAL.Core.Session
                 IsLocal = true,
                 data = new JObject()
             };
-            
         }
-        
-        
+
+
         public void Update(API.Session session)
         {
-            if(session.IsLocal)
+            if(session.IsChanged)
                 return;
+            
+            if (redis == null)
+                throw SalError.CreateFatalException(SalErrorMessages.RedisNotConfigured);
+
             var db = redis.GetDatabase();
-            if (db.KeyExists(session.SessionId))
-            {
-                var ttl = db.KeyTimeToLive(session.SessionId);
-                db.StringSet(session.SessionId, session.data.ToJson(), ttl);
-                session.IsChanged = false;
-            }
+            
+            if (!db.KeyExists(session.SessionId))
+                throw SalError.CreateFatalException(SalErrorMessages.SessionNotFound);
+            
+            var ttl = db.KeyTimeToLive(session.SessionId);
+            db.StringSet(session.SessionId, session.data.ToJson(), ttl);
+            session.IsChanged = false;
         }
 
         public void Refresh(API.Session session)
         {
-            if(session.IsLocal)
-                return;
+            if (redis == null)
+                throw SalError.CreateFatalException(SalErrorMessages.RedisNotConfigured);
+            
             var db = redis.GetDatabase();
-            if (db.KeyExists(session.SessionId))
+            
+            if (!db.KeyExists(session.SessionId))
+                throw SalError.CreateFatalException(SalErrorMessages.SessionNotFound); 
+            
+            var sessionData = db.StringGet(session.SessionId);
+            session.data = JObject.Parse(sessionData);
+            session.IsChanged = false;
+        }
+
+        public bool TryGetCurrentSession(out API.Session session)
+        {
+            session = null;
+            try
             {
+                if (redis == null)
+                    return false;
 
-                var sessionData = db.StringGet(session.SessionId);
-                try
+                var sessionId = HandlerContext.SessionId;
+                if (!string.IsNullOrWhiteSpace(sessionId))
                 {
-                    session.data = JObject.Parse(sessionData);
-                    session.IsChanged = false;
-                }
-                catch (Exception ex)
-                {
-                    logger.Error("SessionDataError",ex);
-                }
+                    var db = redis.GetDatabase();
+                    if (db.KeyExists(sessionId))
+                    {
+                        var sessionData = db.StringGet(sessionId);
+                        session = new API.Session(this)
+                        {
+                            SessionId = sessionId,
+                            IsChanged = false,
+                            data = JObject.Parse(sessionData)
+                        };
+                        return true;
+                    }
 
+                    logger.Warning($"Session Not Found '{sessionId}'");
+                    return false;
+                }
+                logger.Warning($"HandlerContext.SessionId Is Null Or White Space");
             }
+            catch (Exception ex)
+            {
+                logger.Error("Error TryGetCurrent :", ex);
+            }
+
+            return false;
+        }
+
+        public API.Session GetCurrentSession()
+        {
+            var sessionId = HandlerContext.SessionId;
+            if (string.IsNullOrWhiteSpace(sessionId))
+                throw SalError.CreateFatalException(SalErrorMessages.SessionIdNotSet);
+
+            if (redis == null)
+                throw SalError.CreateFatalException(SalErrorMessages.RedisNotConfigured);
+
+            var db = redis.GetDatabase();
+            if (!db.KeyExists(sessionId))
+                throw SalError.CreateFatalException(SalErrorMessages.SessionNotFound);
+
+            var sessionData = db.StringGet(sessionId);
+
+            return new API.Session(this)
+            {
+                SessionId = sessionId,
+                IsChanged = false,
+                data = JObject.Parse(sessionData)
+            };
         }
     }
-
-
 }
+

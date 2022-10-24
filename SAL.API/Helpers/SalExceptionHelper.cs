@@ -215,5 +215,12 @@ namespace SAL.API
             return dto.ToException();
         }
         
+        public static Exception CreateFatalException(string message,  object properties = null)
+        {
+            return CreateDto(SalErrorCodes.Fatal, message, properties).ToException();
+        }
+        
+        
+        
     }
 }

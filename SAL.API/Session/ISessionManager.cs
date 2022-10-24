@@ -1,13 +1,21 @@
-﻿using Newtonsoft.Json.Linq;
+﻿using System;
+using Newtonsoft.Json.Linq;
 
 namespace SAL.API
 {
     public interface ISessionManager
     {
+        [Obsolete("Use TryGetCurrentSession or GetCurrentSession")]
         Session GetCurrent();
 
         void Update(API.Session session);
         void Refresh(API.Session session);
+
+
+        bool TryGetCurrentSession(out Session session);
+
+        Session GetCurrentSession();
+
 
 
 
@@ -15,11 +23,14 @@ namespace SAL.API
     
     public class Session 
     {
+        [Obsolete("Dont Use this Field")]
         public bool IsLocal { get; internal set; }
         public bool IsChanged { get; internal set; }
         
         public string SessionId { get; internal set; }
+        [Obsolete("Use HandlerContext.AuthId")]
         public long? AuthId { get; internal set; }
+        [Obsolete("Use HandlerContext.ProcessId")]
         public long? ProcessId { get; internal set; }
 
         internal JObject data;
@@ -28,6 +39,7 @@ namespace SAL.API
         internal Session(ISessionManager manager)
         {
             this.manager = manager;
+            
         }
 
 
@@ -76,10 +88,5 @@ namespace SAL.API
             manager.Refresh(this);
 
         }
-
-
-
-
-
     }
 }

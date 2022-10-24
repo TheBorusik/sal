@@ -18,11 +18,22 @@
         public const string NotFound = "NotFound";
         public const string NotSuccess = "NotSuccess";
         
+        
+
+        
         public const string NotImplemented = " NotImplemented";
         public const string NotHandledCommand = "NotHandledCommand";
         public const string NotHandledEvent = "NotHandledEvent";
         public const string UnknownResultCode = "UnknownResultCode";
         public const string Obsolete = "Obsolete";
         public const string NotError = "NotError";
+    }
+
+
+    public static partial class SalErrorMessages
+    {
+        public const string RedisNotConfigured = "Redis Not Configured";
+        public const string SessionIdNotSet = "SessionId Not Set";
+        public const string SessionNotFound = "Session Not Found";
     }
 }
