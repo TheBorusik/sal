@@ -46,10 +46,11 @@ namespace SAL.Test.Front
         public void Online()
         {
             using var scope = lifetimeScope.BeginLifetimeScope();
-            
-            var client = scope.Resolve<ISalClient>();
-            client.PublishEventAsync("System.WhoIsWhoEvent", new { });
 
+            var s3s = scope.Resolve<IS3Store>();
+
+            var b = s3s.IsFilePresent("011c421b06d54e019355fc4e29c1ad07").Result;
+            b = s3s.IsFilePresent("1234").Result;
             //     client.PublishCommandWithSharedResultHandlerAsync("SalTester.TestCommand", new { });
             //     client.PublishCommandWithSharedResultHandlerAsync("SalTester.TestCommand", new { });
 

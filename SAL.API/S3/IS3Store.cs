@@ -8,5 +8,7 @@ namespace SAL.API
         Task DownloadFileAsync(string fileId, string filePath, long? byteLimit = null);
         Task DeleteFileAsync(string fileId);
         Task<bool> CheckSizeLimitAsync(string fileId, long byteLimit);
+
+        Task<bool> IsFilePresent(string fileId);
     }
 }

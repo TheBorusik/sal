@@ -100,5 +100,25 @@ namespace SAL.Core.S3
         {
             return CheckSizeLimitAsync(CreateClient(), fileId, byteLimit);
         }
+
+        public async Task<bool> IsFilePresent(string fileId)
+        {
+            if (config == null)
+                throw new SalNotConfiguredException(sectionName);
+
+            var s3Client = CreateClient();
+
+            try
+            {
+                var fileMetaData = await s3Client.GetObjectMetadataAsync(config.BucketName, fileId);
+                return true;
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+            
+            return false;
+        }
     }
 }
