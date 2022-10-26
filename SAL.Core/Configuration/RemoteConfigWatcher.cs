@@ -103,14 +103,15 @@ namespace SAL.Core.Configuration
 
             Console.WriteLine("Connected to configurationBus");
             Console.WriteLine($"Geting AdapterName for type {AdapterConfiguration.AdapterType}");
-            baseServiceSection.AdapterName = GetAdapterName(e => throw new ConfigurationErrorException(e.Code)).Result;
+            var result = GetAdapterName(e => throw new ConfigurationErrorException(e.Code)).Result;
+            baseServiceSection.AdapterName = result.AdapterName;
             baseServiceSection.LogRoot = "";
             baseServiceSection.RootStorePath = "";
 
 
             Console.WriteLine($"Geting Adapter configuration for {AdapterConfiguration.AdapterType}.{baseServiceSection.AdapterName}");
             configurationRoot = GetConfigFromBus();
-            Console.WriteLine($"Config Received");
+            Console.WriteLine($"Config Received Name:'{result.ConfigurationName}' | Id:{result.ConfigurationId}");
         }
 
         private JObject GetConfigFromBus()
@@ -183,11 +184,24 @@ namespace SAL.Core.Configuration
             info.CancellationTokenSource.CancelAfter(timeOut);
         }
 
-        private async Task<string> GetAdapterName(Func<Error, Task<string>> onError)
+        private async Task<GetAdapterNameRes> GetAdapterName(Func<Error, Task<GetAdapterNameRes>> onError)
         {
             var correlationId = Guid.NewGuid().ToString("N");
             
             var taskSlot =  Environment.GetEnvironmentVariable("X_TASK_SLOT");
+            var returnDefaultStr =  Environment.GetEnvironmentVariable("UseDefaultConfiguration");
+            var returnDefaultConfiguration = true;
+            if (bool.TryParse(returnDefaultStr, out var value))
+                returnDefaultConfiguration = value;
+            if (int.TryParse(returnDefaultStr, out var intVal))
+            {
+                if (intVal == 0)
+                    returnDefaultConfiguration = false;
+            }
+            
+            var configurationName = Environment.GetEnvironmentVariable("ConfigurationName");
+                
+                
 
             var message = new ConfigMessage
             {
@@ -200,8 +214,9 @@ namespace SAL.Core.Configuration
                 {
                     AdapterType = AdapterConfiguration.AdapterType,
                     MachineName = AdapterConfiguration.MachineName,
-                    InDocker = AdapterConfiguration.InDocker,
-                    TaskSlot = taskSlot
+                    TaskSlot = taskSlot,
+                    ReturnDefaultConfiguration = returnDefaultConfiguration,
+                    ConfigurationName = configurationName
                 })
             };
 
@@ -218,7 +233,7 @@ namespace SAL.Core.Configuration
                 return await onError(result.Payload.ToObject<Error>());
             }
 
-            return result.Payload.ToObject<GetAdapterNameRes>()?.AdapterName;
+            return result.Payload.ToObject<GetAdapterNameRes>();
         }
 
 

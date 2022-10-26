@@ -35,13 +35,19 @@ namespace SAL.Core.Configuration.Messages
     {
         public string AdapterType { get; set; }
         public string MachineName { get; set; }
-        public bool InDocker { get; set; }
         public string TaskSlot { get; set; }
+        public bool ReturnDefaultConfiguration { get; set; }
+        public string ConfigurationName { get; set; } 
+
     }
 
     public class GetAdapterNameRes
     {
         public string AdapterName { get; set; }
+        public string ConfigurationName { get; set; }
+        public string ConfigurationId { get; set; }
+        
+        public bool IsDefault { get; set; }
     }
     
     public class ConfigChanged
