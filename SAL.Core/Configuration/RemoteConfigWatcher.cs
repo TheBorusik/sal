@@ -24,6 +24,8 @@ namespace SAL.Core.Configuration
 
 
         private JObject configurationRoot;
+        private string configurationId;
+        private string configurationName;
         private readonly JsonMergeSettings mergeSettings;
         private bool inited = false;
         private const string configurationBusName = "configurationBus";
@@ -111,6 +113,8 @@ namespace SAL.Core.Configuration
 
             Console.WriteLine($"Geting Adapter configuration for {AdapterConfiguration.AdapterType}.{baseServiceSection.AdapterName}");
             configurationRoot = GetConfigFromBus();
+            configurationId = result.ConfigurationId;
+            configurationName = result.ConfigurationName;
             Console.WriteLine($"Config Received Name:'{result.ConfigurationName}' | Id:{result.ConfigurationId}");
         }
 
@@ -143,12 +147,13 @@ namespace SAL.Core.Configuration
                 handler.CompletionSource.TrySetResult(configMessage);
                 return;
             }
-            
-            if(!configMessage.Destination.Any(s => string.Equals(s ,AdapterConfiguration.AdapterFullName)))
-                return;
-            
-            if(configMessage.Type == MessageTypes.ConfigChanged)
-                OnConfigChanged();
+
+            if (configMessage.Type == MessageTypes.ConfigChanged)
+            {
+                var configChanged = configMessage.Payload.ConvertValue<ConfigChanged>();
+                if(configChanged.ChangedConfigurationIds.Contains(configurationId))
+                    OnConfigChanged();
+            }
         }
 
         private void RegisterExecHandler(string correlationId, TimeSpan timeOut, TaskCompletionSource<ConfigMessage> completionSource)
@@ -174,7 +179,6 @@ namespace SAL.Core.Configuration
                             Code = ConfigErrorCodes.Timeout
                         }),
                         Timestamp = DateTime.UtcNow,
-                        Destination = new[] {AdapterConfiguration.AdapterType},
                         Source = AdapterConfiguration.AdapterFullName
                     });
 
@@ -206,7 +210,6 @@ namespace SAL.Core.Configuration
             var message = new ConfigMessage
             {
                 Source = AdapterConfiguration.AdapterFullName,
-                Destination = new string [0],
                 Timestamp = DateTime.UtcNow,
                 Type = MessageTypes.GetAdapterName,
                 CorrelationId = correlationId,

@@ -8,7 +8,6 @@ namespace SAL.Core.Configuration.Messages
         public MessageTypes Type { get; set; }
         public string CorrelationId { get; set; }
         public string Source { get; set; }
-        public string[] Destination { get; set; }
         public JObject Payload { get; set; }
         public DateTime Timestamp { get; set; }
     }
@@ -49,10 +48,14 @@ namespace SAL.Core.Configuration.Messages
         public string ConfigurationId { get; set; }
         
         public bool IsDefault { get; set; }
+        
+        [Obsolete]
+        public string[] Destination { get; set; }
     }
     
     public class ConfigChanged
     {
+        public string[] ChangedConfigurationIds { get; set; }
     }
     
 }

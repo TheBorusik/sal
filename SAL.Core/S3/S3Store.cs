@@ -117,8 +117,6 @@ namespace SAL.Core.S3
             {
                 return false;
             }
-            
-            return false;
         }
     }
 }
