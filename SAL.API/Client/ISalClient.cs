@@ -55,6 +55,17 @@ namespace SAL.API
             string handlerAdapterName = null,
             bool throwIfTimeout = true);
         
+        
+        Task<SimpleCommandResult> ExecuteCommandWithVersionAsync(            
+            string commandName,
+            string commandVersion,
+            object commandBody,
+            CommandPriority priority = CommandPriority.Normal,
+            TimeSpan? ttl = null,
+            string handlerAdapterType = null,
+            string handlerAdapterName = null,
+            bool throwIfTimeout = true);
+        
         Task<CommandResult<TCommandResult>> ExecuteCommandAsync<TCommandResult>(
             string commandName,
             object commandBody,
@@ -64,6 +75,8 @@ namespace SAL.API
             string handlerAdapterName = null,
             bool throwIfTimeout = true
         ) where TCommandResult : class, new();
+        
+        
         
         Task PublishResultAsync(object result, CommandContext commandContext);
         Task PublishResultAsync(CommonCommandResult result, CommandContext commandContext);

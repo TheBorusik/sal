@@ -19,6 +19,7 @@ using SAL.Infrastructure;
 
 namespace SAL.Core.Processors
 {
+    
     internal class FrontCommandProcessor : IProcessor
     {
         private ILogger logger;
@@ -33,6 +34,7 @@ namespace SAL.Core.Processors
         private readonly Dictionary<string, FrontCommandHandlerInfo> commandHandlers = new();
 
         private ISubscription subscription;
+        private ISubscription subscriptionMultiVersion;
         
         private readonly IMetricProvider metricProvider;
 
@@ -94,13 +96,28 @@ namespace SAL.Core.Processors
                 subscription = subscriptionFactory.CreateCommand(
                     commandProcessorConfig.GlobalPrefetchCount,
                     commandProcessorConfig.CommandPrefetchCount,
-                    processingCommand.Select(k => new CommandInfo
+                    processingCommand
+                        .Where(k => string.IsNullOrEmpty(k.Value.Version) )
+                        .Select(k => new CommandInfo
                     {
-                        CommandName = k.Key,
+                        CommandName = k.Value.CommandName,
                         PrefetchCount = commandProcessorConfig.CommandProcessingSettings[k.Key].PrefetchCount
                     }).ToArray(),
                     Handler,
                     "FrontCommand");
+                
+                subscriptionMultiVersion = subscriptionFactory.CreateCommand(
+                    commandProcessorConfig.GlobalPrefetchCount,
+                    commandProcessorConfig.CommandPrefetchCount,
+                    processingCommand
+                        .Where(k => !string.IsNullOrEmpty(k.Value.Version))
+                        .Select(k => new CommandInfo
+                        {
+                            CommandName = $"{k.Value.CommandName}.{k.Value.Version}",
+                            PrefetchCount = commandProcessorConfig.CommandProcessingSettings[k.Key].PrefetchCount
+                        }).ToArray(),
+                        Handler,
+                    "FrontCommandMultiVersion");
             }
             catch (Exception ex)
             {
@@ -183,43 +200,82 @@ namespace SAL.Core.Processors
                         commandName = cnAttr;
                 }
                 
+                var versions = handleMethod.GetAttribute<SalCommandVersionsAttribute>()?.Versions ??  Array.Empty<string>();
+                if (!versions.Any() && handlerInterfaces.Length == 1)
+                {
+                    versions = handlerType.GetAttribute<SalCommandVersionsAttribute>()?.Versions ??  Array.Empty<string>();
+                }
+
                 
 
-
-
-                if (commandHandlers.ContainsKey(commandName))
-                    throw new Exception($"Внешний метод {commandName} уже имеет обработчик");
+                if (!versions.Any() && commandHandlers.ContainsKey(commandName))
+                    throw new Exception($"Внешний метод '{commandName}' уже имеет обработчик");
+                if (versions.Any())
+                    foreach(var version in versions)
+                        if(commandHandlers.ContainsKey($"{commandName}.{version}"))
+                            throw new Exception($"Внешний метод '{commandName}' v:{version} уже имеет обработчик");
+                
 
                 ICommandSchemeCreator schemaCreater = null;
                 if (handlerType.IsAssignableTo<ICommandSchemeCreator>())
                     schemaCreater = (ICommandSchemeCreator) container.Resolve(handlerType);
 
+                var commandSchema = schemaCreater == null ? SalSchema.Generate(commandType) : schemaCreater.GetCommandSchema(commandName);
 
-                var commandHandlerInfo = new FrontCommandHandlerInfo
+
+                if (versions.Any())
                 {
-                    CommandName = commandName,
-                    CommandType = commandType,
-
-                    HandlerType = handlerType,
-                    IsCommon = false,
-
-                    HandleMethod = handleMethod,
-                    CommandSchema = schemaCreater == null ? SalSchema.Generate(commandType) : schemaCreater.GetCommandSchema(commandName)
-                };
-
-
-                commandHandlers.Add(commandName, commandHandlerInfo);
-                logger.Info($"Для команды {commandName} добавлен обработчик {handlerType.Name}");
-
-
-                salService.AddFrontCommandHandler(new API.FrontCommandHandlerInfo
+                    foreach(var version in versions)
+                    {
+                        commandHandlers.Add($"{commandName}.{version}", new FrontCommandHandlerInfo
+                        {
+                            CommandName = commandName,
+                            Version = version, 
+                            CommandType = commandType,
+                            HandlerType = handlerType,
+                            IsCommon = false,
+                            HandleMethod = handleMethod,
+                            CommandSchema = commandSchema
+                        });
+                    
+                        salService.AddFrontCommandHandler(new API.FrontCommandHandlerInfo
+                        {
+                            CommandName = commandName,
+                            Version = version,
+                            CommandSchema = commandSchema,
+                            ResultSchema = schemaCreater?.GetResultSchema(commandName),
+                        });
+                        logger.Info($"Для команды '{commandName}' v:{version} добавлен обработчик {handlerType.Name}");
+                    }
+                    
+                    
+                }
+                else
                 {
-                    CommandName = commandHandlerInfo.CommandName,
-                    CommandSchema = commandHandlerInfo.CommandSchema,
-                    ResultSchema = schemaCreater?.GetResultSchema(commandName),
-                });
+                    commandHandlers.Add(commandName, new FrontCommandHandlerInfo
+                    {
+                        CommandName = commandName,
+                        Version = String.Empty, 
+                        CommandType = commandType,
+                        HandlerType = handlerType,
+                        IsCommon = false,
+                        HandleMethod = handleMethod,
+                        CommandSchema = commandSchema
+                    });
+                    
+                    salService.AddFrontCommandHandler(new API.FrontCommandHandlerInfo
+                    {
+                        CommandName = commandName,
+                        Version = String.Empty,
+                        CommandSchema = commandSchema,
+                        ResultSchema = schemaCreater?.GetResultSchema(commandName),
+                    });
+                    logger.Info($"Для команды '{commandName}' добавлен обработчик {handlerType.Name}");
+                }
+
+
                 
-                metricProvider.RegisterCommand(commandHandlerInfo.CommandName);
+                metricProvider.RegisterCommand(commandName);
             }
         }
 
@@ -276,16 +332,19 @@ namespace SAL.Core.Processors
         public void Online()
         {
             subscription.Start();
+            subscriptionMultiVersion.Start();
         }
 
         public void Offline()
         {
             subscription.Stop();
+            subscriptionMultiVersion.Stop();
         }
 
         public void Stop()
         {
             subscription.Stop();
+            subscriptionMultiVersion.Stop();
         }
 
         private async Task Handler(RabbitMessage rabbitMessage, Action ack, Action nack)
@@ -368,7 +427,7 @@ namespace SAL.Core.Processors
             sw.Stop();
             metricProvider.IncCommand(commandName, sw.Elapsed, isFail);
         }
-
+        
         protected TransportMessage ExtractMessage(RabbitMessage rabbitMessage)
         {
             var transportMessage = SalSerializer.BinaryDeserialize<TransportMessage>(rabbitMessage.Payload);
@@ -407,7 +466,7 @@ namespace SAL.Core.Processors
             return commandPayload;
         }
 
-        protected virtual async Task Processing(CommandPayload commandPayload)
+        protected async Task Processing(CommandPayload commandPayload)
         {
             var commandLogger = salLogger.GetLogger(commandPayload);
 
@@ -422,7 +481,11 @@ namespace SAL.Core.Processors
             HandlerContext.Update(HandlerTypes.FrontCommandHandler, commandPayload.Context.Descriptor.CommandName);
 
 
-            if (commandHandlers.TryGetValue(commandPayload.Context.Descriptor.CommandName, out var commandHandlerInfo))
+            var commandKey = commandPayload.Context.Descriptor.CommandName;
+            if (!string.IsNullOrEmpty(commandPayload.Context.Descriptor.Version))
+                commandKey = $"{commandPayload.Context.Descriptor.CommandName}.{commandPayload.Context.Descriptor.Version}";
+                
+            if (commandHandlers.TryGetValue(commandKey, out var commandHandlerInfo))
             {
                 HandlerContext.UpdateHandlerName(handlerName: commandHandlerInfo.HandlerType.Name);
                 salLogger.LogHandler(commandPayload, commandHandlerInfo.HandlerType.Name);
@@ -466,7 +529,7 @@ namespace SAL.Core.Processors
                 throw SalError.CreateException(SalErrorCodes.Fatal, "Обработчик команды не найден");
             }
         }
-
+        
         private async Task<bool> Validate(FrontCommandHandlerInfo handlerInfo, CommandPayload commandPayload)
         {
             if (handlerInfo.CommandSchema != null)

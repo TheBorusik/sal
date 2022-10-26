@@ -120,6 +120,7 @@ namespace SAL.API
         
         public static LogExceptionDTO ToLogDto(this InternalExceptionDTO dto)
         {
+            
             return new LogExceptionDTO
             {
                 Code = dto.Code,
@@ -128,7 +129,7 @@ namespace SAL.API
                 ExceptionType = dto.ExceptionType,
                 Properties = dto.Properties.Clone(),
                 StackTrace = dto.StackTrace,
-                InnerException = dto.InnerException.ToLogDto()
+                InnerException = dto.InnerException?.ToLogDto()
             };
         }
         

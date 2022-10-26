@@ -14,14 +14,9 @@ namespace SAL.Test.Front
     {
         public void Configure(ContainerBuilder builder, IConfigWatcher config)
         {
-            builder.RegisterSalHandler<CommandResultHandler>();
-            builder.RegisterSalHandler<CommandHandler>();
-
+            builder.RegisterSalHandler<TestFrontMultiVersionHandler>();
+            builder.RegisterSalHandler<TestFrontMultiVersionHandler2>();
             
-       //     builder.RegisterSalHandler<TestEventHandler>();
-        //    builder.RegisterSalHandler<ExceptionDetectedEventHandler>();
-            
-            //     builder.RegisterSalHandler<ExternalApi>();
            builder.RegisterProcessor<TestFront>();
         }
     }
@@ -40,19 +35,19 @@ namespace SAL.Test.Front
         {
         }
 
-
-        static int __index = 0;
-
+        
         public void Online()
         {
-            using var scope = lifetimeScope.BeginLifetimeScope();
+            Task.Run(async () =>  
+            {
+                var salClient = lifetimeScope.ResolveKeyed<ISalClient>(Contour.Front);
+                await salClient.ExecuteCommandWithVersionAsync("Test.TestVer", "1", new { });
+                await salClient.ExecuteCommandWithVersionAsync("Test.TestVer", "3", new { });
+                await salClient.ExecuteCommandWithVersionAsync("Test.TestVer", "100", new { });
+            });
+            
+            
 
-            var s3s = scope.Resolve<IS3Store>();
-
-            var b = s3s.IsFilePresent("011c421b06d54e019355fc4e29c1ad07").Result;
-            b = s3s.IsFilePresent("1234").Result;
-            //     client.PublishCommandWithSharedResultHandlerAsync("SalTester.TestCommand", new { });
-            //     client.PublishCommandWithSharedResultHandlerAsync("SalTester.TestCommand", new { });
 
         }
 
@@ -71,6 +66,40 @@ namespace SAL.Test.Front
         public int Id { get; set; }
         public string Payload { get; set; }
     }
+    
+    public class CommandResult2
+    {
+        public string Version { get; set; }
+    }
+
+
+    [FrontCommandName("Test.TestVer")]
+    [SalCommandVersions("1","3")]
+    public class TestFrontMultiVersionHandler : BaseFrontCommandHandlerAsync<Nothing, CommandResult2>
+    {
+        public override async Task Handle(Nothing command)
+        {
+            await PublishResult(new CommandResult2
+            {
+                Version = commandContext.Descriptor.Version
+            });
+        }
+    }
+    
+    [FrontCommandName("Test.TestVer")]
+    [SalCommandVersions("100")]
+    public class TestFrontMultiVersionHandler2 : BaseFrontCommandHandlerAsync<Nothing, CommandResult2>
+    {
+        public override async Task Handle(Nothing command)
+        {
+            await PublishResult(new CommandResult2
+            {
+                Version = $"{commandContext.Descriptor.Version}|10000"
+            });
+        }
+    }
+
+
 
 
     [BackCommandName("SalTester.TestCommand")]

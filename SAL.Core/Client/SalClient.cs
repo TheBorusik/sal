@@ -192,6 +192,28 @@ namespace SAL.Core.Client
             string handlerAdapterName = null,
             bool throwIfTimeout = true)
         {
+            return ExecuteCommandWithVersionAsync
+            (   commandName,
+                null,
+                commandBody,
+                priority,
+                ttl,
+                handlerAdapterType,
+                handlerAdapterName,
+                throwIfTimeout
+            );
+        }
+
+        public Task<SimpleCommandResult> ExecuteCommandWithVersionAsync(
+            string commandName, 
+            string commandVersion, 
+            object commandBody, 
+            CommandPriority priority = CommandPriority.Normal, 
+            TimeSpan? ttl = null, 
+            string handlerAdapterType = null, 
+            string handlerAdapterName = null, 
+            bool throwIfTimeout = true)
+        {
             ttl ??= TimeSpan.FromSeconds(60);
             
             var correlationId = Guid.NewGuid().ToString("N");
@@ -200,6 +222,9 @@ namespace SAL.Core.Client
             var resultExchangeName = ExchangeNames.CommandResultExchange;
 
             var commandRoutingKey = commandName;
+            if(!string.IsNullOrEmpty(commandVersion))
+                commandRoutingKey = $"{commandName}.{commandVersion}";
+            
             var resultRoutingKey = $"!{AdapterConfiguration.AdapterType}@{AdapterConfiguration.AdapterName}";
 
             if (!string.IsNullOrWhiteSpace(handlerAdapterType))
@@ -214,6 +239,7 @@ namespace SAL.Core.Client
                 {
                     CorrelationId = correlationId,
                     CommandName = commandName,
+                    Version = commandVersion,
                     CommandExchangeName = commandExchangeName,
                     CommandRoutingKey = commandRoutingKey,
                     Priority = priority,
@@ -227,8 +253,9 @@ namespace SAL.Core.Client
                 }
             };
             return LoExecuteAsync(commandContext, commandBody, throwIfTimeout);
+
         }
-        
+
         public async Task<CommandResult<TCommandResult>> ExecuteCommandAsync<TCommandResult>(
             string commandName,
             object commandBody,

@@ -6,6 +6,7 @@ namespace SAL.API
     {
         public string CorrelationId { get; init; }
         public string CommandName { get; init; }
+        public string Version { get; init; }
         public string CommandExchangeName { get; init; }
         public string CommandRoutingKey { get; init; }
         public CommandPriority Priority { get; init; }

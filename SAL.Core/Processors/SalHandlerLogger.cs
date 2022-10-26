@@ -40,6 +40,8 @@ namespace SAL.Core.Processors
             var sb = new StringBuilder();
             sb.Append("[CP  <- BUS] ");
             sb.Append($"({pt.TotalSeconds:F3} c) ");
+            if(!string.IsNullOrEmpty(commandPayload.Context.Descriptor.Version)) 
+                sb.Append($"| V:{commandPayload.Context.Descriptor.Version} ");
             sb.Append($"| P:{commandPayload.Context.Descriptor.Priority} ");
             sb.Append($"| PTS:{commandPayload.Context.Descriptor.PublishTimeStamp:O} ");
             if (commandPayload.Context.Descriptor.TTL.HasValue)
@@ -129,6 +131,8 @@ namespace SAL.Core.Processors
 
             var sb = new StringBuilder();
             sb.Append("[CMD -> BUS] ");
+            if(!string.IsNullOrEmpty(commandPayload.Context.Descriptor.Version)) 
+                sb.Append($"| V:{commandPayload.Context.Descriptor.Version} ");
             sb.Append($"| P:{commandPayload.Context.Descriptor.Priority} ");
             sb.Append($"| PTS:{commandPayload.Context.Descriptor.PublishTimeStamp:O} ");
             if (commandPayload.Context.Descriptor.TTL.HasValue)
@@ -260,6 +264,8 @@ namespace SAL.Core.Processors
             var pt = DateTime.UtcNow - commandPayload.Context.Descriptor.PublishTimeStamp;
             var sb = new StringBuilder();
             sb.Append($"[CP  -> {handlerName}] ");
+            if(!string.IsNullOrEmpty(commandPayload.Context.Descriptor.Version)) 
+                sb.Append($"V:{commandPayload.Context.Descriptor.Version} ");
             sb.Append($"({pt.TotalSeconds:F3} c) ");
 
 

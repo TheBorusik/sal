@@ -7,6 +7,8 @@ namespace SAL.Core.Processors
     internal class FrontCommandHandlerInfo
     {
         public string CommandName;
+        public string Version;
+        
         public Type CommandType;
         
         public Type HandlerType;
@@ -17,5 +19,7 @@ namespace SAL.Core.Processors
 
         public CommandProcessingSettings CommandProcessingSettings;
         public JSchema CommandSchema;
+
+
     }
 }
