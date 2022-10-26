@@ -40,8 +40,9 @@ namespace SAL.Core.NLogEx.Adapter
         {
             InternalLogger.Trace(nameof(ParseNLogElement));
             InternalLogger.LogLevel = LogLevel.FromString(jn.GetSafeValue("internalLogLevel", "Info"));
-            AutoReload = jn.GetSafeValue("autoReload", false);
-
+            //AutoReload = jn.GetSafeValue("autoReload", false);
+            AutoReload = true;
+            
             logFactory.ThrowExceptions = jn.GetSafeValue("throwExceptions", logFactory.ThrowExceptions);
             logFactory.ThrowConfigExceptions = jn.GetSafeValue("throwConfigExceptions", logFactory.ThrowConfigExceptions);
             logFactory.KeepVariablesOnReload = jn.GetSafeValue("keepVariablesOnReload", this.logFactory.KeepVariablesOnReload);

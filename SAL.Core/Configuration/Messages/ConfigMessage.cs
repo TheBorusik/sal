@@ -10,6 +10,9 @@ namespace SAL.Core.Configuration.Messages
         public string Source { get; set; }
         public JObject Payload { get; set; }
         public DateTime Timestamp { get; set; }
+        
+        [Obsolete]
+        public string[] Destination { get; set; }
     }
 
     public enum MessageTypes
@@ -49,8 +52,7 @@ namespace SAL.Core.Configuration.Messages
         
         public bool IsDefault { get; set; }
         
-        [Obsolete]
-        public string[] Destination { get; set; }
+
     }
     
     public class ConfigChanged
