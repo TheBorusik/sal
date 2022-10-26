@@ -36,6 +36,7 @@ namespace SAL.Core.Configuration.Messages
         public string AdapterType { get; set; }
         public string MachineName { get; set; }
         public string TaskSlot { get; set; }
+        public bool InDocker { get; set; }
         public bool ReturnDefaultConfiguration { get; set; }
         public string ConfigurationName { get; set; } 
 

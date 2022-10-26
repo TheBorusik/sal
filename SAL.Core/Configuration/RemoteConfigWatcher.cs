@@ -216,7 +216,8 @@ namespace SAL.Core.Configuration
                     MachineName = AdapterConfiguration.MachineName,
                     TaskSlot = taskSlot,
                     ReturnDefaultConfiguration = returnDefaultConfiguration,
-                    ConfigurationName = configurationName
+                    ConfigurationName = configurationName,
+                    InDocker = AdapterConfiguration.InDocker
                 })
             };
 
