@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using Newtonsoft.Json.Linq;
 
 namespace SAL.API
@@ -461,5 +463,23 @@ namespace SAL.API
         {
             return obj == null ? JValue.CreateNull() : JToken.FromObject(obj);
         }
+        
+        public static JToken Rename(this JToken token , Dictionary<string , string> map)
+        {
+            return token.Rename((path , name) => map.ContainsKey(path) ? map[path] : name);
+        }
+
+        public static JToken Rename(this JToken token , Func<string , string , string> map) => token switch
+        {
+            JProperty prop => new JProperty(map(prop.Path , prop.Name) , prop.Value.Rename(map)) ,
+            JArray arr     => new JArray(arr.Select(el => el.Rename(map))) ,
+            JObject obj    => new JObject(obj.Properties().Select(el => el.Rename(map))) ,
+            _              => token
+        };
+
+        public static JToken Rename(this JToken token , string propertyPath , string newName)
+        {
+            return token.Rename((path , name) => propertyPath == path ? newName : name);
+        }    
     }
 }
