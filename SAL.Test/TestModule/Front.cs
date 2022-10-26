@@ -43,7 +43,7 @@ namespace SAL.Test.Front
                 var salClient = lifetimeScope.ResolveKeyed<ISalClient>(Contour.Front);
                 await salClient.ExecuteCommandWithVersionAsync("Test.TestVer", "1", new { });
                 await salClient.ExecuteCommandWithVersionAsync("Test.TestVer", "3", new { });
-                await salClient.ExecuteCommandWithVersionAsync("Test.TestVer", "100", new { });
+                var res = await salClient.ExecuteCommandWithVersionAsync("Test.TestVer", "1000", new { });
             });
             
             
@@ -87,7 +87,7 @@ namespace SAL.Test.Front
     }
     
     [FrontCommandName("Test.TestVer")]
-    [SalCommandVersions("100")]
+    [SalCommandVersions("1000", "100")]
     public class TestFrontMultiVersionHandler2 : BaseFrontCommandHandlerAsync<Nothing, CommandResult2>
     {
         public override async Task Handle(Nothing command)

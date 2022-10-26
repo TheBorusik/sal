@@ -17,11 +17,13 @@
         public const string NotHandledCommandResult = " NotHandledCommandResult";
         public const string NotFound = "NotFound";
         public const string NotSuccess = "NotSuccess";
+        public const string NotSupportedVersion = "NotSupportedVersion";
+        public const string NotImplemented = " NotImplemented";
         
         
 
         
-        public const string NotImplemented = " NotImplemented";
+
         public const string NotHandledCommand = "NotHandledCommand";
         public const string NotHandledEvent = "NotHandledEvent";
         public const string UnknownResultCode = "UnknownResultCode";
