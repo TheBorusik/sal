@@ -115,7 +115,7 @@ namespace SAL.Core.Session
 
         public void Update(API.Session session)
         {
-            if(session.IsChanged)
+            if(!session.IsChanged)
                 return;
             
             if (redis == null)

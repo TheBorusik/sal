@@ -77,16 +77,12 @@ namespace SAL.API
 
         public void Update()
         {
-            if (IsChanged)
-            {
-                manager.Update(this);
-            }
+            manager.Update(this);
         }
 
         public void Refresh()
         {
             manager.Refresh(this);
-
         }
     }
 }

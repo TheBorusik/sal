@@ -73,13 +73,29 @@ namespace SAL.Test.Front
     }
 
 
-    [SalCommandName("Test.TestVer")]
+    [FrontCommandName("Test.TestVer")]
     [SalCommandVersions("1","3")]
-    public class TestFrontMultiVersionHandler : 
-        BaseFrontHandlerAsync
+    public class TestFrontMultiVersionHandler : BaseFrontCommandHandlerAsync<Nothing, CommandResult2>
     {
-        public TestFrontMultiVersionHandler( ) { }
+        private ISessionManager sessionManager;
+
+        public TestFrontMultiVersionHandler(ISessionManager sessionManager)
+        {
+            this.sessionManager = sessionManager;
+        }
+
+        public override async Task Handle(Nothing command)
+        {
+            var s = sessionManager.GetCurrentSession();
+            logger.Info(s.GetRawData().ToIndentedJson());
+            
+            await PublishResult(new CommandResult2
+            {
+                Version = $"{commandContext.Descriptor.Version}"
+            });
+        }
     }
+
     
     
     
