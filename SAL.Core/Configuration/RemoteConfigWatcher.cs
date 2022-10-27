@@ -112,19 +112,17 @@ namespace SAL.Core.Configuration
 
 
             Console.WriteLine($"Geting Adapter configuration for {AdapterConfiguration.AdapterType}.{baseServiceSection.AdapterName}");
-            configurationRoot = GetConfigFromBus();
             configurationId = result.ConfigurationId;
             configurationName = result.ConfigurationName;
+            configurationRoot = GetConfigFromBus();
             Console.WriteLine($"Config Received Name:'{result.ConfigurationName}' | Id:{result.ConfigurationId}");
         }
 
         private JObject GetConfigFromBus()
         {
-            var key = $"{AdapterConfiguration.AdapterType}.{baseServiceSection.AdapterName}";
             var db = redis.GetDatabase();
-            var value = db.StringGet(key);
+            var value = db.StringGet(configurationId);
             if (!value.HasValue) throw new ConfigurationErrorException("Config not found");
-            db.KeyDelete(key);
             var config = JToken.Parse(value).RemoveEmptyChildren() as JObject;
             if (config == null) 
                 throw new ConfigurationErrorException("Config is null");

@@ -41,8 +41,7 @@ namespace SAL.Core.NLogEx.Adapter
         {
             if (logFactory.Configuration is JTokenLoggingConfiguration j && j.AutoReload)
             {
-                try
-                {
+                try {
                     var tmpLogFactory = new LogFactory();
                     tmpLogFactory.Configuration = new JTokenLoggingConfiguration(nlogConfig, tmpLogFactory);
 
