@@ -44,5 +44,5 @@ nugetDeploy:
         GIT_STRATEGY: none
     when: manual
     script:
-        - ls -la $nugetPubDir
-        - dotnet nuget push "$nugetPubDir/*.nupkg" --skip-duplicate -k $NUGET_KEY -s $NUGET_URL
+        - ls -la $pubDir
+        - dotnet nuget push "$pubDir/*.nupkg" --skip-duplicate -k $NUGET_KEY -s $NUGET_URL
