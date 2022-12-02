@@ -1,24 +1,26 @@
 stages:
     - build
-    - deploy
+    - nugetDeploy
       
 variables:
     masterVersion: '$MajorVersion.$MinorVersion.$CI_PIPELINE_IID'
-    prereleaseVersion: '$MajorVersion.$MinorVersion.$CI_PIPELINE_IID-$CI_COMMIT_BRANCH.$CI_PIPELINE_ID'
-    nugetPubDir: './pub/SAL'
+
+    pubDir: './pub'
+    
     salInfrProj: './SAL.Infrastructure/SAL.Infrastructure.csproj'
     salApiProj: './SAL.API/SAL.API.csproj'
     salCoreProj: './SAL.Core/SAL.Core.csproj'
 
-    
+workflow:
+    rules:
+        - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
+          when: always
+        - when: never
 
-build-master:
+build:
     stage: build
     image : mcr.microsoft.com/dotnet/sdk:5.0
     tags: [docker]
-    only:
-        variables:
-            - $CI_COMMIT_REF_NAME == "master"
     cache:
         key: "NugetsCache"
         paths:
@@ -26,47 +28,21 @@ build-master:
     script: 
         - dotnet nuget add source $NUGET_URL -n BroPay3
         - dotnet restore --packages ./nugets
-        - dotnet build -c Release --no-restore -p:Version="$prereleaseVersion"
-        - dotnet pack $salInfrProj --no-build -c Release --output $nugetPubDir -p:Version="$masterVersion"
-        - dotnet pack $salApiProj --no-build -c Release --output $nugetPubDir -p:Version="$masterVersion"
-        - dotnet pack $salCoreProj --no-build -c Release --output $nugetPubDir -p:Version="$masterVersion"
+        - dotnet build -c Release --no-restore -p:Version="$masterVersion"
+        - dotnet pack $salInfrProj --no-build -c Release --output $pubDir -p:Version="$masterVersion"
+        - dotnet pack $salApiProj --no-build -c Release --output $pubDir -p:Version="$masterVersion"
+        - dotnet pack $salCoreProj --no-build -c Release --output $pubDir -p:Version="$masterVersion"
     artifacts:
         paths:
-            - $nugetPubDir
+            - $pubDir
               
-build-debug:
-    stage: build
-    image : mcr.microsoft.com/dotnet/sdk:5.0
-    tags: [docker]
-    only:
-        variables:
-            - $CI_COMMIT_REF_NAME != "master"
-    cache:
-        key: "NugetsCache"
-        paths:
-            - ./nugets/
-    script:
-        - echo $prereleaseVersion
-        - dotnet nuget add source $NUGET_URL -n BroPay3
-        - dotnet restore --packages ./nugets
-        - dotnet build -c Debug --no-restore -p:Version="$prereleaseVersion"
-        - dotnet pack $salInfrProj --no-build -c Debug --output $nugetPubDir -p:IncludeSymbols=true -p:SymbolPackageFormat=snupkg -p:Version="$prereleaseVersion"
-        - dotnet pack $salApiProj --no-build -c Debug --output $nugetPubDir -p:IncludeSymbols=true -p:SymbolPackageFormat=snupkg -p:Version="$prereleaseVersion"
-        - dotnet pack $salCoreProj --no-build -c Debug --output $nugetPubDir -p:IncludeSymbols=true -p:SymbolPackageFormat=snupkg -p:Version="$prereleaseVersion"
-    artifacts:
-        paths:
-            - $nugetPubDir
-
-nuget-deploy:
-    stage: deploy
+nugetDeploy:
+    stage: nugetDeploy
     image : mcr.microsoft.com/dotnet/sdk:5.0
     tags: [docker]
     variables:
         GIT_STRATEGY: none
-    rules:
-        - if: '$CI_COMMIT_BRANCH == "master"'
-          when: manual
-        - when: on_success
+    when: manual
     script:
         - ls -la $nugetPubDir
         - dotnet nuget push "$nugetPubDir/*.nupkg" --skip-duplicate -k $NUGET_KEY -s $NUGET_URL

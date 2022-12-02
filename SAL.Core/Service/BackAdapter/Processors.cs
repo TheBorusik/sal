@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using System.Threading.Tasks;
 using Autofac;
 using SAL.API;
@@ -19,8 +20,16 @@ namespace SAL.Core.Service
         {
             var onlineTasks = processors.Select(p => Task.Run(() =>
             {
-                HandlerContext.Set(HandlerTypes.Processor, p.GetType().Name);
-                p.Start();
+                try
+                {
+                    HandlerContext.Set(HandlerTypes.Processor, p.GetType().Name);
+                    p.Start();
+                }
+                catch (Exception e)
+                {
+                    throw new Exception($"[{p.GetType().Name}] {e.Message}", e);
+                }
+
             })).ToArray();
 
             Task.WaitAll(onlineTasks);
@@ -31,8 +40,15 @@ namespace SAL.Core.Service
         {
             var onlineTasks = processors.Select(p => Task.Run(() =>
             {
-                HandlerContext.Set(HandlerTypes.Processor, p.GetType().Name);
-                p.Stop();
+                try
+                {
+                    HandlerContext.Set(HandlerTypes.Processor, p.GetType().Name);
+                    p.Stop();
+                }
+                catch (Exception e)
+                {
+                    logger.Error(e);
+                }
             })).ToArray();
 
             Task.WaitAll(onlineTasks);
@@ -42,8 +58,15 @@ namespace SAL.Core.Service
         {
             var onlineTasks = processors.Select(p => Task.Run(() =>
             {
-                HandlerContext.Set(HandlerTypes.Processor, p.GetType().Name);
-                p.Online();
+                try
+                {
+                    HandlerContext.Set(HandlerTypes.Processor, p.GetType().Name);
+                    p.Online();
+                }
+                catch (Exception e)
+                {
+                    logger.Error(e);
+                }
             })).ToArray();
 
             Task.WaitAll(onlineTasks);
@@ -55,8 +78,15 @@ namespace SAL.Core.Service
         {
             var offlineTasks = processors.Select(p => Task.Run(() =>
             {
-                HandlerContext.Set(HandlerTypes.Processor, p.GetType().Name);
-                p.Offline();
+                try
+                {
+                    HandlerContext.Set(HandlerTypes.Processor, p.GetType().Name);
+                    p.Offline();
+                }
+                catch (Exception e)
+                {
+                    logger.Error(e);
+                }
             })).ToArray();
             
             Task.WaitAll(offlineTasks);
