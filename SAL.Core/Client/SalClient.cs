@@ -611,7 +611,9 @@ namespace SAL.Core.Client
             TimeSpan? ttl = null;
             ttl = commandResultContext.Descriptor.PublishTimeStamp + commandResultContext.Descriptor.TTL - DateTime.UtcNow;
 
-            if (ttl is null || ttl > TimeSpan.Zero && !string.IsNullOrEmpty(commandResultContext.Descriptor.ResultExchangeName))
+            if(!(string.IsNullOrEmpty(commandResultContext.Descriptor.ResultRoutingKey) 
+                 || string.IsNullOrEmpty(commandResultContext.Descriptor.ResultRoutingKey)) && 
+               (ttl is null || ttl > TimeSpan.Zero))
             {
                 commandResultContext.Descriptor.PublishResultTimeStamp = DateTime.UtcNow;
                 if (commandResultContext.Descriptor.HandlerTimeStamp.HasValue)
@@ -629,10 +631,8 @@ namespace SAL.Core.Client
 
                 return publisher.PublishAsync(CreateRmqMessage(commandResultPayload));
             }
-            else
-            {
-                salLogger.LogNullOutgoing(commandResultContext.Descriptor);
-            }
+
+            salLogger.LogNullOutgoing(commandResultContext.Descriptor);
 
             return Task.CompletedTask;
         }
