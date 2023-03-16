@@ -6,7 +6,7 @@ namespace SAL.Core.NLogEx.LayoutRenderer
     public static class  LogMaskSecretData
     {
         //  private const string PanPattern1 = "((cardnumber|pan)\"\\s?:\\s?\"\\d{6})(\\d{6,9}?)(\\d{4}\")";
-        private const string PanPattern2 = "(\"\\d{6})(\\d{6,9}?)(\\d{4}\")";
+        private const string PanPattern2 = "(\"\\d{6})(\\d{3,9}?)(\\d{4}\")";
         private const string CvvPattern = "(cvv\"\\s?:\\s?\")(\\d{3,})(\")";
         private const string CvcPattern = "(cvc\"\\s?:\\s?\")(\\d{3,})(\")";
         private const string PassPattern = "((password|pwd)\"\\s?:\\s?\")(.*?)(\")";
