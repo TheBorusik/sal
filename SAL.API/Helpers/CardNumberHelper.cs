@@ -20,7 +20,7 @@ namespace SAL.API
             if (!Regex.IsMatch(noSpace, @"^\d{13,19}$"))
                 return number;
 
-            var mnumber = Regex.Replace(noSpace, @"(\d{6})(\d{6,9})(\d{4})",
+            var mnumber = Regex.Replace(noSpace, @"(\d{6})(\d{3,9})(\d{4})",
                 m => m.Groups[1].Value + Repeat(MaskChar, m.Groups[2].Value.Length) + m.Groups[3].Value, RegexOptions.IgnoreCase);
 
             if (partLength < 1)
