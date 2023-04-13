@@ -10,7 +10,7 @@ namespace SAL.API
         // base
         public static T ConvertValue<T>(this JToken jToken)
         {
-            return (T) jToken.ConvertValue(typeof(T));
+            return (T)jToken.ConvertValue(typeof(T));
         }
 
         public static object ConvertValue(this JToken jToken, Type type)
@@ -88,10 +88,10 @@ namespace SAL.API
         public static JToken GetValueIC(this JToken jToken, string propertyName)
         {
             if (jToken is JObject jObj)
-                foreach(var property in jObj.Properties())
+                foreach (var property in jObj.Properties())
                     if (string.Equals(property.Name, propertyName, StringComparison.InvariantCultureIgnoreCase))
                         return property.Value;
-            
+
             return jToken?.SelectToken(propertyName);
         }
 
@@ -110,7 +110,7 @@ namespace SAL.API
 
         public static T ConvertValue<T>(this string str)
         {
-            return (T) str.ConvertValue(typeof(T));
+            return (T)str.ConvertValue(typeof(T));
         }
 
         public static object ConvertValue(this string str, Type type)
@@ -124,12 +124,12 @@ namespace SAL.API
         public static JObject AddOrUpdate(this JObject jObj, string propertyName, object value)
         {
             var find = false;
-            foreach(var property in jObj.Properties())
+            foreach (var property in jObj.Properties())
             {
                 if (string.Equals(property.Name, propertyName, StringComparison.InvariantCultureIgnoreCase))
                 {
                     property.Value = value != null ? JToken.FromObject(value) : JValue.CreateNull();
-                    find = true;
+                    find           = true;
                     break;
                 }
             }
@@ -148,8 +148,8 @@ namespace SAL.API
 
             return jObj;
         }
-        
-        
+
+
         public static bool TryGetValue(this JObject jObj, string propertyName, Type type, out object value)
         {
             try
@@ -221,7 +221,7 @@ namespace SAL.API
         {
             return jObj.GetValueIC(propertyName) != null;
         }
-        
+
         public static JToken RemoveEmptyChildren(this JToken token)
         {
             if (token.Type == JTokenType.Object)
@@ -234,11 +234,13 @@ namespace SAL.API
                     {
                         child = RemoveEmptyChildren(child);
                     }
+
                     if (!child.IsEmpty())
                     {
                         copy.Add(prop.Name, child);
                     }
                 }
+
                 return copy;
             }
 
@@ -252,20 +254,22 @@ namespace SAL.API
                     {
                         child = RemoveEmptyChildren(child);
                     }
+
                     if (!child.IsEmpty())
                     {
                         copy.Add(child);
                     }
                 }
+
                 return copy;
             }
-            
+
             return token;
         }
-        
+
         public static JObject RemoveEmptyChildren(this JObject obj)
         {
-            return (JObject) RemoveEmptyChildren((JToken)obj);
+            return (JObject)RemoveEmptyChildren((JToken)obj);
         }
 
         public static bool IsEmpty(this JToken token)
@@ -287,17 +291,16 @@ namespace SAL.API
                 if (string.Equals(token.Value<string>(), "null"))
                     return true;
             }
+
             return false;
         }
-        
-    
-        
-        
+
+
         //JProperty
 
         public static T ConvertValue<T>(this JProperty jProperty)
         {
-            return (T) jProperty.ConvertValue(typeof(T));
+            return (T)jProperty.ConvertValue(typeof(T));
         }
 
         public static object ConvertValue(this JProperty jProperty, Type type)
@@ -310,7 +313,7 @@ namespace SAL.API
 
         public static T ConvertValue<T>(this object obj)
         {
-            return (T) obj.ConvertValue(typeof(T));
+            return (T)obj.ConvertValue(typeof(T));
         }
 
         public static object ConvertValue(this object obj, Type type)
@@ -426,8 +429,8 @@ namespace SAL.API
 
         public static JObject ToJObjectSafe(this string json)
         {
-            if(string.IsNullOrWhiteSpace(json))
-                return  new JObject();
+            if (string.IsNullOrWhiteSpace(json))
+                return new JObject();
 
             try
             {
@@ -435,13 +438,11 @@ namespace SAL.API
                 if (jt.Type is JTokenType.Object)
                     return jt as JObject;
                 return new JObject();
-
             }
             catch (Exception)
             {
                 return new JObject();
             }
-
         }
 
         public static JObject ToJObjectSafe(this object obj)
@@ -449,37 +450,59 @@ namespace SAL.API
             if (obj == null)
                 return new JObject();
             if (obj.GetType() == typeof(JObject))
-                return (JObject) obj;
+                return (JObject)obj;
             return JObject.FromObject(obj);
         }
 
         //clone
         public static JObject Clone(this JObject obj)
         {
-            return (JObject) obj?.DeepClone();
+            return (JObject)obj?.DeepClone();
         }
-        
+
         public static JToken ToJToken(this object obj)
         {
             return obj == null ? JValue.CreateNull() : JToken.FromObject(obj);
         }
-        
-        public static JToken Rename(this JToken token , Dictionary<string , string> map)
+
+        public static JToken Rename(this JToken token, string propertyPath, string newName)
         {
-            return token.Rename((path , name) => map.ContainsKey(path) ? map[path] : name);
+            return token.Rename((path, name) => propertyPath == path ? newName : name);
         }
 
-        public static JToken Rename(this JToken token , Func<string , string , string> map) => token switch
+        public static JToken Rename(this JToken token, Dictionary<string, string> map)
         {
-            JProperty prop => new JProperty(map(prop.Path , prop.Name) , prop.Value.Rename(map)) ,
-            JArray arr     => new JArray(arr.Select(el => el.Rename(map))) ,
-            JObject obj    => new JObject(obj.Properties().Select(el => el.Rename(map))) ,
+            return token.Rename((path, name) => map.ContainsKey(path) ? map[path] : name);
+        }
+
+        public static JToken Rename(this JToken token, Func<string, string, string> map) => token switch
+        {
+            JProperty prop => new JProperty(map(prop.Path, prop.Name), prop.Value.Rename(map)),
+            JArray arr     => new JArray(arr.Select(el => el.Rename(map))),
+            JObject obj    => new JObject(obj.Properties().Select(el => el.Rename(map))),
             _              => token
         };
 
-        public static JToken Rename(this JToken token , string propertyPath , string newName)
+        public static JToken ReplaceValue(this JToken token, Dictionary<string, Func<object, object>> map)
         {
-            return token.Rename((path , name) => propertyPath == path ? newName : name);
-        }    
+            return token.ReplaceValue((path, value) => map.ContainsKey(path) ? map[path](value) : value);
+        }
+
+        public static JToken ReplaceValue(this JToken token, string propertyPath, Func<object, object> replaceFunc)
+        {
+            return token.ReplaceValue((path, value) =>
+            {
+                return propertyPath == path ? replaceFunc(value) : value;
+            });
+        }
+
+        public static JToken ReplaceValue(this JToken token, Func<string, object, object> map, string propName = null) => token switch
+        {
+            JValue prop    => propName != null ? new JValue(map(propName, prop.Value)) : new JValue(prop.Value),
+            JProperty prop => new JProperty(prop.Name, prop.Value.ReplaceValue(map, prop.Name)),
+            JArray arr     => new JArray(arr.Select(el => el.ReplaceValue(map))),
+            JObject obj    => new JObject(obj.Properties().Select(el => el.ReplaceValue(map))),
+            _              => token
+        };
     }
 }
