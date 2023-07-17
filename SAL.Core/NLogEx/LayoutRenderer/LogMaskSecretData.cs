@@ -10,13 +10,12 @@ namespace SAL.Core.NLogEx.LayoutRenderer
         private const string CvvPattern = "(cvv\"\\s?:\\s?\")(\\d{3,})(\")";
         private const string CvcPattern = "(cvc\"\\s?:\\s?\")(\\d{3,})(\")";
         private const string PassPattern = "((password|pwd)\"\\s?:\\s?\")(.*?)(\")";
+        private const string ApiSecretKey = "((ApiKey|SecretKey|ApiKeyId)\"\\s?:\\s?\")(.*?)(\")";
         private const char MaskChar = '*';
-        
 
         private static string Repeat(char ch, int length)
             => new StringBuilder().Append(ch, length).ToString();
-        
-        
+
         public static string MaskSecretData(this string str)
         {
              str = Regex.Replace(str, PanPattern2,
@@ -27,7 +26,10 @@ namespace SAL.Core.NLogEx.LayoutRenderer
                 m => m.Groups[1].Value + Repeat(MaskChar, m.Groups[2].Value.Length) + m.Groups[3].Value, RegexOptions.IgnoreCase);
              str = Regex.Replace(str, CvcPattern,
                 m => m.Groups[1].Value + Repeat(MaskChar, m.Groups[2].Value.Length) + m.Groups[3].Value, RegexOptions.IgnoreCase);
-             return str;
+            str = Regex.Replace(str, ApiSecretKey,
+                m => m.Groups[1].Value + Repeat(MaskChar, 3) + m.Groups[4].Value, RegexOptions.IgnoreCase);
+
+            return str;
         }
     }
 }
