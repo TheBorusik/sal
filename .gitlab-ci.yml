@@ -19,7 +19,7 @@ workflow:
 
 build:
     stage: build
-    image : mcr.microsoft.com/dotnet/sdk:5.0
+    image : mcr.microsoft.com/dotnet/sdk:6.0
     tags: [docker]
     cache:
         key: "NugetsCache"
@@ -38,7 +38,7 @@ build:
               
 nugetDeploy:
     stage: nugetDeploy
-    image : mcr.microsoft.com/dotnet/sdk:5.0
+    image : mcr.microsoft.com/dotnet/sdk:6.0
     tags: [docker]
     variables:
         GIT_STRATEGY: none
