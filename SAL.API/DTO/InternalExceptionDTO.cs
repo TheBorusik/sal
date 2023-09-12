@@ -10,7 +10,6 @@ namespace SAL.API
         public string HandlerName { get; set; }
         public string ExceptionType { get; set; }
 
-
         public InternalExceptionDTO InnerException { get; set; }
 
         public InternalExceptionDTO Clone()
@@ -29,7 +28,8 @@ namespace SAL.API
                 StackTrace = StackTrace,
                 AdapterName = AdapterName,
                 HandlerName = HandlerName,
-                InnerException = InnerException?.Clone()
+                InnerException = InnerException?.Clone(),
+                ExceptionType = ExceptionType,
             };
         }
 
@@ -39,7 +39,6 @@ namespace SAL.API
             return this;
         }
     }
-
 
     public class LogExceptionDTO
     {
