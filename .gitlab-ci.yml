@@ -1,48 +1,52 @@
 stages:
-    - build
-    - nugetDeploy
-      
-variables:
-    masterVersion: '$MajorVersion.$MinorVersion.$CI_PIPELINE_IID'
+  - build
+  - deploy
 
-    pubDir: './pub'
-    
-    salInfrProj: './SAL.Infrastructure/SAL.Infrastructure.csproj'
-    salApiProj: './SAL.API/SAL.API.csproj'
-    salCoreProj: './SAL.Core/SAL.Core.csproj'
+variables:
+  pubDir: './pub'             
+  masterVersion: '$MajorVersion.$MinorVersion.$CI_PIPELINE_IID'
+  
+  salInfrProj: './SAL.Infrastructure/SAL.Infrastructure.csproj'
+  salApiProj: './SAL.API/SAL.API.csproj'
+  salCoreProj: './SAL.Core/SAL.Core.csproj'
 
 workflow:
-    rules:
-        - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
-          when: always
-        - when: never
-
+  rules:  
+    - if: $CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH
+      variables:
+        masterVersion: '$MajorVersion.$MinorVersion.$CI_PIPELINE_IID-alpha'
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+  
 build:
-    stage: build
-    image : mcr.microsoft.com/dotnet/sdk:6.0
-    tags: [docker]
-    cache:
-        key: "NugetsCache"
-        paths:
-            - ./nugets/
-    script: 
-        - dotnet nuget add source $NUGET_URL -n BroPay3
-        - dotnet restore --packages ./nugets
-        - dotnet build -c Release --no-restore -p:Version="$masterVersion"
-        - dotnet pack $salInfrProj --no-build -c Release --output $pubDir -p:Version="$masterVersion"
-        - dotnet pack $salApiProj --no-build -c Release --output $pubDir -p:Version="$masterVersion"
-        - dotnet pack $salCoreProj --no-build -c Release --output $pubDir -p:Version="$masterVersion"
-    artifacts:
-        paths:
-            - $pubDir
-              
-nugetDeploy:
-    stage: nugetDeploy
-    image : mcr.microsoft.com/dotnet/sdk:6.0
-    tags: [docker]
-    variables:
-        GIT_STRATEGY: none
-    when: manual
-    script:
-        - ls -la $pubDir
-        - dotnet nuget push "$pubDir/*.nupkg" --skip-duplicate -k $NUGET_KEY -s $NUGET_URL
+  stage: build
+  image: mcr.microsoft.com/dotnet/sdk:6.0
+  tags: [docker]
+  cache:
+    key: "NugetsCache"
+    paths:
+      - ./nugets/
+  script:
+    - dotnet nuget add source $NUGET_URL -n BroPay3
+    - dotnet restore --packages ./nugets
+    - dotnet build -c Release --no-restore -p:Version="$masterVersion"
+    - dotnet pack $salInfrProj --no-build -c Release --output $pubDir -p:Version="$masterVersion"
+    - dotnet pack $salApiProj --no-build -c Release --output $pubDir -p:Version="$masterVersion"
+    - dotnet pack $salCoreProj --no-build -c Release --output $pubDir -p:Version="$masterVersion"
+  artifacts:
+    paths:
+      - $pubDir
+
+deploy-package:
+  stage: deploy
+  image: mcr.microsoft.com/dotnet/sdk:6.0
+  tags: [docker]
+  needs: [build]
+  variables:
+    GIT_STRATEGY: none
+  rules: 
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      when: always
+    - when: manual
+      allow_failure: true      
+  script:
+    - dotnet nuget push "$pubDir/*.nupkg" --skip-duplicate -k $NUGET_KEY -s $NUGET_URL

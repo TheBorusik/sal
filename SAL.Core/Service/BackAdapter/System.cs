@@ -17,7 +17,6 @@ namespace SAL.Core.Service
         public List<EventHandlerInfo> backEvents = new();
 
 
-
         protected virtual void InitSystem()
         {
             backClient = Container.Resolve<ISalClient>();
@@ -40,7 +39,7 @@ namespace SAL.Core.Service
             }
             catch (Exception)
             {
-                logger.Error( "Ошибка отправки сообщения IAmOffline");
+                logger.Error("IAmOffline error");
             }
         }
         
@@ -95,12 +94,13 @@ namespace SAL.Core.Service
                         MachineName = AdapterConfiguration.MachineName,
                         CommandHandlers = backCommands.ToArray(),
                         CommandResultHandlers = backCommandResults.ToArray(),
-                        EventHandlers = backEvents.ToArray()
+                        EventHandlers         = backEvents.ToArray(),
+                        EnvUid = AdapterConfiguration.EnvUid,
                     }, SalConst.SystemEventTTL);
             }
             catch (Exception ex)
             {
-                logger.Error(ex, "Ошибка отправки сообщения IAmBackEvent");
+                logger.Error(ex, "IAmBackEvent error");
             }
             return Task.CompletedTask;
         }

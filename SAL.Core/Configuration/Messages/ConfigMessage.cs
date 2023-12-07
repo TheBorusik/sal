@@ -5,14 +5,12 @@ namespace SAL.Core.Configuration.Messages
 {
     public class ConfigMessage
     {
-        public MessageTypes Type { get; set; }
-        public string CorrelationId { get; set; }
-        public string Source { get; set; }
-        public JObject Payload { get; set; }
-        public DateTime Timestamp { get; set; }
-        
-        [Obsolete]
-        public string[] Destination { get; set; }
+        public MessageTypes Type          { get; set; }
+        public string       CorrelationId { get; set; }
+        public string       Source        { get; set; }
+        public JObject      Payload       { get; set; }
+        public DateTime     Timestamp     { get; set; }
+        public string       EnvUid { get; set; }
     }
 
     public enum MessageTypes
@@ -52,7 +50,6 @@ namespace SAL.Core.Configuration.Messages
         
         public bool IsDefault { get; set; }
         
-
     }
     
     public class ConfigChanged

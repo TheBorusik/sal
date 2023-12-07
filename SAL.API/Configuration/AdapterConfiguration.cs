@@ -25,5 +25,6 @@ namespace SAL.API
 
         public static bool InDocker { get; internal set; }
         public static string MachineName { get; internal set; }
+        public static string EnvUid { get; internal set; }
     }
 }

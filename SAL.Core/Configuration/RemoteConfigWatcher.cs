@@ -13,8 +13,7 @@ using MessageTypes = SAL.Core.Configuration.Messages.MessageTypes;
 
 namespace SAL.Core.Configuration
 {
-    public class RemoteConfigWatcher : IConfigWatcher
-        //,IEventHandler<>
+    public class RemoteConfigWatcher : IConfigWatcher        
     {
         private ConnectionMultiplexer redis;
         private ISubscriber subscriber;
@@ -22,24 +21,17 @@ namespace SAL.Core.Configuration
         private readonly ConcurrentDictionary<string, ConfigExecuteHandlerInfo> resultHandlers = new();
         private readonly Service baseServiceSection = new Service();
 
-
-        private JObject configurationRoot;
-        private string configurationId;
-        private string configurationName;
-        private readonly JsonMergeSettings mergeSettings;
-        private bool inited = false;
-        private const string configurationBusName = "configurationBus";
+        private          JObject           configurationRoot;
+        private          string            configurationId;
+        private          bool              inited               = false;
+        private const    string            configurationBusName = "configurationBus";        
 
         private readonly EventHandlerList<string, ConfigurationSectionChangedEventArgs> listEventDelegates = new();
 
+        public string EnvUid { get; private set; }
+
         public RemoteConfigWatcher()
         {
-            mergeSettings = new JsonMergeSettings
-            {
-                MergeArrayHandling = MergeArrayHandling.Replace,
-                PropertyNameComparison = StringComparison.InvariantCultureIgnoreCase,
-                MergeNullValueHandling = MergeNullValueHandling.Ignore
-            };
         }
 
         public void Subscribe(string sectionName, EventHandler<ConfigurationSectionChangedEventArgs> handler)
@@ -62,7 +54,6 @@ namespace SAL.Core.Configuration
             return configurationRoot.Clone();
         }
 
-
         public void Init()
         {
             if (inited)
@@ -78,7 +69,7 @@ namespace SAL.Core.Configuration
                 busPort = 6379;
             }
             
-            Console.WriteLine($"Connect to configurationBus (host:{busHost} port:{busPort} )...");
+            Console.WriteLine($"Connecting to Redis (host:{busHost} port:{busPort} )...");
             
             var options = new ConfigurationOptions
             {
@@ -94,9 +85,9 @@ namespace SAL.Core.Configuration
             {
                 redis = ConnectionMultiplexer.Connect(options);
             }
-            catch (RedisConnectionException e)
+            catch (RedisConnectionException ex)
             {
-                throw new ConfigurationErrorException(e.Message);
+                throw new ConfigurationErrorException(ex.Message);
             }
 
             subscriber = redis.GetSubscriber();
@@ -105,17 +96,16 @@ namespace SAL.Core.Configuration
 
             Console.WriteLine("Connected to configurationBus");
             Console.WriteLine($"Geting AdapterName for type {AdapterConfiguration.AdapterType}");
-            var result = GetAdapterName(e => throw new ConfigurationErrorException(e.Code)).Result;
-            baseServiceSection.AdapterName = result.AdapterName;
-            baseServiceSection.LogRoot = "";
+            var result = GetAdapterName().Result;
+            baseServiceSection.AdapterName   = result.payload.AdapterName;
+            baseServiceSection.LogRoot       = "";
             baseServiceSection.RootStorePath = "";
+            configurationId = result.payload.ConfigurationId;
+            AdapterConfiguration.EnvUid = result.envUid;
 
-
-            Console.WriteLine($"Geting Adapter configuration for {AdapterConfiguration.AdapterType}.{baseServiceSection.AdapterName}");
-            configurationId = result.ConfigurationId;
-            configurationName = result.ConfigurationName;
-            configurationRoot = GetConfigFromBus();
-            Console.WriteLine($"Config Received Name:'{result.ConfigurationName}' | Id:{result.ConfigurationId}");
+            Console.WriteLine($"Geting Adapter configuration for {AdapterConfiguration.AdapterType}.{baseServiceSection.AdapterName}");            
+            configurationRoot = GetConfigFromBus();            
+            Console.WriteLine($"Config Received Name:'{result.payload.ConfigurationName}' | Id:{result.payload.ConfigurationId}");
         }
 
         private JObject GetConfigFromBus()
@@ -186,7 +176,7 @@ namespace SAL.Core.Configuration
             info.CancellationTokenSource.CancelAfter(timeOut);
         }
 
-        private async Task<GetAdapterNameRes> GetAdapterName(Func<Error, Task<GetAdapterNameRes>> onError)
+        private async Task<(GetAdapterNameRes payload, string envUid)> GetAdapterName()
         {
             var correlationId = Guid.NewGuid().ToString("N");
             
@@ -204,7 +194,6 @@ namespace SAL.Core.Configuration
             var configurationName = Environment.GetEnvironmentVariable("ConfigurationName");
                 
                 
-
             var message = new ConfigMessage
             {
                 Source = AdapterConfiguration.AdapterFullName,
@@ -231,11 +220,9 @@ namespace SAL.Core.Configuration
             var result = await completionSource.Task;
 
             if (result.Type == MessageTypes.Error)
-            {
-                return await onError(result.Payload.ToObject<Error>());
-            }
+                throw new ConfigurationErrorException(result.Payload.ToObject<Error>().Code);                
 
-            return result.Payload.ToObject<GetAdapterNameRes>();
+            return (result.Payload.ToObject<GetAdapterNameRes>(), result.EnvUid);
         }
 
 

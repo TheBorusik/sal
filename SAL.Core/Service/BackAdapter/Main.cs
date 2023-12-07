@@ -13,6 +13,7 @@ namespace SAL.Core.Service
 {
     internal partial class BackAdapter : IServiceProviderFactory<ContainerBuilder>, ISalService
     {
+        private bool stoping = false;
         protected Logger logger;
         protected IContainer Container;
 
@@ -20,34 +21,38 @@ namespace SAL.Core.Service
         {
             RemoveNewtonsoftJsonSchemaLicensing();
         }
+
         private void RemoveNewtonsoftJsonSchemaLicensing()
         {
             var type = Type.GetType("Newtonsoft.Json.Schema.Infrastructure.Licensing.LicenseHelpers, Newtonsoft.Json.Schema");
-            if(type == null) return;
-            var method = type.GetMethod("SetRegisteredLicense", BindingFlags.Static  | BindingFlags.NonPublic );
-            if(method == null) return;
+            if (type == null) return;
+
+            var method = type.GetMethod("SetRegisteredLicense", BindingFlags.Static | BindingFlags.NonPublic);
+            if (method == null) return;
 
             var ldType = Type.GetType("Newtonsoft.Json.Schema.Infrastructure.Licensing.LicenseDetails, Newtonsoft.Json.Schema");
-            if(ldType == null) return;
+            if (ldType == null) return;
+
             var ldInstance = Activator.CreateInstance(ldType);
             var propInfo = ldType.GetProperty("Id");
             if (propInfo != null)
             {
                 propInfo.SetValue(ldInstance, 10);
             }
+
             propInfo = ldType.GetProperty("ExpiryDate");
             if (propInfo != null)
             {
                 propInfo.SetValue(ldInstance, DateTime.MaxValue);
             }
+
             propInfo = ldType.GetProperty("Type");
             if (propInfo != null)
             {
                 propInfo.SetValue(ldInstance, "hacking");
             }
 
-            method.Invoke(null, new [] {ldInstance});
-            
+            method.Invoke(null, new[] { ldInstance });
         }
 
         public virtual void LoadConfiguration()
@@ -56,43 +61,37 @@ namespace SAL.Core.Service
             InitNLog();
         }
 
-
         public virtual void Initialization()
         {
             HandlerContext.Set(HandlerTypes.System, "Initialization");
-            logger.Trace("Инициализация...");
+            logger.Trace("Initializing...");
             ConfigureLimits();
             InitUnhandledExceptionHandler();
             InitWatchDog();
             InitProcessors();
             InitSystem();
-            logger.Trace("Инициализация завершена");
+            logger.Trace("Initialization complinted");
             ShowStartupInfo();
         }
-
 
         public void Start()
         {
             HandlerContext.Set(HandlerTypes.System, "Start");
-            logger.Trace("Запуск...");
+            logger.Trace("Starting...");
             StartProcessors();
             StartTransport();
-            logger.Trace("Основные системы запущены.");
+            logger.Trace("Base systems started.");
         }
-
-
-        private bool stoping = false;
 
         public void Stop()
         {
             HandlerContext.Set(HandlerTypes.System, "Stop");
-            logger.Trace("Остановка...");
+            logger.Trace("Stopting...");
             stoping = true;
             StopProcessors();
             StopTransport();
-            logger.Trace("Сервис остановлен.");
+            logger.Trace("Service stoped.");
         }
-
 
         protected virtual void InitUnhandledExceptionHandler()
         {
@@ -101,8 +100,6 @@ namespace SAL.Core.Service
             {
                 var ex = (Exception)args.ExceptionObject;
                 Console.WriteLine($"UnhandledException: {ex.Message}\r{ex.StackTrace}");
-             //   logger.Fatal(ex, $"AppDomain.UnhandledException:");
-                
             };
 
             TaskScheduler.UnobservedTaskException += (_, args) =>
@@ -113,17 +110,6 @@ namespace SAL.Core.Service
                         return true;
 
                     logger.Fatal(exp, $"TaskScheduler.UnobservedTaskException:\r\n");
-
-
-                    try
-                    {
-                        //    var eventBus = Container.Resolve<IEventBus>();
-                        //     exp.RaiseExceptionDetectEvent(eventBus);
-                    }
-                    catch (Exception ex)
-                    {
-                        logger.Fatal(ex, $"TaskScheduler.UnobservedTaskException: При RaiseExceptionDetectEvent произошла ошибка ");
-                    }
 
                     return true;
                 });
@@ -144,6 +130,7 @@ namespace SAL.Core.Service
             var sb = new StringBuilder();
             sb.AppendLine()
                 .AppendLine("-------------------------------------------------------------")
+                .AppendLine($"EnvUid          : {AdapterConfiguration.EnvUid}")
                 .AppendLine($"InDocker        : {AdapterConfiguration.InDocker}")
                 .AppendLine($"MachineName     : {AdapterConfiguration.MachineName}")
                 .AppendLine($"AdapterContour  : {AdapterConfiguration.AdapterContour}")

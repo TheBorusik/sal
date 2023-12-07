@@ -10,6 +10,7 @@ namespace SAL.Core.Service
             var sb = new StringBuilder();
             sb.AppendLine()
                 .AppendLine("-------------------------------------------------------------")
+                .AppendLine($"EnvUid          : {AdapterConfiguration.EnvUid}")
                 .AppendLine($"InDocker        : {AdapterConfiguration.InDocker}")
                 .AppendLine($"MachineName     : {AdapterConfiguration.MachineName}")
                 .AppendLine($"AdapterContour  : {AdapterConfiguration.AdapterContour}")

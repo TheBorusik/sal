@@ -12,15 +12,7 @@ namespace SAL.Core.Configuration
         private JObject configurationRoot;
         private readonly JsonMergeSettings mergeSettings;
         private bool inited = false;
-
-
-
         private readonly EventHandlerList<string, ConfigurationSectionChangedEventArgs> listEventDelegates = new EventHandlerList<string, ConfigurationSectionChangedEventArgs>();
-/*        public event EventHandler<ConfigurationSectionChangedEventArgs> SectionChanged
-        {
-            add => listEventDelegates.AddHandler("", value);
-            remove => listEventDelegates.RemoveHandler("", value);
-        }*/
 
         public void Subscribe(string sectionName, EventHandler<ConfigurationSectionChangedEventArgs> handler)
         {
@@ -31,7 +23,6 @@ namespace SAL.Core.Configuration
         {
             listEventDelegates.RemoveHandler(sectionName.ToLower(), handler);
         }
-
 
         public ConfigWatcher()
         {
@@ -140,7 +131,8 @@ namespace SAL.Core.Configuration
             if (fileCount > 1)
             {
                 RemoveSectionFromFiles(sectionName);
-            }else if(fileCount == 1)
+            }
+            else if(fileCount == 1)
             {
                 fileName = SectionFileName(sectionName);
             }
@@ -177,16 +169,14 @@ namespace SAL.Core.Configuration
             if (fileCount > 1)
             {
                 RemoveSectionFromFiles(sectionName);
-            }else if(fileCount == 1)
+            }
+            else if(fileCount == 1)
             {
                 fileName = SectionFileName(sectionName);
-            }
-            
+            }            
 
             SaveSection(sectionName, section, fileName);
-            configWatcher.EnableRaisingEvents = true;
-            
-            
+            configWatcher.EnableRaisingEvents = true;                       
         }
 
         public bool CanUpdateConfig()
@@ -207,15 +197,13 @@ namespace SAL.Core.Configuration
                     { 
                         section.Parent?.Remove();
                         File.WriteAllText(fn, jData.ToIndentedJson());
-                    }
-                    
+                    }                    
                 }
                 catch (Exception)
                 {
                     //
                 }
             });
-
         }
 
         private int SectionInFiles(string sectionName)
@@ -269,6 +257,7 @@ namespace SAL.Core.Configuration
             var fileName = Path.Combine(AdapterConfiguration.ConfigPath, sectionName + ".json");
             if (!string.IsNullOrEmpty(filename))
                 fileName = filename;
+
             var fileData = new JObject();
             if (File.Exists(fileName))
             {
@@ -287,9 +276,9 @@ namespace SAL.Core.Configuration
                     fileData = new JObject();
                 }
             }
+
             fileData.Add(sectionName, sectionData);
             File.WriteAllText(fileName, fileData.ToIndentedJson());
-        }
-        
+        }        
     }
 }

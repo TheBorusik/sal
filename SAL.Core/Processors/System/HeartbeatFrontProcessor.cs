@@ -11,12 +11,12 @@ namespace SAL.Core.Processors
     class HeartbeatFrontProcessor : HeartbeatBaseProcessor
     {
         private ILogger logger;
-        private ISalClient salClient;
+        private ISalClient salClient;        
 
-        public HeartbeatFrontProcessor(ILifetimeScope container, ILoggerProvider loggerProvider)
+        public HeartbeatFrontProcessor(ILifetimeScope container, ILoggerProvider loggerProvider, IConfigWatcher configWatcher)
         {
             salClient = container.ResolveKeyed<ISalClient>(Contour.Front);
-            logger = loggerProvider.CreateLogger(nameof(HeartbeatFrontProcessor));
+            logger    = loggerProvider.CreateLogger(nameof(HeartbeatFrontProcessor));            
         }
 
         protected override async Task Beat()
@@ -29,15 +29,16 @@ namespace SAL.Core.Processors
                     Name = AdapterConfiguration.AdapterName,
                     AdapterContour = AdapterConfiguration.AdapterContour,
                     AdapterVersion = AdapterConfiguration.AdapterVersion,
-                    SalVersion = AdapterConfiguration.SalVersion,
-                    InDocker = AdapterConfiguration.InDocker,
-                    MachineName = AdapterConfiguration.MachineName,
-                    Timestamp = DateTime.UtcNow
+                    SalVersion     = AdapterConfiguration.SalVersion,
+                    InDocker       = AdapterConfiguration.InDocker,
+                    MachineName    = AdapterConfiguration.MachineName,
+                    Timestamp      = DateTime.UtcNow,
+                    EnvUid = AdapterConfiguration.EnvUid,                    
                 }, SalConst.SystemEventTTL);
             }
             catch (Exception ex)
             {
-                logger.Error("При отправке HeartbeatEvent произошла ошибка", ex);
+                logger.Error("HeartbeatEvent error", ex);
             }
         }
     }

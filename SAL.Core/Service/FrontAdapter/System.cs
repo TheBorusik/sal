@@ -42,16 +42,14 @@ namespace SAL.Core.Service
             }
             catch (Exception)
             {
-                logger.Error("Ошибка отправки сообщения IAmOffline во front");
+                logger.Error("IAmOffline front error");
             }
         }
-
 
         public override void AddExternalHttpHandler(ExternalHandlerInfo extInfo)
         {
             externalHttp.Add(extInfo);
         }
-
 
         public override void AddFrontCommandHandler(FrontCommandHandlerInfo handlerInfo)
         {
@@ -67,7 +65,6 @@ namespace SAL.Core.Service
         {
             frontEvents.Add(eventHandlerInfo);
         }
-
 
         public override Task SendIm(Contour contour)
         {
@@ -86,13 +83,14 @@ namespace SAL.Core.Service
                         MachineName = AdapterConfiguration.MachineName,
                         CommandHandlers = frontCommands.ToArray(),
                         CommandResultHandlers = frontCommandResults.ToArray(),
-                        EventHandlers = frontEvents.ToArray(),
-                        ExternalHandlers = externalHttp.ToArray(),
-                    },  SalConst.SystemEventTTL);
+                        EventHandlers         = frontEvents.ToArray(),
+                        ExternalHandlers      = externalHttp.ToArray(),
+                        EnvUid = AdapterConfiguration.EnvUid,
+                    }, SalConst.SystemEventTTL);
             }
             catch (Exception ex)
             {
-                logger.Error(ex, "Ошибка отправки сообщения IAmFrontEvent");
+                logger.Error(ex, "IAmFrontEvent error");
             }
 
             return Task.CompletedTask;
