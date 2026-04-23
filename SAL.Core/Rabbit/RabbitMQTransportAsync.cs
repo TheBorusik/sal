@@ -13,11 +13,12 @@ using SAL.Core.Rabbit.EventArgs;
 using SAL.Core.Rabbit.Helpers;
 using SAL.Core.Rabbit.Interfaces;
 using SAL.Core.Rabbit.Topology;
+using SAL.Core.Transport;
 using SAL.Infrastructure;
 
 namespace SAL.Core.Rabbit
 {
-    public class RabbitMQTransportAsync :  IRMQTransport
+    public class RabbitMQTransportAsync : IRMQTransport
     {
         private readonly RabbitMQConnectionManagerAsync rabbitMQConnectionManager;
 
@@ -25,11 +26,14 @@ namespace SAL.Core.Rabbit
         private readonly ISubscriptionFactory subscriptionFactory;
         private readonly RabbitMQPublisherWithConfirms publisher;
 
-        public event EventHandler<ConnectionRestoreEventArgs> ConnectionRestore;
-        public event EventHandler<ConnectionFailureEventArgs> ConnectionFailure;
+        public event EventHandler ConnectionRestore;
+        public event EventHandler ConnectionFailure;
 
-        public bool IsConnected => rabbitMQConnectionManager.IsConnected;
-        public string CounterName => rabbitMQConnectionManager.ContourName;
+        bool IMessageTransport.IsConnected => IsConnected;
+        string IMessageTransport.ContourName => CounterName;
+
+        ISubscriptionFactory IMessageTransport.CreateSubscriptionFactory() => CreateMessageSubscription();
+        IPublisher IMessageTransport.CreatePublisher() => CreatePublisher();
         public ILoggerProvider LoggerProvider { get; private set; }
 
         //topology
@@ -66,6 +70,7 @@ namespace SAL.Core.Rabbit
 
             rabbitMQConnectionManager = new RabbitMQConnectionManagerAsync(rabbitConfig, loggerProvider);
             rabbitMQConnectionManager.ConnectionFailure += (sender, args) => OnConnectionFailure(args);
+            rabbitMQConnectionManager.ConnectionRestore += (sender, args) => ConnectionRestore?.Invoke(this, EventArgs.Empty);
             
             subscriptionFactory = new RabbitMQAsyncSubscriptionFactoryAsync(this);
             publisher = new RabbitMQPublisherWithConfirms(this, LoggerProvider);
@@ -122,6 +127,7 @@ namespace SAL.Core.Rabbit
 
         private void OnConnectionFailure(ConnectionFailureEventArgs e)
         {
+            ConnectionFailure?.Invoke(this, EventArgs.Empty);
             lifeTime.StopApplication();
             //    salService.Stop();
         }
