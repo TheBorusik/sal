@@ -7,25 +7,27 @@ namespace SAL.API
 {
     public abstract class BaseRepository<T> : IBaseRepository<T>, IBaseRepository, IDisposable where T : IDisposable, IBaseRepository
     {
-        protected readonly DbTransaction transaction;
-        protected readonly DbConnection connection;
-        private readonly ILifetimeScope scope;
-        protected IDbConnectionCreator connectionCreator;
-        public abstract string ConnectionName { get; }
+        protected readonly DbTransaction        transaction;
+        protected readonly DbConnection         connection;
+        private readonly   ILifetimeScope       scope;
+        protected          IDbConnectionCreator connectionCreator;
+        public abstract    string               ConnectionName { get; }
 
         protected BaseRepository(ILifetimeScope scope, IDbConnectionCreator connectionCreator)
         {
-            this.scope = scope;
+            this.scope             = scope;
             this.connectionCreator = connectionCreator;
-            transaction = null;
-            connection = null;
+            transaction            = null;
+            connection             = null;
         }
 
         protected BaseRepository(ILifetimeScope scope, DbConnection connection, DbTransaction transaction)
         {
-            this.scope = scope;
-            this.connection = connection;
-            this.transaction = transaction;
+            Console.WriteLine($"DB+{connection?.ConnectionString}");
+
+            this.scope        = scope;
+            this.connection   = connection;
+            this.transaction  = transaction;
             connectionCreator = null;
         }
 
@@ -36,6 +38,7 @@ namespace SAL.API
                 return SalDBObjectFactory.CreateConnection(connection, transaction);
             var con = connectionCreator.GetConnection(ConnectionName);
             con.Open();
+
             return con;
         }
 
@@ -45,6 +48,7 @@ namespace SAL.API
                 throw new NotSupportedException();
             var con = connectionCreator.GetConnection(connectionName);
             con.Open();
+
             return con;
         }
 
@@ -69,7 +73,7 @@ namespace SAL.API
             }
 
             return scope.Resolve<TT>(
-                new TypedParameter(typeof(DbConnection), SalDBObjectFactory.CreateConnection(connection, transaction)),
+                new TypedParameter(typeof(DbConnection),  SalDBObjectFactory.CreateConnection(connection, transaction)),
                 new TypedParameter(typeof(DbTransaction), SalDBObjectFactory.CreateTransaction(transaction)));
         }
 

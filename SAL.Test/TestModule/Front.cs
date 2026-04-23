@@ -16,8 +16,8 @@ namespace SAL.Test.Front
         {
             builder.RegisterSalHandler<TestFrontMultiVersionHandler>();
             builder.RegisterSalHandler<TestFrontMultiVersionHandler2>();
-            
-           builder.RegisterProcessor<TestFront>();
+
+            builder.RegisterProcessor<TestFront>();
         }
     }
 
@@ -31,42 +31,32 @@ namespace SAL.Test.Front
         }
 
 
-        public void Start()
-        {
-        }
+        public void Start() { }
 
-        
+
         public void Online()
         {
-            Task.Run(async () =>  
+            Task.Run(async () =>
             {
                 var salClient = lifetimeScope.ResolveKeyed<ISalClient>(Contour.Front);
                 await salClient.ExecuteCommandWithVersionAsync("Test.TestVer", "1", new { });
                 await salClient.ExecuteCommandWithVersionAsync("Test.TestVer", "3", new { });
                 var res = await salClient.ExecuteCommandWithVersionAsync("Test.TestVer", "1000", new { });
             });
-            
-            
-
-
         }
 
-        public void Offline()
-        {
-        }
+        public void Offline() { }
 
-        public void Stop()
-        {
-        }
+        public void Stop() { }
     }
 
 
     public class CommandResult
     {
-        public int Id { get; set; }
+        public int    Id      { get; set; }
         public string Payload { get; set; }
     }
-    
+
     public class CommandResult2
     {
         public string Version { get; set; }
@@ -74,7 +64,7 @@ namespace SAL.Test.Front
 
 
     [FrontCommandName("Test.TestVer")]
-    [SalCommandVersions("1","3")]
+    [SalCommandVersions("1", "3")]
     public class TestFrontMultiVersionHandler : BaseFrontCommandHandlerAsync<Nothing, CommandResult2>
     {
         private ISessionManager sessionManager;
@@ -88,7 +78,7 @@ namespace SAL.Test.Front
         {
             var s = sessionManager.GetCurrentSession();
             logger.Info(s.GetRawData().ToIndentedJson());
-            
+
             await PublishResult(new CommandResult2
             {
                 Version = $"{commandContext.Descriptor.Version}"
@@ -96,24 +86,15 @@ namespace SAL.Test.Front
         }
     }
 
-    
-    
-    
-    public abstract class BaseFrontHandlerAsync : 
-        IFrontCommonCommandHandler2Async 
-    {
-        protected BaseFrontHandlerAsync()
-        {
-        }
 
-        public async Task Handle(JObject command , CommandContext commandContext , ExecutingContext executingContext)
-        {
-          
-        }
+    // public abstract class BaseFrontHandlerAsync :
+    //     IFrontCommonCommandHandler2Async
+    // {
+    //     protected BaseFrontHandlerAsync() { }
+    //
+    //     public async Task Handle(JObject command, CommandContext commandContext, ExecutingContext executingContext) { }
+    // }
 
-
-    }
-    
     [FrontCommandName("Test.TestVer")]
     [SalCommandVersions("1000", "100")]
     public class TestFrontMultiVersionHandler2 : BaseFrontCommandHandlerAsync<Nothing, CommandResult2>
@@ -128,26 +109,22 @@ namespace SAL.Test.Front
     }
 
 
-
-
     [BackCommandName("SalTester.TestCommand")]
     public class CommandHandler : BaseBackCommandHandlerAsync<Nothing, CommandResult>
     {
-
-
         public override async Task Handle(Nothing command)
         {
             logger.Info(HandlerContext.GetData().ToIndentedJson());
-            
+
             await PublishResult(new CommandResult
             {
-                Id = 1,
+                Id      = 1,
                 Payload = "s1"
             });
         }
     }
-    
-    
+
+
     public class CommandResultHandler : ICommonCommandSharedResultHandler
     {
         private ILogger logger;
@@ -160,22 +137,17 @@ namespace SAL.Test.Front
         public Task PersonalResultHandle(CommonCommandResult result, CommandResultContext commandContext, ExecutingContext executingContext)
         {
             logger.Info("!!! PERSONAL !!!");
+
             return Task.CompletedTask;
         }
 
         public Task SharedResultHandle(CommonCommandResult result, CommandResultContext commandContext, ExecutingContext executingContext)
         {
             logger.Info("!!!! SHARED !!!!");
+
             return Task.CompletedTask;
         }
     }
-
-
- 
-
-
-    
-
 
 
 /*

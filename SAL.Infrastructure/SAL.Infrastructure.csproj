@@ -5,10 +5,10 @@
     <Company>
     </Company>
     <Product>SAL 3.0 Infrastructure</Product>
-    <Version>3.1.0</Version>
     <PackageTags>SAL3 Infrastructure</PackageTags>
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
     <PackageId>SAL3.Infrastructure</PackageId>
+    <Version>..-.+git.commit.</Version>
     <LangVersion>9</LangVersion>
   </PropertyGroup>
 </Project>

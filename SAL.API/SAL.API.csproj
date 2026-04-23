@@ -1,10 +1,10 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
     <Authors>Kooklev P.A.</Authors>
     <Company>Pipindl</Company>
     <Product>SAL 3.0 API</Product>
-    <Version>3.0.0-Beta.15</Version>
+    <Version>..-.+git.commit.</Version>
     <PackageTags>SAL3 API</PackageTags>
     <PackageId>SAL3.API</PackageId>
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>

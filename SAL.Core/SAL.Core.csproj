@@ -1,7 +1,7 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
-    <Version>3.0.0-Beta.15</Version>
+    <Version>..-.+git.commit.</Version>
     <PackageId>SAL3.Core</PackageId>
     <Authors>Kooklev P.A.</Authors>
     <Company>Pipindl</Company>

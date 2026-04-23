@@ -5,11 +5,13 @@
     <LangVersion>9</LangVersion>
   </PropertyGroup>
   <ItemGroup>
+    <PackageReference Include="Autofac" Version="6.0.0" />
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="5.0.0" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     <PackageReference Include="Npgsql" Version="6.0.3" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\SAL.Core\SAL.Core.csproj" />
+    <PackageReference Include="SAL3.API" Version="3.0.3" />
+    <PackageReference Include="SAL3.Core" Version="3.0.3" />
+    <PackageReference Include="SAL3.Infrastructure" Version="3.0.3" />
   </ItemGroup>
   <ItemGroup>
     <None Update="Config\autofac.json">
